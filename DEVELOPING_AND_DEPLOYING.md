@@ -6,9 +6,9 @@ Open an Anaconda prompt (Start menu, start typing "anaconda" in the search box).
 
 In the Anaconda prompt, change directory (folder) to the folder with your code.  
 This is has been set up on the desktop on our computers. 
-```cd Desktop\frc2023``` (relative to the user's folder)
+```cd Desktop\frc2024``` (relative to the user's folder)
 or
-```cd c:\Users\<username>\Desktop\frc2023``` (specifying the full folder name, but you do need the correct username)
+```cd c:\Users\<username>\Desktop\frc2024``` (specifying the full folder name, but you do need the correct username)
 
 
 Activate the python environment we set up.  This tells this command window to use the Python version
@@ -19,7 +19,39 @@ In most cases you want to make sure you are using the latest code, which might n
 computer.  Hopefully, it was pushed to the GitHub cloud repository.  To get it (pull it from the repository), 
 type the following in the command window:
 
-```git pull``
+    git pull
+
+# Projects
+
+We will likely have several "projects" running during the season, each being a `robot.py` file with a some associated functionality, such as running the drivetrain or working with the Limelight.  In fact, there are already several of these projects in the `src\helloworld` folder: `accelerometer``, `apriltags``, etc.
+
+Projects have an associated `pyproject.toml` file that details which version of robotpy and which extra components (like Rev Robotics libraries) should be installed on the roboRIO when we deploy code.  We probably want to have all of the projects we are actively developing using the same `pyproject.toml` file so that it isn't loading different robotpy versions to robots when we switch uses.
+
+## Creating a project
+
+Create a folder for the project.  A good place would be as a subfolder of `src`.  Copy the `pyproject.toml` file from the `src\helloworld\hello2024` folder to your folder.  Rod is going to try to keep that project's `pyproject.toml` file up to date.
+
+If this is the first time that this computer has deployed code (or if there has been a robotpy update), in the Anaconda prompt, cd to your new folder and run
+
+    robotpy sync
+
+This downloads Python for the roboRIO, robotpy and other packages from the Internet to your computer in preparation for putting them on the robot.
+
+Create your `robot.py` file, or copy from another project and edit it.  Then proceed to "Deploying code".
+
+(Documented in https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-2/python-setup.html)
+
+
+## Updating a project's dependencies
+
+If we upgrade to a new version of robotpy, or we need to add a new extra component (like apriltags), we'll need to update the `pyproject.toml` file.
+
+1. In the file, edit the `robotpy_version` to the new version.
+2. Uncomment the line with the new extra component.
+3. Save the file.
+4. Inform people developing different projects and get the new file copied to other projects (pushing to GitHub).
+5. Run `robotpy sync` from the Anaconda prompt to download the updated extra components.
+6. Other development computers will need to run `robotpy sync` (and potentially also update the WPILib installation as detailed at the bottom of DEVELOPERS_START_HERE.md).
 
 # Editing code
 Use VSCode to edit your code.
@@ -33,14 +65,14 @@ Check the robot:
 * Make sure there is nothing that could get in the way if motors move.  (wires, wrenches, fingers)
 
 1. Power the robot by turning on the breaker.
-2. Open driver station software on PLTW1.
-3. Connect PLTW1 to the Wi-Fi to the access point on the robot (access point name 3881).
+2. Open driver station software on the computer.
+3. Connect the computer to the Wi-Fi to the access point on the robot (access point name 3881).
 4. Check your code again.  Are there any spelling errors?
-5. If you are using a different computer from PLTW1 to write code, also connect that computer's Wi-Fi to the access point on the robot (access point name 3881).
+5. If you are using a different computer from the driver's station to write code, also connect that computer's Wi-Fi to the access point on the robot (access point name 3881).
 
-TODO 2024-06-07: I think this is wrong now. I think you need to use `robotpy` command. 
 Deploy your code:
-```python robot.py deploy```
+
+    robotpy deploy
 
 Look for the message that it deployed successfully.
 

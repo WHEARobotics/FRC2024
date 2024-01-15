@@ -83,31 +83,26 @@ You're asking the robotpy program to run the program **hello_robot.py** in simul
 You should see a command-line output similar to:
 
 ```bash
-(frc) D:\src\lobrien\frc_whea\helloworld\robot>python hello_robot.py sim
-09:30:18:845 INFO    : wpilib              : WPILib version 2023.1.1.0
-09:30:18:846 INFO    : wpilib              : HAL version 2023.1.1.0
-09:30:18:846 INFO    : wpilib              : Running with simulated HAL.
-09:30:18:846 INFO    : wpilib              : pyntcore version 2023.1.1.0
-09:30:18:846 INFO    : wpilib              : robotpy-apriltag version 2023.1.1.0
-09:30:18:847 INFO    : wpilib              : robotpy-halsim-gui version 2023.1.1.0
-09:30:18:847 INFO    : wpilib              : robotpy-wpimath version 2023.1.1.0
-09:30:18:847 INFO    : wpilib              : robotpy-wpinet version 2023.1.1.0
-09:30:18:847 INFO    : wpilib              : robotpy-wpiutil version 2023.1.1.0
-09:30:18:850 INFO    : halsim_gui          : WPILib HAL Simulation 2023.1.1.0
+(frc) c:\gh\wh\FRC2024\src\helloworld\robot>robotpy --main hello_robot.py sim
+23:02:51:625 INFO    : halsim_gui          : WPILib HAL Simulation 2024.1.1.0
 HAL Extensions: Attempting to load: halsim_gui
 Simulator GUI Initializing.
 Simulator GUI Initialized!
 HAL Extensions: Successfully loaded extension
-09:30:20:210 INFO    : pyfrc.physics       : Physics support successfully enabled
-09:30:20:230 INFO    : nt                  : Listening on NT3 port 1735, NT4 port 5810
+23:02:52:532 INFO    : pyfrc.physics       : Physics support successfully enabled
+23:02:52:533 INFO    : wpilib              : RobotPy version 2024.1.1
+23:02:52:533 INFO    : wpilib              : WPILib version 2024.1.1.0
+23:02:52:533 INFO    : wpilib              : Running with simulated HAL.
+23:02:52:547 INFO    : nt                  : Listening on NT3 port 1735, NT4 port 5810
 Not loading CameraServerShared
-09:30:20:252 INFO    : pyfrc.physics       : Motor config: 2 CIM motors @ 10.71 gearing with 6.0 diameter wheels
-09:30:20:253 INFO    : pyfrc.physics       : - Theoretical: vmax=12.980 ft/s, amax=44.731 ft/s^2, kv=0.925, ka=0.268
-09:30:20:254 INFO    : pyfrc.physics       : Robot base: 29.5x38.5 frame, 22.0 wheelbase, 110.0 mass
+23:02:52:565 INFO    : pyfrc.physics       : Motor config: 2 CIM motors @ 10.71 gearing with 6.0 diameter wheels
+23:02:52:566 INFO    : pyfrc.physics       : - Theoretical: vmax=12.980 ft/s, amax=44.731 ft/s^2, kv=0.925, ka=0.268
+23:02:52:567 INFO    : pyfrc.physics       : Robot base: 29.5x38.5 frame, 22.0 wheelbase, 110.0 mass
 
 ********** Robot program startup complete **********
 Default frc::IterativeRobotBase::DisabledPeriodic() method... Override me!
 Default frc::IterativeRobotBase::RobotPeriodic() method... Override me!
+
 ```
 
 And a "Robot Simulation" Window to appear. Close the simulation window to end the program.
@@ -146,9 +141,12 @@ If you've:
 
 You should have all the tools ready to begin programming! 
 
-# Updating the RobotPy installation on your PC and the roboRIO
+# Updating the RobotPy installation on your PC
 
-1. While connected to the Internet, `pip install -U robotpy[all]`.  Upgrades all the robotpy files on the PC, the ones that are used to simulate and deploy.
-1. Still connected to the Internet, `python -m robotpy_installer download robotpy[all]` to get the latest robot files, which should be version synchronized with the above if you do them the same day.
-1. Connect the PC to the robot, either over Wi-Fi or USB, `python -m robotpy_installer install robotpy[all]` to put those files onto the roboRIO.
-1. It is a good idea to run the first step on all the PCs the same day so that they will all be the same version as what is on the robot(s).
+For the first PC of our batch, we'll need to do update robotpy by running:
+
+    pip install --upgrade robotpy
+
+Then figure out the new wpilib packages and put them into the requirements file.  Once that file is pushed to GitHub, The rest of the computers can pull it and run the same command:
+
+    pip install -r requirements.txt
