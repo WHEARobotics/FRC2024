@@ -111,7 +111,7 @@ And a "Robot Simulation" Window to appear. Close the simulation window to end th
 
 Switch to the **src/helloworld/apriltags** directory and run:
 
-    python hello_apriltags.py 
+    python hello_apriltag.py 
 
 Expected output: `Yeah, that worked.`
 
