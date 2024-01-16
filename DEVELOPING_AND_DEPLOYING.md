@@ -1,6 +1,6 @@
 # Preparing for a development session
 
-You need to have a computer set up as in DEVELOPERS_START_HERE.md.  If not, go to that file first.
+You need to have a computer set up as in **DEVELOPERS_START_HERE.md**.  If not, go to that file first.
 
 Open an Anaconda prompt (Start menu, start typing "anaconda" in the search box).
 
@@ -10,26 +10,24 @@ This is has been set up on the desktop on our computers.
 or
 ```cd c:\Users\<username>\Desktop\frc2024``` (specifying the full folder name, but you do need the correct username)
 
-
 Activate the python environment we set up.  This tells this command window to use the Python version
-and libraries that we had installed in the start here document.
-```conda activate frc```
+and libraries that we had installed in the **DEVELOPERS_START_HERE.md** document.
 
-In most cases you want to make sure you are using the latest code, which might not have been written using this 
-computer.  Hopefully, it was pushed to the GitHub cloud repository.  To get it (pull it from the repository), 
-type the following in the command window:
+    conda activate frc
+
+In most cases you want to make sure you are using the latest code, which might not have been written using this computer.  Hopefully, it was pushed to the GitHub cloud repository.  To get it (pull it from the repository), type the following in the command window or use the Git GUI to pull from the repository:
 
     git pull
 
 # Projects
 
-We will likely have several "projects" running during the season, each being a `robot.py` file with a some associated functionality, such as running the drivetrain or working with the Limelight.  In fact, there are already several of these projects in the `src\helloworld` folder: `accelerometer``, `apriltags``, etc.
+We will likely have several "projects" running during the season, each being a **robot.py** file with a some associated functionality, such as running the drivetrain or working with the Limelight.  In fact, there are already several of these projects in the **src\helloworld** folder: **accelerometer**, **apriltags**, etc.
 
-Projects have an associated `pyproject.toml` file that details which version of robotpy and which extra components (like Rev Robotics libraries) should be installed on the roboRIO when we deploy code.  We probably want to have all of the projects we are actively developing using the same `pyproject.toml` file so that it isn't loading different robotpy versions to robots when we switch uses.
+Projects have an associated **pyproject.toml** file that details which version of robotpy and which extra components (like Rev Robotics libraries) should be installed on the roboRIO when we deploy code.  We probably want to have all of the projects we are actively developing using the same **pyproject.toml** file so that it isn't loading different robotpy versions to robots when we switch uses.
 
 ## Creating a project
 
-Create a folder for the project.  A good place would be as a subfolder of `src`.  Copy the `pyproject.toml` file from the `src\helloworld\hello2024` folder to your folder.  Rod is going to try to keep that project's `pyproject.toml` file up to date.
+Create a folder for the project.  A good place would be as a subfolder of **src**.  Copy the **pyproject.toml** file from the **src\helloworld\hello2024** folder to your folder.  The plan is to keep that project's **pyproject.toml** file up to date.
 
 If this is the first time that this computer has deployed code (or if there has been a robotpy update), in the Anaconda prompt, cd to your new folder and run
 
@@ -37,24 +35,23 @@ If this is the first time that this computer has deployed code (or if there has 
 
 This downloads Python for the roboRIO, robotpy and other packages from the Internet to your computer in preparation for putting them on the robot.
 
-Create your `robot.py` file, or copy from another project and edit it.  Then proceed to "Deploying code".
+Create your **robot.py** file, or copy from another project and edit it.  Then proceed to "Deploying code".
 
 (Documented in https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-2/python-setup.html)
 
 
 ## Updating a project's dependencies
 
-If we upgrade to a new version of robotpy, or we need to add a new extra component (like apriltags), we'll need to update the `pyproject.toml` file.
-
-1. In the file, edit the `robotpy_version` to the new version.
-2. Uncomment the line with the new extra component.
-3. Save the file.
-4. Inform people developing different projects and get the new file copied to other projects (pushing to GitHub).
-5. Run `robotpy sync` from the Anaconda prompt to download the updated extra components.
-6. Other development computers will need to run `robotpy sync` (and potentially also update the WPILib installation as detailed at the bottom of DEVELOPERS_START_HERE.md).
+If we upgrade to a new version of robotpy, or we need to add a new extra component (like apriltags), we'll need to update the **pyproject.toml** file.  This is discussed in more detail at the bottom of **DEVELOPERS_START_HERE.md**.
 
 # Editing code
 Use VSCode to edit your code.
+
+# Documentation resources
+
+1. The FRC Control System web site is a good place to start: https://docs.wpilib.org/en/stable/index.html.  
+2. The left side bar of the above page has a number of good links, in particular one to the WPILib Python application programming interface (API) docs https://robotpy.readthedocs.io/projects/robotpy/en/stable/.  Note that this is a slightly different URL than the "readthedocs" web site from previous years.  Use this one for now.
+3. Note that the CTRE libraries have been renamed **phoenix5** and **phoenix6**, depending on which version of CTRE's firmware is on the hardware (we've used phoenix5).  See the sidebar on the page linked in (2) above for links to those libraries as well as ones for REV Robotics hardware.
 
 
 # Deploying code to the robot
@@ -62,15 +59,16 @@ Use VSCode to edit your code.
 Check the robot:
 * If you have changed wiring, are the wire polarities correct?
 * Are all the wires connected?
+* Are each NEO motor's power wires and encoder wires connected to the **SAME** SparkMax?  If power wires are connected to one SparkMax and the encoder to a different one, you can overheat the motors and/or controllers, pop a breaker, and potentially cause damage.
 * Make sure there is nothing that could get in the way if motors move.  (wires, wrenches, fingers)
 
 1. Power the robot by turning on the breaker.
 2. Open driver station software on the computer.
-3. Connect the computer to the Wi-Fi to the access point on the robot (access point name 3881).
+3. Connect the computer to the Wi-Fi to the access point on the robot (access point name 3881 or similar).
 4. Check your code again.  Are there any spelling errors?
-5. If you are using a different computer from the driver's station to write code, also connect that computer's Wi-Fi to the access point on the robot (access point name 3881).
+5. If you are using a different computer from the driver's station to write code, also connect that computer's Wi-Fi to the access point on the robot (access point name 3881 or similar).
 
-Deploy your code:
+With the Anaconda prompt in the folder where your robot code is, deploy your code (note that this command is different from previous years):
 
     robotpy deploy
 
@@ -111,7 +109,7 @@ indicate a line number in robot.py.  That's the one to look at.
 
 The below image shows the console view after the robot code was deployed successfully. You can
 see information coming from **nt* (the network tables library) and from **robot** (our code).
-In this case, the robot code is properly seeing the limelight data in the `limelight` networktabe.
+In this case, the robot code is properly seeing the limelight data in the `limelight` networktable.
 
 ![](docs/console_view_3.png)
 
