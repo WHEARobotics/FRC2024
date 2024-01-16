@@ -1,3 +1,17 @@
+# FRC Game Tools
+
+FIRST Robotics Competition has a set of tools: 
+1. driver station software
+2. tools to configure the hardware, and 
+3. software libraries to use with your chosen programming language.  
+
+The first two items come in the "game tools" installation, and the third comes in a language-specific installation.  Not every computer **needs** to have the game tools, but practically speaking it will be more convenient if most or all computers have the driver station software, so that we aren't searching/borrowing the driver station just to run a test.  
+
+To install the FRC game tools, follow the directions at https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-2/frc-game-tools.html.
+
+You will see links on that page to the Python Installation Guide.  Read it for information, but **don't execute** the steps.  Rather, use the modified steps that we have documented below.
+
+
 # Developer Configuration
 
 Sharkbots uses Python for programming. Because Python has a very large community and because it's very easy to add new libraries to a python environment, it's very easy for developers to end up with a lot of complex dependencies that end up causing trouble on the actual RoboRio or outboard processor. To (help) fight that, please use the **conda** package manager to create a "virtual environment." Everyone will share the same libraries and be able to to recreate the virtual environment quickly.
@@ -8,16 +22,16 @@ Sharkbots uses Python for programming. Because Python has a very large community
 
 Using your git client, create a local copy of this Github repository on your development machine. If you have a graphical user interface, use it. If you have a command-line version of **git** installed, go to the directory in which you want to do your programming, and run:
 
-    git clone https://github.com/WHEARobotics/FRC2023
+    git clone https://github.com/WHEARobotics/FRC2024
 
-This will create a subdirectory called **FRC2023** containing the latest contents of this repository.
+This will create a subdirectory called **FRC2024** containing the latest contents of this repository.
 
 ## Installing miniconda
 
 Follow the instructions at the [miniconda installation page](https://docs.conda.io/en/latest/miniconda.html#latest-miniconda-installer-links) to install the **conda** program on your system.
 
 1. Open a terminal. 
-1. Change directories (`cd`) to the **FRC2023/** directory created by the git cloning process from the previous step
+1. Change directories (`cd`) to the **FRC2024/** directory created by the git cloning process from the previous step
 1. Confirm that this directory has a file called **requirements.txt** in it. 
 
 The **requirements.txt** file defines the Python libraries used in the common development environment.
@@ -141,12 +155,54 @@ If you've:
 
 You should have all the tools ready to begin programming! 
 
-# Updating the RobotPy installation on your PC
+# Updating the RobotPy installation on our PCs
 
-For the first PC of our batch, we'll need to do update robotpy by running:
+## Update the first computer
+
+A designated person will:
+
+* Create a git branch for updates.
+
+* Update robotpy by running (in the Anaconda prompt with the frc environment activated):
 
     pip install --upgrade robotpy
 
-Then figure out the new wpilib packages and put them into the requirements file.  Once that file is pushed to GitHub, The rest of the computers can pull it and run the same command:
+* Find the new robotpy version number by executing 
+ 
+    pip list
+
+and looking for a line like `robotpy 2024.1.1`
+
+* Edit the **pyproject.toml** file in the **hello2024** project.  This file tells robotpy which version of robotpy should be on the robot, along with other libraries.  Change the line that looks like `robotpy_version = "2024.1.1"` to use the same version that you see in pip list output.
+
+* Now we need to get the latest versions of the robotpy files that go onto the robot loaded onto the PC.  With your Anaconda prompt in the folder of the code project you edited, run
+
+    robotpy sync
+
+
+* Test deploying the code to a robot.  
+* Ideally, copy the **pyproject.toml** file to another project with more complex code than **hello2024**, and test to verify that deployed code works, too.
+* Then update the requirements file for the whole repository. With your Anaconda prompt at the root level of the repository (where the **requirements.txt** file is), execute: 
+
+    pip freeze > requirements.txt
+
+this puts the output of the `pip freeze` command into the **requirements.txt** file, replacing the old contents.
+
+* Ideally, update the **pyproject.toml** files in all other projects within the repository so that they are all using the same version.
+
+* Document your changes in the **RELEASE_NOTES.md** file in the repository.
+
+* Make a commit, push the updated files to GitHub, and merge your branch into the **main** branch.  
+
+## Updating the rest of the computers
+
+Once the changes have been pushed to GitHub, The rest of computers (and the developers using them) can pull from it and then run these two commands (in an Anaconda prompt with the `frc` environment activated):
+
+* Updating the python environment:
 
     pip install -r requirements.txt
+
+* In the folder with one of projects to download stuff needed for the robot:
+
+    robotpy sync
+
