@@ -1,9 +1,8 @@
 
 import wpilib
 import wpimath
-import ctre.sensors
 import rev
-from ctre import TalonFX, ControlMode, DemandType
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, SwerveModulePosition, SwerveModuleState, ChassisSpeeds
 from wpimath.controller import PIDController, ProfiledPIDController
 from wpimath.controller import SimpleMotorFeedforwardMeters
 from wpimath.geometry import Rotation2d, Translation2d
@@ -18,7 +17,7 @@ from wpilib import PWMSparkMax
 import math
 import time # Temporary for diagnostics
 
-class SwerveModule:                                                                 #UPDATE: 2/3/2023
+class CrescendoSwerveModule:      #This is the 'constructor' which we refer to in the Drivtrain file i.e. CrescendoSwerveModule(3,4,5,ABSOLUTEPOS_4)                            #UPDATE: 2/3/2023
 
     
     WHEELDIAMETER = 4 * 0.0254 #4 inch diameter for the wheel times the conversion to meters
@@ -40,15 +39,20 @@ class SwerveModule:                                                             
     kSlotIdx = 0 
 
     kPIDLoopIdx = 0
-
-    def __init__(self, driveMotorChannel : int, turningMotorChannel : int, absoluteEncoderChannel : int, absEncOffset : float) -> None:        #   we need to assign to them to make them function
+    
+    def __init__(self,driveMotorChannel : int, turningMotorChannel : int, absoluteEncoderChannel : int, absEncOffset : float) -> None:        #The first three parameters refer to which motor controller 
+        #   number we use. absEncOffset is the ABSOLUTEPOS_4/whatever number
+        #   we need to assign to them to make them function
         #The above portion of the method, conceptually, could be changed to hold four parameters, since the ctre CANcoder method only needs one channel
         #This means we need to go into SwerveDrivetrain.py and change the SwerveModules to hold the four parameters we cahnge the code above to.
-
-        self.driveMotor = rev.CANSparkMax(driveMotorChannel)                 #"Channel" is ID on CAN bus
+        self.driveMotor = rev.CANSparkMax(driveMotorChannel)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
         self.turningMotor = rev.CANSparkMax(turningMotorChannel)
+        self.PIDController = self.turningMotor.getPIDController()
+        self.InternalEncoder = self.turningMotor.getEncoder()
+
         time.sleep(1)
-        self.absEnc = ctre.sensors.CANCoder(absoluteEncoderChannel)
+        self.absEnc = wpilib.AnalogEncoder()
+       
 
         #self.absEnc.configMagnetOffset(absEncOffset)#we used cancoder configuration class when we were supposed to just use cancoder class remember that mistake   DO NOT UNCOMMENT!!!!!!!!!
 
@@ -61,29 +65,37 @@ class SwerveModule:                                                             
 
         #self.targetPos = 0                       #target pos is used in teleop periodic, we would set it to the joystick rotation, and set the motor pos to the target pos
 
+        #THIS WAS COMMENTED OUT SAT 1/20/2024 SINE IT'S PHOENIX CTRE AND WE REPLACED WITH REV
         #We'll need to set these up for the drive motor
-        self.turningMotor.configNominalOutputForward(0)
-        self.turningMotor.configNominalOutputReverse(0)
-        self.turningMotor.configPeakOutputForward(1)
-        self.turningMotor.configPeakOutputReverse(-1)
+        # self.turningMotor.configNominalOutputForward(0)
+        # self.turningMotor.configNominalOutputReverse(0)
+        # self.turningMotor.configPeakOutputForward(1)
+        # self.turningMotor.configPeakOutputReverse(-1)
         
-        self.driveMotor.configNominalOutputForward(0)
-        self.driveMotor.configNominalOutputReverse(0)
-        self.driveMotor.configPeakOutputForward(1)
-        self.driveMotor.configPeakOutputReverse(-1)
+        # self.driveMotor.configNominalOutputForward(0)
+        # self.driveMotor.configNominalOutputReverse(0)
+        # self.driveMotor.configPeakOutputForward(1)
+        # self.driveMotor.configPeakOutputReverse(-1)
 
-        self.turningMotor.configAllowableClosedloopError(0, self.kPIDLoopIdx)      #kind of like a dead band- the higher the value, the more deadband-- NEED THIS?
+        #THIS WAS COMMENTED OUT SAT 1/20/2024 SINE IT'S PHOENIX CTRE AND WE REPLACED WITH REV
+        # self.turningMotor.configAllowableClosedloopError(0, self.kPIDLoopIdx)      #kind of like a dead band- the higher the value, the more deadband-- NEED THIS?
 
-        self.turningMotor.selectProfileSlot(self.kSlotIdx, self.kPIDLoopIdx)       #kind of like a dead band- the higher the value, the more deadband-- NEED THIS?
-        self.turningMotor.config_kF(self.kSlotIdx, 0)              #a constant that, if we know how much to correct already, this can help us correct faster (Nascar vs. DriverPermit)
-        self.turningMotor.config_kP(self.kSlotIdx, 0.3)            #proportion of how far off the current value is from the input. DOUBLE CHECK-READ 364 INFO: WE MIGHT NEED TO ADJUST THIS
-        self.turningMotor.config_kI(self.kSlotIdx, 0)              #This takes how much error there is over time and uses it to help correct (high value = SUPERIMMEDIATECORRECT!!!
-                                                                   #... lower value = LET'S CORRECT, BUT WE'LL BE A LITTLE MORE CAUTIOUS)
-        self.turningMotor.config_kD(self.kSlotIdx, 0)              #This senses how MUCH the error is off, and helps correct based on how much the error is
-
-
+        # self.turningMotor.selectProfileSlot(self.kSlotIdx, self.kPIDLoopIdx)       #kind of like a dead band- the higher the value, the more deadband-- NEED THIS?
+        # self.turningMotor.config_kF(self.kSlotIdx, 0)              #a constant that, if we know how much to correct already, this can help us correct faster (Nascar vs. DriverPermit)
+        # self.turningMotor.config_kP(self.kSlotIdx, 0.3)            #proportion of how far off the current value is from the input. DOUBLE CHECK-READ 364 INFO: WE MIGHT NEED TO ADJUST THIS
+        # self.turningMotor.config_kI(self.kSlotIdx, 0)              #This takes how much error there is over time and uses it to help correct (high value = SUPERIMMEDIATECORRECT!!!
+        #                                                            #... lower value = LET'S CORRECT, BUT WE'LL BE A LITTLE MORE CAUTIOUS)
+        # self.turningMotor.config_kD(self.kSlotIdx, 0)              #This senses how MUCH the error is off, and helps correct based on how much the error is
+        
+        # #THIS WAS USED TO REPLACE THE ABOVE CTRE CODE FROM THE REV LIBRARY ON REV MIGRATING (NOT FORM READ THE DOCS)
+        # self.PIDController.setP(0.3)
+        # self.PIDController.setI(0)
+        # self.PIDController.setD(0)
+        # self.PIDController.setFF(0)
+        # self.PIDController.setOutputRange(-1, 1)
+        # #self.PIDController.setIZone(0)                                           #Maby add later
          
-        absolutePos = self.absEnc.getAbsolutePosition()
+        # absolutePos = self.absEnc.getAbsolutePosition()
         # print(absolutePos) # Print the value as a diagnostic.
 
         self.initPos = self.DegToTurnCount(absolutePos) #COMMENTED OUT MONDAY AFTERNOON AFTER SETTING INIT TO ZERO  '''SWAP BACK TUES AM'''
@@ -92,7 +104,7 @@ class SwerveModule:                                                             
         # self.turningMotor.setSelectedSensorPosition(self.initPos)                                                  #'''SWAP BACK TUES AM'''
         # #print(self.turningMotor.setSelectedSensorPosition(initPos))   
         
-        tempPos = self.turningMotor.getSelectedSensorPosition()                                          #SWAP BACK TUES AM'''
+        tempPos = self.InternalEncoder.getPosition()                                          #SWAP BACK TUES AM'''
         # print(tempPos)
 
         print(self.TurnCountToDeg(tempPos))
@@ -113,22 +125,22 @@ class SwerveModule:                                                             
 
 
         count = 0
-        while count < 10:
-            err_code = self.turningMotor.setSelectedSensorPosition(self.initPos)
-            time.sleep(1)
-            if err_code.value != 0:
-                print(f'Falcon {turningMotorChannel} error setting position: {err_code.value} {err_code.name}.')
-            # Get the value back.
-            tempPos = self.turningMotor.getSelectedSensorPosition()
-            if abs(self.initPos - tempPos) > self.DegToTurnCount(1):
-                print(f'Attempt {count} Falcon {turningMotorChannel} read back {self.TurnCountToDeg(tempPos)}, but we set {absolutePos}.')
-            else:
-                print (f"Falcon {turningMotorChannel} is close enough {self.TurnCountToDeg(self.initPos)}, {self.TurnCountToDeg(tempPos)}")
-                print (f"Init position: {self.TurnCountToDeg(self.initPos)} and the absolute position: {()}")
-                break
+        # while count < 10:
+        #     err_code = self.turningMotor.setSelectedSensorPosition(self.initPos)
+        #     time.sleep(1)
+        #     if err_code.value != 0:
+        #         print(f'Falcon {turningMotorChannel} error setting position: {err_code.value} {err_code.name}.')
+        #     # Get the value back.
+        #     tempPos = self.InternalEncoder.getPosition()
+        #     if abs(self.initPos - tempPos) > self.DegToTurnCount(1):
+        #         print(f'Attempt {count} Falcon {turningMotorChannel} read back {self.TurnCountToDeg(tempPos)}, but we set {absolutePos}.')
+        #     else:
+        #         print (f"Falcon {turningMotorChannel} is close enough {self.TurnCountToDeg(self.initPos)}, {self.TurnCountToDeg(tempPos)}")
+        #         print (f"Init position: {self.TurnCountToDeg(self.initPos)} and the absolute position: {()}")
+        #         break
                     
-            count += 1
-            time.sleep(0.1)
+        #     count += 1
+        #     time.sleep(0.1)
 
         
         
@@ -165,13 +177,13 @@ class SwerveModule:                                                             
         self.turnFeedForward = SimpleMotorFeedforwardMeters(1, 0.5)  # Rod: We probably want this for software PID, but the parameter values may be different.
         '''
     def getState(self) -> SwerveModuleState:
-        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.turningMotor.getSelectedSensorPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
+        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
 
     
     def getPosition(self) -> SwerveModulePosition:
         drivePos = self.driveCountToMeters(self.driveMotor.getSelectedSensorPosition())
         wpilib.SmartDashboard.putString('DB/String 4',"Pos_Degrees: {:4.2f}".format(drivePos))
-        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.turningMotor.getSelectedSensorPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
+        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
 
 
     def setDesiredState(self, desiredState: SwerveModuleState, open_loop: bool) -> None:
@@ -197,19 +209,31 @@ class SwerveModule:                                                             
         self.turningMotor.set(ControlMode.Current, turnOutput + turnFeedForward) # Rod: 
         """
 
-        present_degrees = self.TurnCountToDeg(self.turningMotor.getSelectedSensorPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
+        present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
         present_rotation = Rotation2d.fromDegrees(present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
+
         if open_loop:
-            percent_output = state.speed / self.MAX_SPEED  # TODO: define the max speed in meters/second #DONE
-            self.driveMotor.set(ControlMode.PercentOutput, percent_output)
+            percent_output = state.speed / self.MAX_SPEED
+            self.driveMotor.set(percent_output)
         else:
             velocity = self.MPSToDriveVelocity(state.speed)
-            self.driveMotor.set(ControlMode.Velocity, velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+            self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
 
         angle = self.DegToTurnCount(state.angle.degrees())
-        self.turningMotor.set(ControlMode.Position, angle)
+        self.turningMotor.setPosition(angle)
+        self.PIDController.setReference(angle, rev.ControlType.kPosition)
+
+        # if open_loop:
+        #     percent_output = state.speed / self.MAX_SPEED  # TODO: define the max speed in meters/second #DONE
+        #     self.driveMotor.set(ControlMode.PercentOutput, percent_output)
+        # else:
+        #     velocity = self.MPSToDriveVelocity(state.speed)
+        #     self.driveMotor.set(ControlMode.Velocity, velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+
+        # angle = self.DegToTurnCount(state.angle.degrees())
+        # self.turningMotor.set(ControlMode.Position, angle)
 
     # Rod: I don't think that this method is ever called, so we may not need to implement it.
     # Also, I'm not sure we want to reset the absolute encoder used for turning control.
@@ -300,3 +324,4 @@ class SwerveModule:                                                             
         #     time.sleep(0.1) # In general, using time.sleep() is not a good idea in a robot program; doing this for diagnostics only.
     def toggleDriveMotorInverted(self):
         self.driveMotor.setInverted(not self.driveMotor.getInverted())
+
