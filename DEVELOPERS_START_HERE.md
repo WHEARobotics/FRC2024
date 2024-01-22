@@ -161,38 +161,43 @@ You should have all the tools ready to begin programming!
 
 A designated person will:
 
-* Create a git branch for updates.
+1. Create a git branch for updates. 
 
-* Update robotpy by running (in the Anaconda prompt with the frc environment activated):
+2. If you know the new robotpy version number, do this step, otherwise do "3".
+   * Edit the **pyproject.toml** file in the **hello2024** project.  This file tells robotpy which version of robotpy should be on the robot, along with other libraries.  Change the line that looks like `robotpy_version = "2024.1.1"` to the version number you know.
 
-    pip install --upgrade robotpy
+3. If you don't know the new robotpy version number:
 
-* Find the new robotpy version number by executing 
+   * Update robotpy by running (in the Anaconda prompt with the frc environment activated):
+
+```pip install --upgrade robotpy```
+
+   * Find the new robotpy version number by executing 
  
-    pip list
+```pip list```
 
-and looking for a line like `robotpy 2024.1.1`
+   * and looking for a line like `robotpy 2024.1.1`
 
-* Edit the **pyproject.toml** file in the **hello2024** project.  This file tells robotpy which version of robotpy should be on the robot, along with other libraries.  Change the line that looks like `robotpy_version = "2024.1.1"` to use the same version that you see in pip list output.
+   * Edit the **pyproject.toml** file in the **hello2024** project.  This file tells robotpy which version of robotpy should be on the robot, along with other libraries.  Change the line that looks like `robotpy_version = "2024.1.1"` to use the same version that you see in pip list output.
 
-* Now we need to get the latest versions of the robotpy files that go onto the robot loaded onto the PC.  With your Anaconda prompt in the folder of the code project you edited, run
+4. Now we need to get the latest versions of the robotpy files that go onto the robot loaded onto the PC.  With your Anaconda prompt in the folder of the code project you edited, run
 
-    robotpy sync
+```robotpy sync```
 
 
-* Test deploying the code to a robot.  
-* Ideally, copy the **pyproject.toml** file to another project with more complex code than **hello2024**, and test to verify that deployed code works, too.
-* Then update the requirements file for the whole repository. With your Anaconda prompt at the root level of the repository (where the **requirements.txt** file is), execute: 
+5. Test deploying the code to a robot.  
+6. Ideally, copy the **pyproject.toml** file to another project with more complex code than **hello2024**, and test to verify that deployed code works, too.
+7. Then update the requirements file for the whole repository. With your Anaconda prompt at the root level of the repository (where the **requirements.txt** file is), execute: 
 
-    pip freeze > requirements.txt
+```pip freeze > requirements.txt```
 
-this puts the output of the `pip freeze` command into the **requirements.txt** file, replacing the old contents.
+8. This puts the output of the `pip freeze` command into the **requirements.txt** file, replacing the old contents.
 
-* Ideally, update the **pyproject.toml** files in all other projects within the repository so that they are all using the same version.
+9. Ideally, update the **pyproject.toml** files in all other projects within the repository so that they are all using the same version.
 
-* Document your changes in the **RELEASE_NOTES.md** file in the repository.
+10. Document your changes in the **RELEASE_NOTES.md** file in the repository.
 
-* Make a commit, push the updated files to GitHub, and merge your branch into the **main** branch.  
+11. Make a commit, push the updated files to GitHub, and merge your branch into the **main** branch.  
 
 ## Updating the rest of the computers
 
