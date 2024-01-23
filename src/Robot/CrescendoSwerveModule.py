@@ -113,7 +113,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # Does this constant mean we're using radians?                              #A: 2/3/2023- YES!!  Let's do it!!!
         self.MODULE_MAX_ANGULAR_ACCELERATION = 2 * math.pi
 
-        self.MAX_SPEED = 3     #6380 rpm * (4in * 0.0254 * 3.14) / 6.75 / 60 = 5.02 METERS PER SECOND unweighted
+        self.MAX_SPEED = 1    #6380 rpm * (4in * 0.0254 * 3.14) / 6.75 / 60 = 5.02 METERS PER SECOND unweighted
         
         # Get CANCoder position
         absolutePos = self.absEnc.getAbsolutePosition()
@@ -213,16 +213,16 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         present_rotation = Rotation2d.fromDegrees(present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
-
+        
         if open_loop:
-            percent_output = state.speed / self.MAX_SPEED
-            self.driveMotor.set(percent_output)
-        else:
-            velocity = self.MPSToDriveVelocity(state.speed)
-            self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+             percent_output = state.speed / self.MAX_SPEED
+             self.driveMotor.set(percent_output)
+        # else:
+        #      velocity = self.MPSToDriveVelocity(state.speed)
+        #      self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
 
         angle = self.DegToTurnCount(state.angle.degrees())
-        self.turningMotor.setPosition(angle)
+       # self.turningMotor.setPosition(angle)
         self.PIDController.setReference(angle, rev.ControlType.kPosition)
 
         # if open_loop:
