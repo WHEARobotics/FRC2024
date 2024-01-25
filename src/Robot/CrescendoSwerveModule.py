@@ -45,13 +45,14 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         #   we need to assign to them to make them function
         #The above portion of the method, conceptually, could be changed to hold four parameters, since the ctre CANcoder method only needs one channel
         #This means we need to go into SwerveDrivetrain.py and change the SwerveModules to hold the four parameters we cahnge the code above to.
-        self.driveMotor = rev.CANSparkMax(driveMotorChannel)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
-        self.turningMotor = rev.CANSparkMax(turningMotorChannel)
+        self.turningMotor = rev.CANSparkMax(turningMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
+        
         self.PIDController = self.turningMotor.getPIDController()
         self.InternalEncoder = self.turningMotor.getEncoder()
 
         time.sleep(1)
-        self.absEnc = wpilib.AnalogEncoder()
+        self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
        
 
         #self.absEnc.configMagnetOffset(absEncOffset)#we used cancoder configuration class when we were supposed to just use cancoder class remember that mistake   DO NOT UNCOMMENT!!!!!!!!!
@@ -98,7 +99,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # absolutePos = self.absEnc.getAbsolutePosition()
         # print(absolutePos) # Print the value as a diagnostic.
 
-        self.initPos = self.DegToTurnCount(absolutePos) #COMMENTED OUT MONDAY AFTERNOON AFTER SETTING INIT TO ZERO  '''SWAP BACK TUES AM'''
+        # self.initPos = self.DegToTurnCount(absolutePos) #COMMENTED OUT MONDAY AFTERNOON AFTER SETTING INIT TO ZERO  '''SWAP BACK TUES AM'''
         # # print(initPos)
 
         # self.turningMotor.setSelectedSensorPosition(self.initPos)                                                  #'''SWAP BACK TUES AM'''
@@ -116,8 +117,8 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.MAX_SPEED = 1    #6380 rpm * (4in * 0.0254 * 3.14) / 6.75 / 60 = 5.02 METERS PER SECOND unweighted
         
         # Get CANCoder position
-        absolutePos = self.absEnc.getAbsolutePosition()
-        print(f'absolute {absoluteEncoderChannel}: {absolutePos:.1f}') # The ":.1f" tells it to print only one digit after the decimal.
+        # absolutePos = self.absEnc.getAbsolutePosition()
+        # print(f'absolute {absoluteEncoderChannel}: {absolutePos:.1f}') # The ":.1f" tells it to print only one digit after the decimal.
 
         # Try to set the Falcon, either to zero or to the absolute position.
         # initPos = 0                                                 
@@ -259,6 +260,12 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
     def MPSToDriveVelocity(self, x):
         pass
+
+    def joystickscaling(input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
+        a = 1
+        output = a * input * input * input + (1 - a) * input
+        return output
+
 
     def optimize(self, desired_state: SwerveModuleState, current_angle: Rotation2d) -> SwerveModuleState:
         '''Our own optimize method (instead of SwerveModuleState.optimize())
