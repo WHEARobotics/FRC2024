@@ -21,16 +21,13 @@ class CrescendoSwerveDrivetrain:
     MAX_SPEED = 3.0
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
+    # UPDATE NUMBERS
     ABSOLUTEPOS_3 = 326.1   # Back Right
     ABSOLUTEPOS_4 = 253.2 #-278.788 #106.424  # Front Right
     ABSOLUTEPOS_2 = 152.9  # Back Left
     ABSOLUTEPOS_1 = 326.1  # Front Left
     
 
-        # Magic number copied from Java example
-        # Change these to depend on our wheelbase and track width, like the stuff near the end of __init__().
-
-        ### IMPORTANT!!!!! HALF_WHEEL_BASE and HALF
     def __init__(self):
 
         wheel_base = 26.875 * 0.0254
@@ -38,17 +35,12 @@ class CrescendoSwerveDrivetrain:
         half_wheel_base = wheel_base / 2
         half_track_width = track_width / 2#2_#TRACK_WIDTH MIGHT NEED TO BE SWICHED ARROUND, BUT THE POSITIVE/NEGATIVE SIGNS ARE IN THE RIGHT LOCATION.
 
-        #self.frontLeftLocation = Translation2d(half_track_width, half_wheel_base)
-        #self.frontRightLocation = Translation2d(half_track_width, -half_wheel_base)
-        #self.backLeftLocation = Translation2d(-half_track_width, half_wheel_base)
-        #self.backRightLocation = Translation2d(-half_track_width, -half_wheel_base)
-
         self.frontLeftLocation = Translation2d(half_wheel_base, half_track_width)
         # self.frontRightLocation = Translation2d(half_wheel_base, -half_track_width)
         # self.backLeftLocation = Translation2d(-half_wheel_base, half_track_width)
         # self.backRightLocation = Translation2d(-half_wheel_base, -half_track_width)
 
-        #2024- CHANGE ALL THEES TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
+        #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
         # self.backLeft = CrescendoSwerveModule(6, 7, 2, self.ABSOLUTEPOS_2)
     
         # self.frontRight = CrescendoSwerveModule(1, 10, 4, self.ABSOLUTEPOS_4)  #OG offset was 106.424  
@@ -96,6 +88,7 @@ class CrescendoSwerveDrivetrain:
         # They are probably meters, but the thing I don't understand is why they are different than the self.frontLeftLocation, etc. above.
         # I suggest changing them to be the above --Rod
 
+        # UPDATE
         self.module_positions = [
             # Front left
             self.frontLeftLocation,
@@ -106,18 +99,7 @@ class CrescendoSwerveDrivetrain:
             # # Back right
             # self.backRightLocation
         ]
-        """
-        self.module_positions = [
-            # Front left
-            Translation2d(half_wheel_base, half_track_width),
-            # Front right
-            Translation2d(half_wheel_base, -half_track_width),
-            # Back left
-            Translation2d(-half_wheel_base, half_track_width),
-            # Back right
-            Translation2d(-half_wheel_base, -half_track_width)
-        ]
-        """
+
         # The current pose for each swerve module
         # These values are updated in `periodic()`
         self.module_poses = [
