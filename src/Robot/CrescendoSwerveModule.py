@@ -2,6 +2,7 @@
 import wpilib
 import wpimath
 import rev
+from rev import CANSparkLowLevel
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, SwerveModulePosition, SwerveModuleState, ChassisSpeeds
 from wpimath.controller import PIDController, ProfiledPIDController
 from wpimath.controller import SimpleMotorFeedforwardMeters
@@ -60,8 +61,8 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.driveMotor.setInverted(False) #set inverted to true
         self.turningMotor.setInverted(True)
 
-        self.driveMotor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        self.turningMotor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.driveMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.turningMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
 
 
         #self.targetPos = 0                       #target pos is used in teleop periodic, we would set it to the joystick rotation, and set the motor pos to the target pos
@@ -209,22 +210,28 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.driveMotor.set(ControlMode.Current, driveOutput + driveFeedForward) # Rod: Replace with setting ctre.rev.CANSparkMaxControlMode.Velocity and the target velocity for the internal PID.
         self.turningMotor.set(ControlMode.Current, turnOutput + turnFeedForward) # Rod: 
         """
-
-        present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
+        present_degrees = self.InternalEncoder.getPosition() / (150.0/7.0)
+        # present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
         present_rotation = Rotation2d.fromDegrees(present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
-        
-        if open_loop:
-             percent_output = state.speed / self.MAX_SPEED
-             self.driveMotor.set(percent_output)
-        # else:
-        #      velocity = self.MPSToDriveVelocity(state.speed)
-        #      self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+        percent_output = state.speed / self.MAX_SPEED
+        self.driveMotor.set(0.0)
+        percent_output = state.speed / self.MAX_SPEED
+        self.turningMotor.set(0.0)
 
-        angle = self.DegToTurnCount(state.angle.degrees())
-       # self.turningMotor.setPosition(angle)
-        self.PIDController.setReference(angle, rev.ControlType.kPosition)
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(present_degrees))
+        
+    #     if open_loop:
+    #          percent_output = state.speed / self.MAX_SPEED
+    #          self.driveMotor.set(percent_output)
+    #     # else:
+    #     #      velocity = self.MPSToDriveVelocity(state.speed)
+    #     #      self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+
+    #     angle = self.DegToTurnCount(state.angle.degrees())
+    #    # self.turningMotor.setPosition(angle)
+    #     self.PIDController.setReference(angle, CANSparkLowLevel.ControlType.kPosition)
 
         # if open_loop:
         #     percent_output = state.speed / self.MAX_SPEED  # TODO: define the max speed in meters/second #DONE
@@ -261,6 +268,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
     def MPSToDriveVelocity(self, x):
         pass
 
+        #Added Jan 26 2024, Line 266 to 269 from utilities
     def joystickscaling(input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
         a = 1
         output = a * input * input * input + (1 - a) * input
