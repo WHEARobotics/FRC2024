@@ -6,6 +6,7 @@ from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d, Translation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 import time
+import math
 
 from vision import Vision #Vision file import
 # from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
@@ -50,15 +51,15 @@ class Myrobot(wpilib.TimedRobot):
         
         # allow joystick to be off from center without giving input
 
-        # self.joystick_x = -self.xbox.getLeftX()
-        # self.joystick_y = -self.xbox.getLeftY()
-        # self.joystick_x = applyDeadband(self.joystick_x , 0.1)
-        # self.joystick_y = applyDeadband(self.joystick_y , 0.1)
+        self.joystick_x = -self.xbox.getLeftX()
+        self.joystick_y = -self.xbox.getLeftY()
+        self.joystick_x = applyDeadband(self.joystick_x , 0.1)
+        self.joystick_y = applyDeadband(self.joystick_y , 0.1)
 
-        # rot = -self.xbox.getRightX()
-        # rot = applyDeadband(rot, 0.05) 
+        rot = -self.xbox.getRightX()
+        rot = applyDeadband(rot, 0.05) 
         
-
+        self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
 
         #1/22/2024 commented out whats below for more simplification, we dont need joystickscaling maxspeed etc.
 
@@ -77,9 +78,12 @@ class Myrobot(wpilib.TimedRobot):
 
         # self.swerve.drive(xSpeed, ySpeed, rot, fieldRelativeParam)
 
-        self.angle = Rotation2d(self.xbox.getLeftX(), self.xbox.getLeftY())
-        self.state = SwerveModuleState(0.1, self.angle)
+        self.angle = Rotation2d(self.joystick_x, self.joystick_y)
+        self.state = SwerveModuleState(self.magnitude, self.angle)
         self.frontLeft.setDesiredState(self.state, True)
+        wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))
+
     def teleopExit(self):
         pass
     

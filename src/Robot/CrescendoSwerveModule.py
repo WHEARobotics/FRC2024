@@ -23,8 +23,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
     
     WHEELDIAMETER = 4 * 0.0254 #4 inch diameter for the wheel times the conversion to meters
     TURNING_GEAR_RATIO = 150.0/7.0 # Docs call it a 150/7:1
-    DRIVE_GEAR_RATIO = 6.75
-
+    DRIVE_GEAR_RATIO = 6.75 
     #turn angle invert: yes
     #drive invert: no
 
@@ -39,20 +38,20 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
        
 
-        self.driveMotor.setInverted(False) #set inverted to true
-        self.turningMotor.setInverted(True)
+        self.driveMotor.setInverted(False) 
+        self.turningMotor.setInverted(True) #Positive comand resoluts in couterclockwise turning
 
         self.driveMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.turningMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
 
 
-        # #THIS WAS USED TO REPLACE THE ABOVE CTRE CODE FROM THE REV LIBRARY ON REV MIGRATING (NOT FORM READ THE DOCS)
-        # self.PIDController.setP(0.3)
-        # self.PIDController.setI(0)
-        # self.PIDController.setD(0)
-        # self.PIDController.setFF(0)
-        # self.PIDController.setOutputRange(-1, 1)
-        # #self.PIDController.setIZone(0)                                           #Maybe add later
+        #THIS WAS USED TO REPLACE THE ABOVE CTRE CODE FROM THE REV LIBRARY ON REV MIGRATING (NOT FORM READ THE DOCS)
+        self.PIDController.setP(0.3)
+        self.PIDController.setI(0)
+        self.PIDController.setD(0)
+        self.PIDController.setFF(0)
+        self.PIDController.setOutputRange(-1, 1)
+        # self.PIDController.setIZone(0)                                           #Maybe add later
          
         # absolutePos = self.absEnc.getAbsolutePosition()
         # print(absolutePos) # Print the value as a diagnostic.
@@ -83,7 +82,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
     
     def getPosition(self) -> SwerveModulePosition:
-        drivePos = self.driveCountToMeters(self.driveMotor.getSelectedSensorPosition())
+        drivePos = self.driveCountToMeters(self.driveMotor.getPosition())
         wpilib.SmartDashboard.putString('DB/String 4',"Pos_Degrees: {:4.2f}".format(drivePos))
         return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
 
@@ -92,29 +91,27 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         '''This method is does all the work.  Pass it a desired SwerveModuleState (that is, wheel rim velocity and
         turning direction), and it sets the feedback loops to achieve that.'''
 
-        present_degrees = self.InternalEncoder.getPosition() / (150.0/7.0)
-        # present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
-        present_rotation = Rotation2d.fromDegrees(present_degrees)
+        self.present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
+        present_rotation = Rotation2d.fromDegrees(self.present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
-        percent_output = state.speed / self.MAX_SPEED
-        self.driveMotor.set(0.0)
-        percent_output = state.speed / self.MAX_SPEED
-        self.turningMotor.set(0.0)
-
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(present_degrees))
+        # percent_output = state.speed / self.MAX_SPEED
+        # self.driveMotor.set(0.0)
+        # percent_output = state.speed / self.MAX_SPEED
+        # self.turningMotor.set(0.0) #Counter Clockwise when inverted
         
-    #     if open_loop:
-    #          percent_output = state.speed / self.MAX_SPEED
-    #          self.driveMotor.set(percent_output)
-    #     # else:
-    #     #      velocity = self.MPSToDriveVelocity(state.speed)
-    #     #      self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
+        if open_loop:
+             percent_output = state.speed / self.MAX_SPEED
+             self.driveMotor.set(percent_output)
+        # else:
+        #      velocity = self.MPSToDriveVelocity(state.speed)
+        #      self.driveMotor.setVelocity(velocity, DemandType.ArbitraryFeedForward, self.driveFeedForward.calculate(state.speed))
 
-    #     angle = self.DegToTurnCount(state.angle.degrees())
-    #    # self.turningMotor.setPosition(angle)
-    #     self.PIDController.setReference(angle, CANSparkLowLevel.ControlType.kPosition)
+        angle = self.DegToTurnCount(state.angle.degrees())
 
+        self.PIDController.setReference(angle, CANSparkLowLevel.ControlType.kPosition)
+       # self.turningMotor.setPosition(angle)
+        
         # if open_loop:
         #     percent_output = state.speed / self.MAX_SPEED  # TODO: define the max speed in meters/second #DONE
         #     self.driveMotor.set(ControlMode.PercentOutput, percent_output)
@@ -132,20 +129,20 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.turningEncoder.reset()
     
     def DegToTurnCount(self, deg):
-        return deg * (2048/360) * self.TURNING_GEAR_RATIO #150/7 : 1
+        return deg * (1.0/360.0) * self.TURNING_GEAR_RATIO #150/7 : 1
     
     def TurnCountToDeg(self, count):
-        return count * (360/2048) / self.TURNING_GEAR_RATIO
+        return count * 360.0 / self.TURNING_GEAR_RATIO
     
     def driveCountToMeters(self, x):
-        output = (x / 2048) * (self.WHEELDIAMETER * math.pi) / self.DRIVE_GEAR_RATIO #6.75 : 1
+        output = (x) * (self.WHEELDIAMETER * math.pi) / self.DRIVE_GEAR_RATIO #6.75 : 1
         return output
     
     def metersToDriveCount(self, x):
-        return (2048/x) / (self.WHEELDIAMETER * math.pi) * self.DRIVE_GEAR_RATIO
+        return (x / 1) / (self.WHEELDIAMETER * math.pi) * self.DRIVE_GEAR_RATIO
     
     def driveVelocitytToMPS(self, x):
-        return self.driveCountToMeters(x * 10)     #.getSelectedSensorVelocity measures counts per 1/10 of a second, rather than per second
+        return self.driveCountToMeters(x / 60)     #.getSelectedSensorVelocity measures counts per 1/10 of a second, rather than per second
 
     def MPSToDriveVelocity(self, x):
         pass
