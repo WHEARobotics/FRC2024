@@ -80,6 +80,7 @@ class SimBridge(QWidget):
 
 
 class MyXboxController:
+    JOYSTICK_DEADBAND = 0.1 # Might want to change this? Especially for the triggers
     def __init__(self, status_callback):
         # Thumbsticks are said to be one joystick with 4 axes, which is a curious decision
         assert pygame.joystick.get_count() ==1
@@ -88,18 +89,38 @@ class MyXboxController:
         axes_count = self.joystick.get_numaxes()
         assert axes_count == 6
 
-
         self.status_callback = status_callback
         status_callback("Gamepad connected")
+
+    def on_joystick_moved(self, event):
+        # Triggers are axis 5 & 6, but that should route to on_trigger_moved
+        assert event.axis < 4
+        # Apply deadband
+        if abs(event.value) > self.JOYSTICK_DEADBAND:
+            axis_names = ["LX", "LY", "RX", "RY"]
+            axis_name = axis_names[event.axis]
+            self.status_callback(f"Gamepad {axis_name} moved to {event.value}")
+        else:
+            # Take no action
+            pass
+
+    # Triggers are read by pygame as axis 4 and 5
+    # Their value is -1 to 1, with resting position being -1 (!)
+    def on_trigger_moved(self, event):
+        assert event.axis >= 4
+
+        trigger_name = ['_','_','_','_','LT','RT']
+        axis_name = trigger_name[event.axis]
+        self.status_callback(f"Gamepad {trigger_name} moved to {event.value}")
 
     def on_game_loop(self):
         for event in pygame.event.get():
             if event.type == pygame.JOYAXISMOTION:
-                # Apply deadband
-                if event.value < 0.1:
-                    event.value = 0
+                # The triggers are axis 4 and 5, and they are -1 to 1
+                if event.axis == 4 or event.axis == 5:
+                    self.on_trigger_moved(event)
                 else:
-                    self.status_callback(f"Gamepad moved: axis {event.axis} value {event.value}")
+                    self.on_joystick_moved(event)
             elif event.type == pygame.JOYBUTTONDOWN:
                 self.status_callback(f"Gamepad button {event.button} pressed")
             elif event.type == pygame.JOYBUTTONUP:
