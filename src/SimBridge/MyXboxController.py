@@ -31,20 +31,24 @@ class MyXboxController:
     def on_joystick_moved(self, event : pygame.event.Event) -> None:
         # Triggers are axis 5 & 6, but that should route to on_trigger_moved
         assert event.axis < 4
-        # Apply deadband
-        if abs(event.value) > self.JOYSTICK_DEADBAND:
-            axis_names = ["LX", "LY", "RX", "RY"]
-            axis_name = axis_names[event.axis]
-            self.status_callback(f"Gamepad {axis_name} moved to {event.value}")
-            if axis_name == "LX":
-                self.controller_state.left_x = event.value
-            elif axis_name == "LY":
-                self.controller_state.left_y = event.value
-            elif axis_name == "RX":
-                self.controller_state.right_x = event.value
-        else:
-            # Take no action
-            pass
+        axis_names = ["LX", "LY", "RX", "RY"]
+        axis_name = axis_names[event.axis]
+        self.status_callback(f"Gamepad {axis_name} moved to {event.value}")
+        if axis_name == "LX":
+            self.controller_state.left_x = event.value
+        elif axis_name == "LY":
+            self.controller_state.left_y = event.value
+        elif axis_name == "RX":
+            self.controller_state.right_x = event.value
+        elif axis_name == "RY":
+            self.controller_state.right_y = event.value
+
+        # Apply deadband on all axes
+        self.controller_state.left_x = 0 if abs(self.controller_state.left_x) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.left_x
+        self.controller_state.left_y = 0 if abs(self.controller_state.left_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.left_y
+        self.controller_state.right_x = 0 if abs(self.controller_state.right_x) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_x
+        self.controller_state.right_y = 0 if abs(self.controller_state.right_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_y
+
 
     # Triggers are read by pygame as axis 4 and 5
     # Their value is -1 to 1, with resting position being -1 (!)
