@@ -2,7 +2,9 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer
 import ntcore
+from networktables import NetworkTables
 import pygame
+
 
 class SimBridge(QWidget):
     def __init__(self, game_loop_target_ms=20):
@@ -81,13 +83,15 @@ class SimBridge(QWidget):
 
 class MyXboxController:
     JOYSTICK_DEADBAND = 0.1 # Might want to change this? Especially for the triggers
-    def __init__(self, status_callback):
+    def __init__(self, status_callback, mock_limelight):
         # Thumbsticks are said to be one joystick with 4 axes, which is a curious decision
         assert pygame.joystick.get_count() ==1
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
         axes_count = self.joystick.get_numaxes()
         assert axes_count == 6
+
+        self.limelight = mock_limelight
 
         self.status_callback = status_callback
         status_callback("Gamepad connected")
@@ -127,19 +131,30 @@ class MyXboxController:
                 self.status_callback(f"Gamepad button {event.button} released")
             elif event.type == pygame.JOYHATMOTION:
                 self.status_callback(f"Gamepad hat {event.hat} value {event.value}")
+                self.limelight.set_robot_position(1, 2, 3, 4)
             elif event.type == pygame.JOYBALLMOTION:
                 self.status_callback("Gamepad ball {event.ball} value {event.rel}")
             else:
                 self.status_callback(f"Gamepad event {event.type}")
 
+class MockLimelight:
+    def __init__(self, status_callback):
+        # The NT server is the `robotpy sim` process, which should be running prior to running this program
+        NetworkTables.initialize(server='localhost')
+        self.limelight_table = NetworkTables.getTable("limelight")
+
+    def set_robot_position(self, x, y, z, rotation):
+        self.limelight_table.putNumberArray("robot_position_initial", [x, y, z, rotation])
+        
 
 def main():
     app = QApplication(sys.argv)
 
+
     # The main window is just a big rectangle
     window = SimBridge()
-
-    controller = MyXboxController(window.set_quick_label)
+    mock_limelight = MockLimelight(window.set_quick_label)
+    controller = MyXboxController(window.set_quick_label, mock_limelight)
     window.subscribe_to_game_loop(controller)
     window.set_quick_label("Gamepad connected")
 
