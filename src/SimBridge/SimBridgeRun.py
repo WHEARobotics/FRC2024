@@ -1,10 +1,10 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from src.SimBridge.MockLimelight import MockLimelight
-from src.SimBridge.MyXboxController import MyXboxController
-from src.SimBridge.SimBridge import SimBridge
-from src.SimBridge.XrcDirectoryShim import XrcDirectoryShim
+from MockLimelight import MockLimelight
+from MyXboxController import MyXboxController
+from SimBridge import SimBridge
+from XrcDirectoryShim import XrcDirectoryShim
 
 
 def main():

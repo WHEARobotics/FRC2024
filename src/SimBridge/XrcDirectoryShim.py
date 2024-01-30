@@ -3,9 +3,9 @@ import os
 
 from PyQt5.QtCore import QTimer
 
-from src.SimBridge.GameControllerState import GameControllerState
-from src.SimBridge.MockLimelight import MockLimelight
-from src.SimBridge.MyXboxController import MyXboxController
+from GameControllerState import GameControllerState
+from MockLimelight import MockLimelight
+from MyXboxController import MyXboxController
 
 
 class XrcDirectoryShim:
@@ -49,8 +49,13 @@ class XrcDirectoryShim:
             robot = json_data["myrobot"]
             position_data = robot[1]["global pos"]
             rotation_data = robot[1]["global rot"]
+
+            y, z, x = position_data
+            pitch, yaw, roll = rotation_data
+
+            yaw += 90
             # TODO: I know this is almost certainly wrong in terms of ordering.
-            self.limelight.set_robot_position(position_data[0], position_data[1], position_data[2], rotation_data[0], rotation_data[1], rotation_data[2])
+            self.limelight.set_robot_position(x, y, z, roll, yaw, pitch)
 
     def write_control_state(self) -> None:
         control_string = self.current_control_state.to_xrc_control_strings()

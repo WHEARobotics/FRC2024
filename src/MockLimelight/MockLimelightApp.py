@@ -1,8 +1,9 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSlider, QWidget, QVBoxLayout, QRadioButton, QLabel, QHBoxLayout
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtGui import QPainter, QColor, QPen
+from networktables import NetworkTables
 
 
 class RobotWidget(QWidget):
@@ -11,7 +12,7 @@ class RobotWidget(QWidget):
         # Update with real frame+bumper size
         self.robot_edge_px = int(76 / 100 * pixels_per_meter)  # 76cm
         self.field_pos = (0, 0)
-        self.origin_offset_x = 0
+        self.origin_offset_x = 9 * pixels_per_meter
         # Running on a widget that's 8m tall, with origin halfway down
         # It's not negative because widget coordinates are in "typewriter" space (0,0) is top left, down is +y
         self.origin_offset_y = 4 * pixels_per_meter
@@ -58,7 +59,7 @@ class RobotWidget(QWidget):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, nt_server_ip : str = 'localhost'):
         super().__init__()
 
         # Set up the main layout
@@ -73,6 +74,18 @@ class MainWindow(QMainWindow):
 
         # Set window size to 1024x768
         self.resize(1024, 800)
+
+        # Attach to NetworkTables
+        # The NT server is the `robotpy sim` process, which should be running prior to running this program
+        NetworkTables.initialize(server= nt_server_ip)
+        self.limelight_table = NetworkTables.getTable("limelight")
+        # Read it every 30ms
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.get_robot_position_from_limelight_network_tables)
+        self.timer.start(30)
+
+        self.subscribers = []
+        self.subscribe(self.robot)
 
     def _build_control_panel(self):
         # Create a panel on the right-hand side
@@ -118,9 +131,9 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _build_field():
         # Background SVG
-        svg_widget = QSvgWidget('./field_right.svg')
+        svg_widget = QSvgWidget('./field_whole.svg')
         widget_width = 800  # pixels
-        field_size_x = 9  # meters
+        field_size_x = 18  # meters
         field_size_y = 8
         pixels_per_meter = int(widget_width / field_size_x)  # 1px == 1cm
         svg_widget.setFixedSize(field_size_x * pixels_per_meter, field_size_y * pixels_per_meter)
@@ -136,13 +149,29 @@ class MainWindow(QMainWindow):
         return svg_widget, robot
 
     def update_robot_pos(self):
-        field_x = self.field_x_slider.value() / 100
-        field_y = self.field_y_slider.value() / 100
-        field_rotation = self.field_rotation_slider.value()
-        self.robot.update_position(field_x, field_y, field_rotation)
+        pass
+        # field_x = self.field_x_slider.value() / 100
+        # field_y = self.field_y_slider.value() / 100
+        # field_rotation = self.field_rotation_slider.value()
+        # self.robot.update_position(field_x, field_y, field_rotation)
+
+    def get_robot_position_from_limelight_network_tables(self):
+        botpose = self.limelight_table.getNumberArray("botpose", [0, 0, 0, 0, 0, 0])
+        x, y, z, roll, pitch, yaw = botpose
+        self.robot.update_position(x, y, pitch)
+
+    def subscribe(self, subscriber):
+        self.subscribers.append(subscriber)
+
+    def unsubscribe(self, subscriber):
+        self.subscribers.remove(subscriber)
+
+    def update(self):
+        for subscriber in self.subscribers:
+            subscriber.update(self)
 
 
 app = QApplication(sys.argv)
-window = MainWindow()
+window = MainWindow(nt_server_ip='localhost')
 window.show()
 sys.exit(app.exec_())

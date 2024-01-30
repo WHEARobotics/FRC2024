@@ -2,8 +2,8 @@ from typing import Callable
 
 import pygame
 
-from src.SimBridge.GameControllerState import GameControllerState
-from src.SimBridge.MockLimelight import MockLimelight
+from GameControllerState import GameControllerState
+from MockLimelight import MockLimelight
 
 
 class MyXboxController:
@@ -80,7 +80,6 @@ class MyXboxController:
                 self.status_callback(f"Gamepad button {event.button} released")
             elif event.type == pygame.JOYHATMOTION:
                 self.status_callback(f"Gamepad hat {event.hat} value {event.value}")
-                self.limelight.set_robot_position(1, 2, 3, 4)
             elif event.type == pygame.JOYBALLMOTION:
                 self.status_callback("Gamepad ball {event.ball} value {event.rel}")
             else:
