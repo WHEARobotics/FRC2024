@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import math
 
 @dataclass
 class GameControllerState:
@@ -46,3 +46,44 @@ class GameControllerState:
         control_string += f"trigger_r= {self.trigger_r:.3f}\n"
 
         return control_string
+
+    def swerve_controls_to_tank_controls(self, robot_rotation_positive_degrees : float) -> 'GameControllerState':
+        """
+        Convert swerve controls to tank controls. Swerve controls are field-relative, and tank controls are robot-relative.
+        """
+        # Clone current state
+        tank_control = GameControllerState(
+            a=self.a,
+            b=self.b,
+            x=self.x,
+            y=self.y,
+            dpad_down=self.dpad_down,
+            dpad_up=self.dpad_up,
+            dpad_left=self.dpad_left,
+            dpad_right=self.dpad_right,
+            bumper_l=self.bumper_l,
+            bumper_r=self.bumper_r,
+            stop=self.stop,
+            restart=self.restart,
+            right_y=self.right_y,
+            right_x=self.right_x,
+            left_y=self.left_y,
+            left_x=self.left_x,
+            trigger_l=self.trigger_l,
+            trigger_r=self.trigger_r
+        )
+
+        # Convert robot rotation to radians
+        robot_rotation = -(robot_rotation_positive_degrees % 360) * math.pi / 180
+
+        # Calculating the rotated coordinates
+        rotated_x = tank_control.left_x * math.cos(robot_rotation) - tank_control.left_y * math.sin(robot_rotation)
+        rotated_y = tank_control.left_x * math.sin(robot_rotation) + tank_control.left_y * math.cos(robot_rotation)
+
+        # In field space, the y axis is "sideways" and inverted (note: field space Y is controller space X joystick
+        #rotated_x = -rotated_x
+
+        tank_control.left_x = rotated_x
+        tank_control.left_y = rotated_y
+
+        return tank_control

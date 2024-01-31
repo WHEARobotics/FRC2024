@@ -50,15 +50,16 @@ class XrcDirectoryShim:
             position_data = robot[1]["global pos"]
             rotation_data = robot[1]["global rot"]
 
+            # I _think_ this is the correct ordering
             y, z, x = position_data
             pitch, yaw, roll = rotation_data
 
             yaw += 90
-            # TODO: I know this is almost certainly wrong in terms of ordering.
             self.limelight.set_robot_position(x, y, z, roll, yaw, pitch)
 
     def write_control_state(self) -> None:
-        control_string = self.current_control_state.to_xrc_control_strings()
+        swerve_control_state = self.current_control_state.swerve_controls_to_tank_controls(self.limelight.get_botpose()[4])
+        control_string = swerve_control_state.to_xrc_control_strings()
         try:
             f = open(self.myrobot_control_file_fname, "w")
             f.write(control_string)

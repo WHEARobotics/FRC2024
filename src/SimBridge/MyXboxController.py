@@ -49,6 +49,33 @@ class MyXboxController:
         self.controller_state.right_x = 0 if abs(self.controller_state.right_x) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_x
         self.controller_state.right_y = 0 if abs(self.controller_state.right_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_y
 
+        # Damp the joystick values
+        self.controller_state.right_x = self.controller_state.right_x * 0.5
+        self.controller_state.right_y = self.controller_state.right_y * 0.5
+    def on_button_pressed(self, event : pygame.event.Event, button_down : bool) -> None:
+        self.controller_state.a = button_down
+        buttons = ["A", "B", "X", "Y", "LB", "RB", "BACK", "START", "LS", "RS"]
+        button_name = buttons[event.button]
+        if button_name == "A":
+            self.controller_state.a = button_down
+        elif button_name == "B":
+            self.controller_state.b = button_down
+        elif button_name == "X":
+            self.controller_state.x = button_down
+        elif button_name == "Y":
+            self.controller_state.y = button_down
+        elif button_name == "LB":
+            self.controller_state.bumper_l = button_down
+        elif button_name == "RB":
+            self.controller_state.bumper_r = button_down
+        elif button_name == "BACK":
+            self.controller_state.restart = button_down
+        elif button_name == "START":
+            self.controller_state.stop = button_down
+        elif button_name == "LS":
+            self.controller_state.dpad_down = button_down
+        elif button_name == "RS":
+            self.controller_state.dpad_up = button_down
 
     # Triggers are read by pygame as axis 4 and 5
     # Their value is -1 to 1, with resting position being -1 (!)
@@ -65,6 +92,7 @@ class MyXboxController:
             self.controller_state.trigger_r = event.value
 
 
+
     def on_game_loop(self) -> None:
         # Handle the events (set the state)
         for event in pygame.event.get():
@@ -76,8 +104,10 @@ class MyXboxController:
                     self.on_joystick_moved(event)
             elif event.type == pygame.JOYBUTTONDOWN:
                 self.status_callback(f"Gamepad button {event.button} pressed")
+                self.on_button_pressed(event, True)
             elif event.type == pygame.JOYBUTTONUP:
                 self.status_callback(f"Gamepad button {event.button} released")
+                self.on_button_pressed(event, False)
             elif event.type == pygame.JOYHATMOTION:
                 self.status_callback(f"Gamepad hat {event.hat} value {event.value}")
             elif event.type == pygame.JOYBALLMOTION:
