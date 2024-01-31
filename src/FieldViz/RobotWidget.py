@@ -15,6 +15,7 @@ class RobotWidget(QWidget):
         self.origin_offset_y = 4 * pixels_per_meter
         self.pixels_per_meter = pixels_per_meter
         self.field_rotation = 0
+        self.setFixedSize(1600,1600)
 
     # Called by Qt when the widget needs to be redrawn (e.g. when it's first shown, or when update() is called)
     def paintEvent(self, event):

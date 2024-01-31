@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSlider, QWidget, QVBoxLa
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSvg import QSvgWidget
 from networktables import NetworkTables
+import math
 
 from RobotWidget import RobotWidget
 
@@ -14,12 +15,12 @@ class MainWindow(QMainWindow):
         # Set up the main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QHBoxLayout(central_widget)
+        layout = QVBoxLayout(central_widget)
 
-        self.field, self.robot = self._build_field()
-        layout.addWidget(self.field)
         self.control_panel = self._build_control_panel()
         layout.addWidget(self.control_panel)
+        self.field, self.robot = self._build_field()
+        layout.addWidget(self.field)
 
         # Set window size to 1024x768
         self.resize(1024, 800)
@@ -37,42 +38,19 @@ class MainWindow(QMainWindow):
         self.subscribe(self.robot)
 
     def _build_control_panel(self):
-        # Create a panel on the right-hand side
+        # Create a panel for other controls
         control_panel = QWidget()
         control_panel_layout = QVBoxLayout(control_panel)
 
-        # Sliders
-        self.field_x_slider = QSlider(Qt.Horizontal)
-        self.field_x_slider.setMinimum(0)
-        self.field_x_slider.setMaximum(800)
-        self.field_x_slider.valueChanged.connect(self.update_robot_pos)
-        control_panel_layout.addWidget(self.field_x_slider)
-        self.field_y_slider = QSlider(Qt.Horizontal)
-        self.field_y_slider.setMinimum(-400)
-        self.field_y_slider.setMaximum(400)
-        self.field_y_slider.setValue(0)
-        self.field_y_slider.valueChanged.connect(self.update_robot_pos)
-        control_panel_layout.addWidget(self.field_y_slider)
-
-        self.field_rotation_slider = QSlider(Qt.Horizontal)
-        self.field_rotation_slider.setMaximum(-180)
-        self.field_rotation_slider.setMaximum(180)
-        self.field_rotation_slider.setValue(0)
-        self.field_rotation_slider.valueChanged.connect(self.update_robot_pos)
-        control_panel_layout.addWidget(self.field_rotation_slider)
-
-        # Mock Limelight Radio Button
-        self.mock_limelight = QRadioButton("Mock Limelight")
-        self.mock_limelight.setChecked(False)  # Default to False
-        control_panel_layout.addWidget(self.mock_limelight)
         # Display-only fields
         self.rpm_flywheel_label = QLabel("Flywheel RPM: 0")
         control_panel_layout.addWidget(self.rpm_flywheel_label)
         self.rpm_kicker_label = QLabel("Kicker Wheel RPM: 0")
         control_panel_layout.addWidget(self.rpm_kicker_label)
         self.distance_speaker_label = QLabel("Distance to Speaker: 0")
+        self.distance_speaker_label.setStyleSheet("font-size: 20px; color: red;")
         control_panel_layout.addWidget(self.distance_speaker_label)
-        self.angle_degrees_label = QLabel("Angle in Degrees: 0")
+        self.angle_degrees_label = QLabel("Angle to Speaker: 0")
         control_panel_layout.addWidget(self.angle_degrees_label)
 
         return control_panel
@@ -98,16 +76,53 @@ class MainWindow(QMainWindow):
         return svg_widget, robot
 
     def update_robot_pos(self):
-        pass
-        # field_x = self.field_x_slider.value() / 100
-        # field_y = self.field_y_slider.value() / 100
-        # field_rotation = self.field_rotation_slider.value()
-        # self.robot.update_position(field_x, field_y, field_rotation)
+        # Calculate the distance to the speaker
+        speaker_x = 7
+        speaker_y = 2
+
+        robot_x = self.robot.field_pos[0]
+        robot_y = self.robot.field_pos[1]
+        robot_rotation = self.robot.field_rotation
+
+        distance_to_speaker = ((speaker_x - robot_x) ** 2 + (speaker_y - robot_y) ** 2) ** 0.5
+        self.distance_speaker_label.setText(f"Distance to speaker: {distance_to_speaker:.1f}m")
+        if distance_to_speaker < 2:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: green;")
+        elif distance_to_speaker < 4:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: yellow;")
+        else:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: red;")
+
+        # Calculate the angle to the speaker
+        # Calculate the differences in coordinates
+        delta_x = speaker_x - robot_x
+        delta_y = speaker_y - robot_y
+
+        # Calculate the angle in radians
+        angle_radians = math.atan2(delta_y, delta_x)
+
+        # Convert the angle to degrees
+        angle_degrees = math.degrees(angle_radians)
+
+        # Subtract the robot's rotation from the angle to the speaker
+        angle_degrees -= robot_rotation
+
+        # Normalize the angle to the range -180 to 180
+        angle_degrees = (angle_degrees + 180) % 360 - 180
+
+        self.angle_degrees_label.setText(f"Angle to speaker: {angle_degrees:.1f}°")
+        if abs(angle_degrees) < 10:
+            self.angle_degrees_label.setStyleSheet("font-size: 20px; color: black; background-color: green;")
+        elif abs(angle_degrees) < 20:
+            self.angle_degrees_label.setStyleSheet("font-size: 20px; color: black; background-color: yellow;")
+        else:
+            self.angle_degrees_label.setStyleSheet("font-size: 20px; color: red;")
 
     def get_robot_position_from_limelight_network_tables(self):
         botpose = self.limelight_table.getNumberArray("botpose", [0, 0, 0, 0, 0, 0])
         x, y, z, roll, pitch, yaw = botpose
         self.robot.update_position(x, y, pitch)
+        self.update_robot_pos()
 
     def subscribe(self, subscriber):
         self.subscribers.append(subscriber)
