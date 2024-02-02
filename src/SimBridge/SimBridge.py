@@ -4,9 +4,9 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 
 class SimBridge(QWidget):
-    """ This class is a PyQt5 window that runs a game loop and provides a way for other classes to subscribe to the game loop
+    """ This class is a PyQt5 window that runs a game loop and provides a way for other classes to subscribe to the game loop """
     def __init__(self, game_loop_target_ms : int =20):
-        """ Initializes the window and the game loop
+        """ Initializes the window and the game loop """
         super().__init__()
         self.init_ui()
         self.init_game_loop(game_loop_target_ms)
@@ -53,16 +53,16 @@ class SimBridge(QWidget):
         self.game_loop_subscribers = []
 
     def subscribe_to_game_loop(self, subscriber : object) -> None:
-        """ Adds a subscriber to the game loop (Subscriber _must_ implement `on_game_loop` method)
+        """ Adds a subscriber to the game loop (Subscriber _must_ implement `on_game_loop` method) """
         self.game_loop_subscribers.append(subscriber)
 
     def unsubscribe_from_game_loop(self, subscriber : object) -> None:
-        """ Removes a subscriber from the game loop
+        """ Removes a subscriber from the game loop """
         self.game_loop_subscribers.remove(subscriber)
 
     @staticmethod
     def init_banner():
-        """ Initializes the banner
+        """ Initializes the banner """
         banner = QLabel("Press 'Esc' key to quit")
         banner.setAlignment(Qt.AlignCenter)  # Center horizontally
         banner.setStyleSheet("font-size: 24pt; font-weight: bold;")  # H1 style
@@ -99,9 +99,8 @@ class SimBridge(QWidget):
         self.quick_label.setText(text)
 
     def game_loop(self):
-        """
-        Standard pygame game loop. The call to `pygame.event.pump()` is necessary to keep the window
-        """
+        """ Standard pygame game loop. The call to `pygame.event.pump()`  is necessary to keep the window responsive"""
+        
         pygame.event.pump()
         # After the events have been collected, let the subscribers do their thing
         for subscribers in self.game_loop_subscribers:

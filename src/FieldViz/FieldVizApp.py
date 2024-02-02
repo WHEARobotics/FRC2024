@@ -103,7 +103,8 @@ class MainWindow(QMainWindow):
     def calc_distance_to_speaker(self, speaker_x, speaker_y, robot_x, robot_y):
         # Calculate the distance to the speaker
         # Basic Pythagorean theorem
-        return distance_to_speaker = ((speaker_x - robot_x) ** 2 + (speaker_y - robot_y) ** 2) ** 0.5
+        distance_to_speaker = ((speaker_x - robot_x) ** 2 + (speaker_y - robot_y) ** 2) ** 0.5
+        return distance_to_speaker
 
     def calc_angle_to_speaker(self, speaker_x, speaker_y, robot_x, robot_y, robot_rotation):
         # Calculate the angle to the speaker

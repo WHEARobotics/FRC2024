@@ -78,7 +78,7 @@ class XrcDirectoryShim:
             self.limelight.set_robot_position(x, y, z, roll, yaw, pitch)
 
     def write_control_state(self) -> None:
-        """ Writes the game-controller state to a file, to simulate the robot's controls
+        """ Writes the game-controller state to a file, to simulate the robot's controls """
 
         # Convert the gamepad controls (as our swerve-drive pilot uses the controller) to the equivalent (or as close as
         # possible) tank-drive controls that are expected by xRC
@@ -95,7 +95,7 @@ class XrcDirectoryShim:
             f.close()
 
     def update(self, controller_state : GameControllerState) -> None:
-        """ Assigns the current game-controller state
+        """ Assigns the current game-controller state """
         self.current_control_state = controller_state
 
     def on_game_loop(self) -> None:
