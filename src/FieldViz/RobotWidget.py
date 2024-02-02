@@ -4,10 +4,19 @@ from PyQt5.QtWidgets import QWidget
 
 
 class RobotWidget(QWidget):
+    ###
+    A widget that displays a robot at a given position and rotation. It is a rectangle with an arrow.
+    ###
+
     def __init__(self, pixels_per_meter):
+        ###
+        Initializes the robot widget to be properly sized given `pixels_per_meter`
+        ###
+
         super().__init__()
-        # Update with real frame+bumper size
-        self.robot_edge_px = int(76 / 100 * pixels_per_meter)  # 76cm
+
+        # TODO: Update with real frame+bumper size
+        self.robot_edge_pixels = int(76 / 100 * pixels_per_meter)  # 76cm
         self.field_pos = (0, 0)
         self.origin_offset_x = 9 * pixels_per_meter
         # Running on a widget that's 8m tall, with origin halfway down
@@ -15,6 +24,8 @@ class RobotWidget(QWidget):
         self.origin_offset_y = 4 * pixels_per_meter
         self.pixels_per_meter = pixels_per_meter
         self.field_rotation = 0
+        # The robot is drawn as a smallish square, but the widget size defines "where on the screen" it's allowed to
+        # paint. So make the widget big enough to contain the robot no matter where it's positioned
         self.setFixedSize(1600,1600)
 
     # Called by Qt when the widget needs to be redrawn (e.g. when it's first shown, or when update() is called)
@@ -34,14 +45,14 @@ class RobotWidget(QWidget):
         q.setTransform(transform)
         # Note that at this point, the origin is at the center of the robot and the robot is rotated
         # So we can draw the robot as if it's at (0,0) and it will appear on the screen properly located and rotated
-        q.drawRect(int(-self.robot_edge_px/2),
-                   int(-self.robot_edge_px/2),
-                   int(self.robot_edge_px),
-                   int(self.robot_edge_px))
+        q.drawRect(int(-self.robot_edge_pixels / 2),
+                   int(-self.robot_edge_pixels / 2),
+                   int(self.robot_edge_pixels),
+                   int(self.robot_edge_pixels))
         # Draw directional arrow
         q.setPen(QPen(Qt.black, 2, Qt.SolidLine))
         arrow_start = (0, 0)
-        arrow_end = (self.robot_edge_px + 5, 0)
+        arrow_end = (self.robot_edge_pixels + 5, 0)
         q.drawLine(int(arrow_start[0]), int(arrow_start[1]), int(arrow_end[0]), int(arrow_end[1]))
         q.drawLine(int(arrow_end[0]), int(arrow_end[1]), int(arrow_end[0] - 10), int(arrow_end[1] - 10))
         q.drawLine(int(arrow_end[0]), int(arrow_end[1]), int(arrow_end[0] - 10), int(arrow_end[1] + 10))

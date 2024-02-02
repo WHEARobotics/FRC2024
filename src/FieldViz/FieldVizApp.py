@@ -9,7 +9,16 @@ from RobotWidget import RobotWidget
 
 
 class MainWindow(QMainWindow):
+    ###
+    Visualizes the Crescendor playing field and the robot's position as defined by the `limelight` `botpose`
+    value in NetworkTables. Also displays the robot's distance and angle to the speaker. This class should be
+    improved to show the driver the most useful information about the robot
+    ###
+
     def __init__(self, nt_server_ip : str = 'localhost'):
+        ###
+        Initialize the window
+        ###
         super().__init__()
 
         # Set up the main layout
@@ -17,8 +26,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
+        # Create a panel for other controls
         self.control_panel = self._build_control_panel()
         layout.addWidget(self.control_panel)
+        # Create widgets for the field and the robot
         self.field, self.robot = self._build_field()
         layout.addWidget(self.field)
 
@@ -26,18 +37,28 @@ class MainWindow(QMainWindow):
         self.resize(1024, 800)
 
         # Attach to NetworkTables
-        # The NT server is the `robotpy sim` process, which should be running prior to running this program
+        # In simulation mode, the NT server is the `robotpy sim` process, which should be running prior to running this program
+        # In competition mode, the NT server is the robot and this class should be called with the robot's IP address (`10.38.81.2`)
         NetworkTables.initialize(server= nt_server_ip)
         self.limelight_table = NetworkTables.getTable("limelight")
-        # Read it every 30ms
+
+        # Read the `limelight` table every 30ms
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.get_robot_position_from_limelight_network_tables)
         self.timer.start(30)
 
         self.subscribers = []
+        # The robot widget should update itself every time the window updates
         self.subscribe(self.robot)
 
     def _build_control_panel(self):
+        ###
+        The panel for showing the robot's state to the driver.
+
+        TODO: 100% this needs to be improved with feedback from driver: what information is most useful?
+        What would you like to see? What here is not useful?
+        ###
+
         # Create a panel for other controls
         control_panel = QWidget()
         control_panel_layout = QVBoxLayout(control_panel)
@@ -57,6 +78,10 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _build_field():
+        ###
+        Creates a PyQt5 widget that displays the field and a robot widget that displays the robot
+        ###
+
         # Background SVG
         svg_widget = QSvgWidget('./field_whole.svg')
         widget_width = 800  # pixels
@@ -75,24 +100,12 @@ class MainWindow(QMainWindow):
 
         return svg_widget, robot
 
-    def update_robot_pos(self):
+    def calc_distance_to_speaker(self, speaker_x, speaker_y, robot_x, robot_y):
         # Calculate the distance to the speaker
-        speaker_x = 7
-        speaker_y = 2
+        # Basic Pythagorean theorem
+        return distance_to_speaker = ((speaker_x - robot_x) ** 2 + (speaker_y - robot_y) ** 2) ** 0.5
 
-        robot_x = self.robot.field_pos[0]
-        robot_y = self.robot.field_pos[1]
-        robot_rotation = self.robot.field_rotation
-
-        distance_to_speaker = ((speaker_x - robot_x) ** 2 + (speaker_y - robot_y) ** 2) ** 0.5
-        self.distance_speaker_label.setText(f"Distance to speaker: {distance_to_speaker:.1f}m")
-        if distance_to_speaker < 2:
-            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: green;")
-        elif distance_to_speaker < 4:
-            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: yellow;")
-        else:
-            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: red;")
-
+    def calc_angle_to_speaker(self, speaker_x, speaker_y, robot_x, robot_y, robot_rotation):
         # Calculate the angle to the speaker
         # Calculate the differences in coordinates
         delta_x = speaker_x - robot_x
@@ -109,6 +122,32 @@ class MainWindow(QMainWindow):
 
         # Normalize the angle to the range -180 to 180
         angle_degrees = (angle_degrees + 180) % 360 - 180
+        return angle_degrees
+
+    def update_robot_pos(self):
+        # Calculate the distance to the speaker
+        # TODO: These need to be updated with the real speaker position
+        speaker_x = 7.8
+        speaker_y = 1.4
+        # speaker_z = 1.5 # Not used yet, but likely important for shooter-angle calculations
+
+        robot_x = self.robot.field_pos[0]
+        robot_y = self.robot.field_pos[1]
+        robot_rotation = self.robot.field_rotation
+
+        distance_to_speaker = self.calc_distance_to_speaker(speaker_x, speaker_y, robot_x, robot_y)
+        self.distance_speaker_label.setText(f"Distance to speaker: {distance_to_speaker:.1f}m")
+
+        # TODO: These values should be updated once we have shooter behavior.
+        if distance_to_speaker < 2:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: green;")
+        elif distance_to_speaker < 4:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: black; background-color: yellow;")
+        else:
+            self.distance_speaker_label.setStyleSheet("font-size: 20px; color: red;")
+
+
+        angle_degrees = self.calc_angle_to_speaker(speaker_x, speaker_y, robot_x, robot_y, robot_rotation)
 
         self.angle_degrees_label.setText(f"Angle to speaker: {angle_degrees:.1f}°")
         if abs(angle_degrees) < 10:
@@ -119,9 +158,15 @@ class MainWindow(QMainWindow):
             self.angle_degrees_label.setStyleSheet("font-size: 20px; color: red;")
 
     def get_robot_position_from_limelight_network_tables(self):
+        ###
+        Called by the QTimer every 30ms to read the robot's position from NetworkTables
+        ###
         botpose = self.limelight_table.getNumberArray("botpose", [0, 0, 0, 0, 0, 0])
-        x, y, z, roll, pitch, yaw = botpose
-        self.robot.update_position(x, y, pitch)
+        x, y, z, roll, yaw, pitch = botpose
+
+        # The robot's yaw is 90 degrees off from the field's yaw (0 degrees is along the x-axis)
+        yaw += 90
+        self.robot.update_position(x, y, yaw)
         self.update_robot_pos()
 
     def subscribe(self, subscriber):

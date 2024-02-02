@@ -7,8 +7,18 @@ from MockLimelight import MockLimelight
 
 
 class MyXboxController:
+    ###
+    A pygame class that basically just represents an XBox Controller
+    ###
+
     JOYSTICK_DEADBAND = 0.1 # Might want to change this? Especially for the triggers
-    def __init__(self, status_callback : Callable[[str], None], mock_limelight : MockLimelight) -> None:
+    def __init__(self, status_callback : Callable[[str], None]) -> None:
+        ###
+        Initializes the Xbox controller. Oddly (to my mind), pygame considers the thumbsticks as a single joystick with
+        4 axes. The triggers are _also_ considered joysticks! Oddly (to my mind), unpressed triggers are -1.0 and
+        pressed triggers are 1.0.
+        ###
+
         # Thumbsticks are said to be one joystick with 4 axes, which is a curious decision
         assert pygame.joystick.get_count() ==1
         self.joystick = pygame.joystick.Joystick(0)
@@ -16,7 +26,7 @@ class MyXboxController:
         axes_count = self.joystick.get_numaxes()
         assert axes_count == 6
 
-        self.limelight = mock_limelight
+        # Default state: everything unpressed, all axes at 0
         self.controller_state = GameControllerState(a=False, b=False, x=False, y=False,
                                                     dpad_down=False, dpad_up=False, dpad_left=False, dpad_right=False,
                                                     bumper_l=False, bumper_r=False, stop=False, restart=False,
@@ -25,10 +35,15 @@ class MyXboxController:
 
         self.subscribers = []
 
+        # Send a message to the user
         self.status_callback = status_callback
         status_callback("Gamepad connected")
 
     def on_joystick_moved(self, event : pygame.event.Event) -> None:
+        ###
+        Respond to a movement of the two thumbsticks
+        ###
+
         # Triggers are axis 5 & 6, but that should route to on_trigger_moved
         assert event.axis < 4
         axis_names = ["LX", "LY", "RX", "RY"]
@@ -43,6 +58,9 @@ class MyXboxController:
         elif axis_name == "RY":
             self.controller_state.right_y = event.value
 
+        # TODO: Everything up to now is just "the truth" of the controller. The next steps are "interpretation". Should
+        #  that be in this class? Or should this class just be a "dumb" interface to the controller?
+
         # Apply deadband on all axes
         self.controller_state.left_x = 0 if abs(self.controller_state.left_x) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.left_x
         self.controller_state.left_y = 0 if abs(self.controller_state.left_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.left_y
@@ -50,9 +68,15 @@ class MyXboxController:
         self.controller_state.right_y = 0 if abs(self.controller_state.right_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_y
 
         # Damp the joystick values
+        # TODO: This could be controlled dynamically. Like if the robot is in a "fine control" mode
         self.controller_state.right_x = self.controller_state.right_x * 0.5
         self.controller_state.right_y = self.controller_state.right_y * 0.5
+
     def on_button_pressed(self, event : pygame.event.Event, button_down : bool) -> None:
+        ###
+        Respond to a button press or release
+        ###
+
         self.controller_state.a = button_down
         buttons = ["A", "B", "X", "Y", "LB", "RB", "BACK", "START", "LS", "RS"]
         button_name = buttons[event.button]
@@ -80,6 +104,9 @@ class MyXboxController:
     # Triggers are read by pygame as axis 4 and 5
     # Their value is -1 to 1, with resting position being -1 (!)
     def on_trigger_moved(self, event: pygame.event.Event) -> None:
+        ### Because pygame considers the triggers to be joysticks, this _could_ be in on_joystick_moved, but it's
+        #  conceptually different enough that I'm separating it out.
+        ###
         assert event.axis >= 4
 
         trigger_name = ['_','_','_','_','LT','RT']
@@ -92,8 +119,11 @@ class MyXboxController:
             self.controller_state.trigger_r = event.value
 
 
-
     def on_game_loop(self) -> None:
+        ###
+        This method is called every game loop iteration. It reads the controller state and transmits it to subscribers
+        ###
+
         # Handle the events (set the state)
         for event in pygame.event.get():
             if event.type == pygame.JOYAXISMOTION:

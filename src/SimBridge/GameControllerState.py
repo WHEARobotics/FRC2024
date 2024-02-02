@@ -3,6 +3,10 @@ import math
 
 @dataclass
 class GameControllerState:
+    ###
+    A dataclass that represents the state of an Xbox controller.
+    ####
+
     a: bool
     b: bool
     x: bool
@@ -22,9 +26,11 @@ class GameControllerState:
     trigger_l: float
     trigger_r: float
 
-    flywheel_throttle : float = 1.0
-
     def to_xrc_control_strings(self) -> str:
+        ###
+        Converts the game-controller state into the format expected by xRCsim
+        ###
+
         # Note: Sensitive to whitespace! No spaces between = and value
         control_string = "// Written by SimBridge\n"
         control_string += f"a={1.0 if self.a else 0.0}\n"
@@ -79,14 +85,13 @@ class GameControllerState:
         # Convert robot rotation to radians
         robot_rotation = -(robot_rotation_positive_degrees % 360) * math.pi / 180
 
+
         # Calculating the rotated coordinates
         rotated_x = tank_control.left_x * math.cos(robot_rotation) - tank_control.left_y * math.sin(robot_rotation)
         rotated_y = tank_control.left_x * math.sin(robot_rotation) + tank_control.left_y * math.cos(robot_rotation)
 
-        # In field space, the y axis is "sideways" and inverted (note: field space Y is controller space X joystick
-        #rotated_x = -rotated_x
-
-        tank_control.left_x = rotated_x
-        tank_control.left_y = rotated_y
+        # The field is rotated and inverted relative to gamepad joystick, so we need to swap x and y and invert
+        tank_control.left_x = rotated_y
+        tank_control.left_y = -rotated_x
 
         return tank_control
