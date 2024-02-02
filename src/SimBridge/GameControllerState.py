@@ -3,9 +3,9 @@ import math
 
 @dataclass
 class GameControllerState:
-    ###
+    """
     A dataclass that represents the state of an Xbox controller.
-    ####
+    """#
 
     a: bool
     b: bool
@@ -27,9 +27,9 @@ class GameControllerState:
     trigger_r: float
 
     def to_xrc_control_strings(self) -> str:
-        ###
+        """
         Converts the game-controller state into the format expected by xRCsim
-        ###
+        """
 
         # Note: Sensitive to whitespace! No spaces between = and value
         control_string = "// Written by SimBridge\n"

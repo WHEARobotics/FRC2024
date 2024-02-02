@@ -4,14 +4,14 @@ from PyQt5.QtWidgets import QWidget
 
 
 class RobotWidget(QWidget):
-    ###
+    """
     A widget that displays a robot at a given position and rotation. It is a rectangle with an arrow.
-    ###
+    """
 
     def __init__(self, pixels_per_meter):
-        ###
+        """
         Initializes the robot widget to be properly sized given `pixels_per_meter`
-        ###
+        """
 
         super().__init__()
 

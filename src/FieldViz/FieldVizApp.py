@@ -9,16 +9,17 @@ from RobotWidget import RobotWidget
 
 
 class MainWindow(QMainWindow):
-    ###
-    Visualizes the Crescendor playing field and the robot's position as defined by the `limelight` `botpose`
+
+    """Visualizes the Crescendo playing field and the robot's position.
+
+    The playing field is just an SVG file. The robot's position iefined by the `limelight` `botpose`
     value in NetworkTables. Also displays the robot's distance and angle to the speaker. This class should be
     improved to show the driver the most useful information about the robot
-    ###
+    """
 
     def __init__(self, nt_server_ip : str = 'localhost'):
-        ###
-        Initialize the window
-        ###
+        """Initializes the main window and sets up the field and robot widgets."""
+        
         super().__init__()
 
         # Set up the main layout
@@ -52,12 +53,11 @@ class MainWindow(QMainWindow):
         self.subscribe(self.robot)
 
     def _build_control_panel(self):
-        ###
-        The panel for showing the robot's state to the driver.
+        """The panel for showing the robot's state to the driver.
 
         TODO: 100% this needs to be improved with feedback from driver: what information is most useful?
         What would you like to see? What here is not useful?
-        ###
+        """
 
         # Create a panel for other controls
         control_panel = QWidget()
@@ -78,9 +78,9 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _build_field():
-        ###
+        """
         Creates a PyQt5 widget that displays the field and a robot widget that displays the robot
-        ###
+        """
 
         # Background SVG
         svg_widget = QSvgWidget('./field_whole.svg')
@@ -158,9 +158,9 @@ class MainWindow(QMainWindow):
             self.angle_degrees_label.setStyleSheet("font-size: 20px; color: red;")
 
     def get_robot_position_from_limelight_network_tables(self):
-        ###
+        """
         Called by the QTimer every 30ms to read the robot's position from NetworkTables
-        ###
+        """
         botpose = self.limelight_table.getNumberArray("botpose", [0, 0, 0, 0, 0, 0])
         x, y, z, roll, yaw, pitch = botpose
 

@@ -9,14 +9,14 @@ from MyXboxController import MyXboxController
 
 
 class XrcDirectoryShim:
-    ###
+    """
     This class reads and writes files to simulate the robot. It's deeply tied to the xRCsim application.
-    ###
+    """
 
     def __init__(self, directory: str, limelight : MockLimelight, gameloop_target_ms : int = 20) -> None:
-        ###
+        """
         Initializes the class with a directory to read and write files to, and a MockLimelight object
-        ###
+        """
 
         self.directory = directory
         self.limelight = limelight
@@ -34,11 +34,11 @@ class XrcDirectoryShim:
 
 
     def read_game_state(self) -> None:
-        ###
+        """
         Reads the xRC-written game-state file (or files, if you wanted to extend this).
         Extracts the robot position and rotation (or more data, if you wanted to extend...)
         Tells the `MockLimelight` object about the robot position and rotation ("as if" it were recognizing AprilTags)
-        ###
+        """
 
         # Because the sim might be writing the file simulatneously, we have to be careful about claiming
         # that we've successfully read the data. So, first, we'll set a flag to False and only if we
@@ -78,7 +78,7 @@ class XrcDirectoryShim:
             self.limelight.set_robot_position(x, y, z, roll, yaw, pitch)
 
     def write_control_state(self) -> None:
-        ### Writes the game-controller state to a file, to simulate the robot's controls
+        """ Writes the game-controller state to a file, to simulate the robot's controls
 
         # Convert the gamepad controls (as our swerve-drive pilot uses the controller) to the equivalent (or as close as
         # possible) tank-drive controls that are expected by xRC
@@ -95,14 +95,14 @@ class XrcDirectoryShim:
             f.close()
 
     def update(self, controller_state : GameControllerState) -> None:
-        ### Assigns the current game-controller state
+        """ Assigns the current game-controller state
         self.current_control_state = controller_state
 
     def on_game_loop(self) -> None:
-        ###
+        """
         Because this class is a subscriber to the game loop, this method is called every game loop iteration.
         It reads the game state and writes the control state.
-        ###
+        """
 
         self.read_game_state()
         self.write_control_state()

@@ -37,7 +37,7 @@ class SwerveDrivetrain:
         # Magic number copied from Java example
         # Change these to depend on our wheelbase and track width, like the stuff near the end of __init__().
 
-        ### IMPORTANT!!!!! HALF_WHEEL_BASE and HALF_TRACK_WIDTH MIGHT NEED TO BE SWICHED ARROUND, BUT THE POSITIVE/NEGATIVE SIGNS ARE IN THE RIGHT LOCATION. ###
+        """ IMPORTANT!!!!! HALF_WHEEL_BASE and HALF_TRACK_WIDTH MIGHT NEED TO BE SWICHED ARROUND, BUT THE POSITIVE/NEGATIVE SIGNS ARE IN THE RIGHT LOCATION. """
 
         #self.frontLeftLocation = Translation2d(half_track_width, half_wheel_base)
         #self.frontRightLocation = Translation2d(half_track_width, -half_wheel_base)
