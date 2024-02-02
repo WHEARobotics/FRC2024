@@ -11,7 +11,7 @@ import wpimath.geometry._geometry
 
 import math
 
-#from CresendoSwerveModule import CrescendoSwerveModule
+from CrescendoSwerveModule import CrescendoSwerveModule
 
 class CrescendoSwerveDrivetrain:
     # I'd suggest not try to use the units functionality, and just stick to floats.
@@ -36,25 +36,25 @@ class CrescendoSwerveDrivetrain:
         half_track_width = track_width / 2#2_#TRACK_WIDTH MIGHT NEED TO BE SWICHED ARROUND, BUT THE POSITIVE/NEGATIVE SIGNS ARE IN THE RIGHT LOCATION.
 
         self.frontLeftLocation = Translation2d(half_wheel_base, half_track_width)
-        # self.frontRightLocation = Translation2d(half_wheel_base, -half_track_width)
+        self.frontRightLocation = Translation2d(half_wheel_base, -half_track_width)
         # self.backLeftLocation = Translation2d(-half_wheel_base, half_track_width)
         # self.backRightLocation = Translation2d(-half_wheel_base, -half_track_width)
 
         #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
         # self.backLeft = CrescendoSwerveModule(6, 7, 2, self.ABSOLUTEPOS_2)
     
-        # self.frontRight = CrescendoSwerveModule(1, 10, 4, self.ABSOLUTEPOS_4)  #OG offset was 106.424  
+        self.frontRight = CrescendoSwerveModule(6, 7, 0, 0)  #OG offset was 106.424  
     
-        self.frontLeft = CrescendoSwerveModule(5, 4, 1, self.ABSOLUTEPOS_1)  #OG offset was 296.543
+        self.frontLeft = CrescendoSwerveModule(5, 4, 0, 0)  #OG offset was 296.543
  
         # self.backRight = CrescendoSwerveModule(8, 9, 3, self.ABSOLUTEPOS_3)
         
-        self.swerve_modules = [ self.frontLeft] #, self.frontRight, self.backLeft, self.backRight ]
+        self.swerve_modules = [ self.frontLeft, self.frontRight]#, self.backLeft, self.backRight ]
 
         
 
 
-        self.swerveModuleStates = [SwerveModuleState()] #, SwerveModuleState(), SwerveModuleState(), SwerveModuleState()]
+        self.swerveModuleStates = [SwerveModuleState() , SwerveModuleState()]#, SwerveModuleState(), SwerveModuleState()]
 
         # Instead of an analog gyro, let's use the ADXRS450_Gyro class, like MAKO does in the mecanum folder. 
         # See https://robotpy.readthedocs.io/projects/wpilib/en/stable/wpilib/ADXRS450_Gyro.html#wpilib.ADXRS450_Gyro
@@ -68,15 +68,16 @@ class CrescendoSwerveDrivetrain:
         # The proper Kinematics and Odometry class to used is determined by the number of modules on the robot.
         # For example, this 4 module robot uses SwerveDrive4Kinematics and SwerveDrive4Odometry.
         self.kinematics = SwerveDrive4Kinematics(
-            self.frontLeftLocation) # , self.frontRightLocation, 
+            self.frontLeftLocation, self.frontRightLocation), 
 #            self.backLeftLocation, self.backRightLocation)
 
         self.odometry = SwerveDrive4Odometry(
             self.kinematics, Rotation2d(),
             (
                 self.frontLeft.getPosition(),
+                self.frontRight.getPosition()
             )
-            #     self.frontRight.getPosition(),
+            
             #     self.backLeft.getPosition(),
             #     self.backRight.getPosition()
             # )
@@ -93,7 +94,7 @@ class CrescendoSwerveDrivetrain:
             # Front left
             self.frontLeftLocation,
             # Front right
-            # self.frontRightLocation,
+            self.frontRightLocation,
             # # Back left
             # self.backLeftLocation,
             # # Back right
@@ -104,8 +105,9 @@ class CrescendoSwerveDrivetrain:
         # These values are updated in `periodic()`
         self.module_poses = [
             Pose2d(),
+            Pose2d()
         ]
-        #     Pose2d(),
+        
         #     Pose2d(),
         #     Pose2d()
         # ]
@@ -143,7 +145,7 @@ class CrescendoSwerveDrivetrain:
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
 
         self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
-        # self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
+        self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
         # self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
         # self.backRight.setDesiredState(self.swerveModuleStates[3], True)
 
@@ -152,7 +154,7 @@ class CrescendoSwerveDrivetrain:
         self.odometry.update(
             Rotation2d.fromDegrees(-self.gyro.getAngle()),
             self.frontLeft.getPosition(),
-            # self.frontRight.getPosition(),
+            self.frontRight.getPosition(),
             # self.backLeft.getPosition(),
             # self.backRight.getPosition()
         )
@@ -170,7 +172,7 @@ class CrescendoSwerveDrivetrain:
     def resetSteering(self):
         """Call this to reset turning encoders when ALL wheels are aligned forward."""
         self.frontRight.resetSteering()
-        # self.frontLeft.resetSteering()
+        self.frontLeft.resetSteering()
         # self.backRight.resetSteering()
         # self.backLeft.resetSteering()
 
