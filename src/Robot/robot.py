@@ -9,8 +9,8 @@ import time
 import math
 
 from vision import Vision #Vision file import
-# from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
-from CrescendoSwerveModule import CrescendoSwerveModule
+from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
+# from CrescendoSwerveModule import CrescendoSwerveModule
 
 class Myrobot(wpilib.TimedRobot):
 
@@ -19,9 +19,9 @@ class Myrobot(wpilib.TimedRobot):
     def robotInit(self):
 
         self.xbox = wpilib.XboxController(0)
+        self.swerve = CrescendoSwerveDrivetrain
 
-        self.frontLeft = CrescendoSwerveModule(3, 2, 0, 0)
-
+        
     def disabledInit(self):
         pass
 
@@ -55,34 +55,24 @@ class Myrobot(wpilib.TimedRobot):
         self.joystick_y = -self.xbox.getLeftY()
         self.joystick_x = applyDeadband(self.joystick_x , 0.1)
         self.joystick_y = applyDeadband(self.joystick_y , 0.1)
-
         rot = -self.xbox.getRightX()
         rot = applyDeadband(rot, 0.05) 
         
-        self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
+        
 
         #1/22/2024 commented out whats below for more simplification, we dont need joystickscaling maxspeed etc.
 
-        # # Get the x speed. We are inverting this because Xbox controllers return
-        # # negative values when we push forward.
-        # joystick_y = self.swerve.joystickscaling(self.joystick_y )
-        # xSpeed = self.xSpeedLimiter.calculate(joystick_y) * self.swerve.getMaxSpeed()
 
-        # # Get the y speed. We are inverting this because Xbox controllers return
-        # # negative values when we push to the left.
-        # joystick_x = self.swerve.joystickscaling(self.joystick_x)
-        # ySpeed = self.ySpeedLimiter.calculate(joystick_x) * self.swerve.MAX_SPEED
 
-        # rot = self.swerve.joystickscaling(rot)
-        # rot = self.rotLimiter.calculate(rot) * self.swerve.MAX_ANGULAR_SPEED
 
-        # self.swerve.drive(xSpeed, ySpeed, rot, fieldRelativeParam)
-
+        self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
         self.angle = Rotation2d(self.joystick_x, self.joystick_y)
-        self.state = SwerveModuleState(self.magnitude, self.angle)
-        self.frontLeft.setDesiredState(self.state, True)
+
+        # self.state = SwerveModuleState(self.magnitude, self.angle)
+        self.swerve.drive(self.joystick_x/3, self.joystick_y/3, rot, fieldRelativeParam)
+        
         wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))
+        # wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))
 
     def teleopExit(self):
         pass
