@@ -5,7 +5,8 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.controller import PIDController
 from wpilib import Field2d, SmartDashboard
 import wpilib
-
+import phoenix5
+from phoenix5 import sensors
 import wpimath.kinematics._kinematics
 import wpimath.geometry._geometry
 
@@ -22,10 +23,10 @@ class CrescendoSwerveDrivetrain:
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    ABSOLUTEPOS_3 = 326.1   # Back Right
-    ABSOLUTEPOS_4 = 253.2 #-278.788 #106.424  # Front Right
-    ABSOLUTEPOS_2 = 152.9  # Back Left
-    ABSOLUTEPOS_1 = 326.1  # Front Left
+    ABSOLUTEPOS_1 = -0.061 #0.047  # Back Left
+    ABSOLUTEPOS_2 = -0.050  # Front Right
+    ABSOLUTEPOS_3 = -0.862  # Front Left
+    ABSOLUTEPOS_4 = -360.204 #0.148  # Back Right
     
 
     def __init__(self):
@@ -37,24 +38,24 @@ class CrescendoSwerveDrivetrain:
 
         self.frontLeftLocation = Translation2d(half_wheel_base, half_track_width)
         self.frontRightLocation = Translation2d(half_wheel_base, -half_track_width)
-        # self.backLeftLocation = Translation2d(-half_wheel_base, half_track_width)
-        # self.backRightLocation = Translation2d(-half_wheel_base, -half_track_width)
+        self.backLeftLocation = Translation2d(-half_wheel_base, half_track_width)
+        self.backRightLocation = Translation2d(-half_wheel_base, -half_track_width)
 
         #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
-        # self.backLeft = CrescendoSwerveModule(6, 7, 2, self.ABSOLUTEPOS_2)
+        self.backLeft = CrescendoSwerveModule(3, 2, 2, self.ABSOLUTEPOS_1)
     
-        self.frontRight = CrescendoSwerveModule(6, 7, 0, 0)  #OG offset was 106.424  
+        self.frontRight = CrescendoSwerveModule(7, 6, 0, self.ABSOLUTEPOS_2)  #OG offset was 106.424  
     
-        self.frontLeft = CrescendoSwerveModule(5, 4, 0, 0)  #OG offset was 296.543
+        self.frontLeft = CrescendoSwerveModule(13, 8, 3, self.ABSOLUTEPOS_3)  #OG offset was 296.543
  
-        # self.backRight = CrescendoSwerveModule(8, 9, 3, self.ABSOLUTEPOS_3)
+        self.backRight = CrescendoSwerveModule(5, 4, 1, self.ABSOLUTEPOS_4)
         
-        self.swerve_modules = [ self.frontLeft, self.frontRight]#, self.backLeft, self.backRight ]
+        self.swerve_modules = [ self.frontLeft, self.frontRight, self.backLeft, self.backRight ]
 
         
 
 
-        self.swerveModuleStates = [SwerveModuleState() , SwerveModuleState()]#, SwerveModuleState(), SwerveModuleState()]
+        self.swerveModuleStates = [SwerveModuleState() , SwerveModuleState(), SwerveModuleState(), SwerveModuleState()]
 
         # Instead of an analog gyro, let's use the ADXRS450_Gyro class, like MAKO does in the mecanum folder. 
         # See https://robotpy.readthedocs.io/projects/wpilib/en/stable/wpilib/ADXRS450_Gyro.html#wpilib.ADXRS450_Gyro
@@ -63,24 +64,23 @@ class CrescendoSwerveDrivetrain:
         # for CCW, when we need positive.  It also doesn't have a getRotation2d() method, so you'll need to 
         # make one with Rotation2d.fromDegrees().
 
-        self.gyro = wpilib.ADXRS450_Gyro(wpilib._wpilib.SPI.Port.kOnboardCS0) 
+        self.gyro = sensors.Pigeon2(14)
+         
 
         # The proper Kinematics and Odometry class to used is determined by the number of modules on the robot.
         # For example, this 4 module robot uses SwerveDrive4Kinematics and SwerveDrive4Odometry.
         self.kinematics = SwerveDrive4Kinematics(
-            self.frontLeftLocation, self.frontRightLocation), 
-#            self.backLeftLocation, self.backRightLocation)
+            self.frontLeftLocation, self.frontRightLocation, 
+            self.backLeftLocation, self.backRightLocation)
 
         self.odometry = SwerveDrive4Odometry(
             self.kinematics, Rotation2d(),
             (
                 self.frontLeft.getPosition(),
-                self.frontRight.getPosition()
+                self.frontRight.getPosition(),
+                self.backLeft.getPosition(),
+                self.backRight.getPosition()
             )
-            
-            #     self.backLeft.getPosition(),
-            #     self.backRight.getPosition()
-            # )
         )
 
         # Where are the swerve modules located on the robot?
@@ -95,28 +95,26 @@ class CrescendoSwerveDrivetrain:
             self.frontLeftLocation,
             # Front right
             self.frontRightLocation,
-            # # Back left
-            # self.backLeftLocation,
-            # # Back right
-            # self.backRightLocation
+            # Back left
+            self.backLeftLocation,
+            # Back right
+            self.backRightLocation
         ]
 
         # The current pose for each swerve module
         # These values are updated in `periodic()`
         self.module_poses = [
             Pose2d(),
+            Pose2d(),
+            Pose2d(),
             Pose2d()
         ]
-        
-        #     Pose2d(),
-        #     Pose2d()
-        # ]
 
         # Simulation support
         self.fieldSim = Field2d()
         SmartDashboard.putData('Field', self.fieldSim)
 
-        self.gyro.calibrate()#8/3/2023 changed gyro reset to calibrate to possibly stop it from drifting
+        self.gyro.setYaw(0)#8/3/2023 changed gyro reset to calibrate to possibly stop it from drifting
 
     def periodic(self):
         self._updateOdometry()
@@ -139,28 +137,28 @@ class CrescendoSwerveDrivetrain:
 
     def drive(self, xSpeed, ySpeed, rot, fieldRelative : bool) -> None:
         chassis_speeds = ChassisSpeeds(xSpeed, ySpeed, rot) if not fieldRelative \
-            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(-self.gyro.getAngle()))
+            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(-self.gyro.getYaw()))
         self.swerveModuleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
 
         self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
         self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
-        # self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
-        # self.backRight.setDesiredState(self.swerveModuleStates[3], True)
+        self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
+        self.backRight.setDesiredState(self.swerveModuleStates[3], True)
 
 
     def _updateOdometry(self):
         self.odometry.update(
-            Rotation2d.fromDegrees(-self.gyro.getAngle()),
+            Rotation2d.fromDegrees(-self.gyro.getYaw()),
             self.frontLeft.getPosition(),
             self.frontRight.getPosition(),
-            # self.backLeft.getPosition(),
-            # self.backRight.getPosition()
+            self.backLeft.getPosition(),
+            self.backRight.getPosition()
         )
 
     def get_heading(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(-self.gyro.getAngle())
+        return Rotation2d.fromDegrees(-self.gyro.getYaw())
 
     def get_pose(self) -> Pose2d :
         return self.odometry.getPose()
@@ -173,8 +171,8 @@ class CrescendoSwerveDrivetrain:
         """Call this to reset turning encoders when ALL wheels are aligned forward."""
         self.frontRight.resetSteering()
         self.frontLeft.resetSteering()
-        # self.backRight.resetSteering()
-        # self.backLeft.resetSteering()
+        self.backRight.resetSteering()
+        self.backLeft.resetSteering()
 
     def toggleDriveMotorsInverted(self):
         for module in self.swerve_modules:

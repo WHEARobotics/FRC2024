@@ -19,14 +19,25 @@ class Myrobot(wpilib.TimedRobot):
     def robotInit(self):
 
         self.xbox = wpilib.XboxController(0)
-        self.swerve = CrescendoSwerveDrivetrain
+        self.swerve = CrescendoSwerveDrivetrain()
+
+        self.absEnc1 = self.swerve.backLeft.absEnc.getAbsolutePosition()
+        self.absEnc2 = self.swerve.frontRight.absEnc.getAbsolutePosition()
+        self.absEnc3 = self.swerve.frontLeft.absEnc.getAbsolutePosition()
+        self.absEnc4 = self.swerve.backRight.absEnc.getAbsolutePosition()
+    
 
         
     def disabledInit(self):
         pass
 
     def disabledPeriodic(self):
-        pass
+
+        
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1 ))
+        wpilib.SmartDashboard.putString('DB/String 1',"Enc Front Right {:4.3f}".format( self.absEnc2 ))
+        wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3 ))
+        wpilib.SmartDashboard.putString('DB/String 3',"Enc Back Right {:4.3f}".format( self.absEnc4 ))
 
     def disabledExit(self):
         pass
@@ -39,7 +50,7 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousExit(self):
         pass
-
+ 
     def teleopInit(self):
         self.halfSpeed = False
 
@@ -56,7 +67,7 @@ class Myrobot(wpilib.TimedRobot):
         self.joystick_x = applyDeadband(self.joystick_x , 0.1)
         self.joystick_y = applyDeadband(self.joystick_y , 0.1)
         rot = -self.xbox.getRightX()
-        rot = applyDeadband(rot, 0.05) 
+        rot = applyDeadband(rot, 0.05)
         
         
 
@@ -73,6 +84,10 @@ class Myrobot(wpilib.TimedRobot):
         
         wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
         # wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))
+        wpilib.SmartDashboard.putString('DB/String 5',"Enc Back Left {:4.3f}".format( self.absEnc1 ))
+        wpilib.SmartDashboard.putString('DB/String 6',"Enc Front Right {:4.3f}".format( self.absEnc2 ))
+        wpilib.SmartDashboard.putString('DB/String 7',"Enc Front Left {:4.3f}".format( self.absEnc3 ))
+        wpilib.SmartDashboard.putString('DB/String 8',"Enc Back Right {:4.3f}".format( self.absEnc4 ))
 
     def teleopExit(self):
         pass

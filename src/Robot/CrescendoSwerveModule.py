@@ -33,9 +33,13 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
         
         self.PIDController = self.turningMotor.getPIDController()
-        self.InternalEncoder = self.turningMotor.getEncoder()
+
+        self.turnMotorEncoder = self.turningMotor.getEncoder()
+        self.driveMotorEncoder = self.driveMotor.getEncoder()
 
         self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
+        self.absEnc.setPositionOffset(absEncOffset)
+        self.absEnc.reset()
        
 
         self.driveMotor.setInverted(False) 
@@ -60,7 +64,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # self.turningMotor.setSelectedSensorPosition(self.initPos)                                                  #'''SWAP BACK TUES AM'''
         # #print(self.turningMotor.setSelectedSensorPosition(initPos))   
         
-        tempPos = self.InternalEncoder.getPosition()                                          #SWAP BACK TUES AM'''
+        tempPos = self.turnMotorEncoder.getPosition()                                          #SWAP BACK TUES AM'''
 
         print(self.TurnCountToDeg(tempPos))
 
@@ -78,20 +82,20 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         
     def getState(self) -> SwerveModuleState:
-        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
+        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
 
     
     def getPosition(self) -> SwerveModulePosition:
-        drivePos = self.driveCountToMeters(self.driveMotor.getPosition())
+        drivePos = self.driveCountToMeters(self.driveMotorEncoder.getPosition())
         wpilib.SmartDashboard.putString('DB/String 4',"Pos_Degrees: {:4.2f}".format(drivePos))
-        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
+        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
 
 
     def setDesiredState(self, desiredState: SwerveModuleState, open_loop: bool) -> None:
         '''This method is does all the work.  Pass it a desired SwerveModuleState (that is, wheel rim velocity and
         turning direction), and it sets the feedback loops to achieve that.'''
 
-        self.present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
+        self.present_degrees = self.TurnCountToDeg(self.turnMotorEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
         present_rotation = Rotation2d.fromDegrees(self.present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
@@ -148,10 +152,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         pass
 
         #Added Jan 26 2024, Line 266 to 269 from utilities
-    def joystickscaling(input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
-        a = 1
-        output = a * input * input * input + (1 - a) * input
-        return output
+   
 
 
     def optimize(self, desired_state: SwerveModuleState, current_angle: Rotation2d) -> SwerveModuleState:
