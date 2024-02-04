@@ -26,7 +26,7 @@ class CrescendoSwerveDrivetrain:
     ABSOLUTEPOS_1 = -0.061 #0.047  # Back Left
     ABSOLUTEPOS_2 = -0.050  # Front Right
     ABSOLUTEPOS_3 = -0.862  # Front Left
-    ABSOLUTEPOS_4 = -360.204 #0.148  # Back Right
+    ABSOLUTEPOS_4 = -0.204 #0.148  # Back Right
     
 
     def __init__(self):

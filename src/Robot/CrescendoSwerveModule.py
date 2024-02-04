@@ -39,7 +39,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
         self.absEnc.setPositionOffset(absEncOffset)
-        self.absEnc.reset()
+        #2/2 also new code
        
 
         self.driveMotor.setInverted(False) 
@@ -61,7 +61,8 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # print(absolutePos) # Print the value as a diagnostic.
 
         # UPDATE CODE FUCTION IS FROM CTRE
-        # self.turningMotor.setSelectedSensorPosition(self.initPos)                                                  #'''SWAP BACK TUES AM'''
+        # initPos = self.DegToTurnCount(self.absEnc.getAbsolutePosition)
+        # self.turningMotor.setSelectedSensorPosition(self.absEnc.getAbsolutePosition * (150 / 7))    # 2/2 new code                                             #'''SWAP BACK TUES AM'''
         # #print(self.turningMotor.setSelectedSensorPosition(initPos))   
         
         tempPos = self.turnMotorEncoder.getPosition()                                          #SWAP BACK TUES AM'''
@@ -77,7 +78,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         # Try to set the Falcon, either to zero or to the absolute position.
         # initPos = 0                                                 
-        # initPos = self.DegToTurnCount(absolutePos)
+        
 
 
         
