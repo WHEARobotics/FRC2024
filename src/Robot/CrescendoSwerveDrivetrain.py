@@ -27,6 +27,10 @@ class CrescendoSwerveDrivetrain:
     ABSOLUTEPOS_2 = -0.050  # Front Right
     ABSOLUTEPOS_3 = -0.862  # Front Left
     ABSOLUTEPOS_4 = -0.204 #0.148  # Back Right
+    """
+    these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
+    if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.
+    """
     
 
     def __init__(self):
@@ -40,6 +44,10 @@ class CrescendoSwerveDrivetrain:
         self.frontRightLocation = Translation2d(half_wheel_base, -half_track_width)
         self.backLeftLocation = Translation2d(-half_wheel_base, half_track_width)
         self.backRightLocation = Translation2d(-half_wheel_base, -half_track_width)
+        '''
+        this sets up the translation 2d for each swerve module that sets up a translation in a 2d space. when the robot is facing
+        at its origin positive x is forward and positive y is left for the 2d translation
+        '''
 
         #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
         self.backLeft = CrescendoSwerveModule(3, 2, 2, self.ABSOLUTEPOS_1)
@@ -51,28 +59,38 @@ class CrescendoSwerveDrivetrain:
         self.backRight = CrescendoSwerveModule(5, 4, 1, self.ABSOLUTEPOS_4)
         
         self.swerve_modules = [ self.frontLeft, self.frontRight, self.backLeft, self.backRight ]
+        '''
+        this section above creates 4 swerve modules and sets the id's of each of them in this order:
+        drivemotor channel, turnmotor channel, absolute encoder channel(from analog input with thrifty encoders) and the absolute pos offset
+        then it creates a list for calling all modules at most
+        '''
 
         
 
 
         self.swerveModuleStates = [SwerveModuleState() , SwerveModuleState(), SwerveModuleState(), SwerveModuleState()]
+        '''
+        this initializes the states of the swerve modules, to set the swerve modules to certain speeds and angles periodically 50 times a second
+        but this is only the initializaation part.
+        '''
 
-        # Instead of an analog gyro, let's use the ADXRS450_Gyro class, like MAKO does in the mecanum folder. 
-        # See https://robotpy.readthedocs.io/projects/wpilib/en/stable/wpilib/ADXRS450_Gyro.html#wpilib.ADXRS450_Gyro
-        # and https://github.com/WHEARobotics/MAKO/blob/master/code/mecanum/robot.py
-        # You need to update here and where ever the gyro is used.  Note that the ADXRS450 outputs negative degrees
-        # for CCW, when we need positive.  It also doesn't have a getRotation2d() method, so you'll need to 
-        # make one with Rotation2d.fromDegrees().
 
         self.gyro = sensors.Pigeon2(14)
+        """
+        this creates the pigeon gyro object that is used to track the robots yaw angle to be able to use field relative.
+        """
          
-
-        # The proper Kinematics and Odometry class to used is determined by the number of modules on the robot.
-        # For example, this 4 module robot uses SwerveDrive4Kinematics and SwerveDrive4Odometry.
+        '''
+        The proper Kinematics and Odometry class to used is determined by the number of modules on the robot.
+        For example, this 4 module robot uses SwerveDrive4Kinematics and SwerveDrive4Odometry. this 
+        '''
         self.kinematics = SwerveDrive4Kinematics(
             self.frontLeftLocation, self.frontRightLocation, 
             self.backLeftLocation, self.backRightLocation)
-
+        '''
+        kinematics sets values for each individual module like its speed and angle working with the swerve module states
+        '''
+        
         self.odometry = SwerveDrive4Odometry(
             self.kinematics, Rotation2d(),
             (
@@ -82,6 +100,10 @@ class CrescendoSwerveDrivetrain:
                 self.backRight.getPosition()
             )
         )
+        '''
+        odometry is used to track the robots position on the field only after being enabled. with this you can track things
+        like how far the robot travelled in meters per second
+        '''
 
         # Where are the swerve modules located on the robot?
         # ? These values of 0.5 are taken from  https://github.com/4201VitruvianBots/2021SwerveSim/blob/main/WPILib_SwerveControllerCommand/src/main/java/frc/robot/Constants.java
@@ -100,6 +122,9 @@ class CrescendoSwerveDrivetrain:
             # Back right
             self.backRightLocation
         ]
+        '''
+        this creates an object to be used for setting up the 2d position of the robot to be called
+        '''
 
         # The current pose for each swerve module
         # These values are updated in `periodic()`
@@ -109,6 +134,9 @@ class CrescendoSwerveDrivetrain:
             Pose2d(),
             Pose2d()
         ]
+        '''
+        this creates another list to create a position facing at the x origin
+        '''
 
         # Simulation support
         self.fieldSim = Field2d()
@@ -129,10 +157,16 @@ class CrescendoSwerveDrivetrain:
             # Module's heading is its angle relative to the chassis heading
             module_angle = self.swerve_modules[i].getState().angle + self.get_pose().rotation() 
             self.module_poses[i] = Pose2d(module_position, module_angle)
+        '''
+        this updates the module position using 2d values to find the robots position with its angle and the x and y position
+        '''
 
         # Update field sim with information
         self.fieldSim.setRobotPose(self.get_pose())
         self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
+        '''
+        this  gives values of the robots pos into the robot field simulator
+        '''
 
 
     def drive(self, xSpeed, ySpeed, rot, fieldRelative : bool) -> None:
@@ -141,12 +175,18 @@ class CrescendoSwerveDrivetrain:
         self.swerveModuleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
+        # Desaturate wheel speeds will slow down the speed or angle of a module if it passed the max speed or angle.
+
+        '''
+        This function takes in the joystick inputs and sets up the field relative to be able to operate the robot with inputs.
+        '''
 
         self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
         self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
         self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
         self.backRight.setDesiredState(self.swerveModuleStates[3], True)
 
+        #set desired state, updates the speed and angle on which each module has to reach periodically.
 
     def _updateOdometry(self):
         self.odometry.update(
@@ -156,6 +196,9 @@ class CrescendoSwerveDrivetrain:
             self.backLeft.getPosition(),
             self.backRight.getPosition()
         )
+        '''
+        This function updates the robots position and angle periodically every 50 ms
+        '''
 
     def get_heading(self) -> Rotation2d:
         return Rotation2d.fromDegrees(-self.gyro.getYaw())

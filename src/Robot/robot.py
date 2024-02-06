@@ -12,7 +12,6 @@ import math
 
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
-# from CrescendoSwerveModule import CrescendoSwerveModule
 
 class Myrobot(wpilib.TimedRobot):
 
@@ -22,8 +21,6 @@ class Myrobot(wpilib.TimedRobot):
 
         self.xbox = wpilib.XboxController(0)
         self.swerve = CrescendoSwerveDrivetrain()
-
-
     
 
 
@@ -38,7 +35,7 @@ class Myrobot(wpilib.TimedRobot):
         
     def readAbsoluteEncoders(self) :
         """
-        This reads the four absolute encoders 
+        This reads the four absolute encoders position
         """
         self.absEnc1 = self.swerve.backLeft.absEnc.getAbsolutePosition()
         self.absEnc2 = self.swerve.frontRight.absEnc.getAbsolutePosition()
@@ -59,9 +56,9 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3 ))
         wpilib.SmartDashboard.putString('DB/String 3',"Enc Back Right {:4.3f}".format( self.absEnc4 ))
         wpilib.SmartDashboard.putString('DB/String 4',f"Turn motor pos BR  {self.turnmotor1:4.1f}")
-        """
-        This is the internal turning motor encoder position.
-        """
+        
+        # This is the internal turning motor encoder position.
+        
 
         wpilib.SmartDashboard.putString('DB/String 5', f"Back left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc1):.0f}")
         wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
@@ -84,7 +81,6 @@ class Myrobot(wpilib.TimedRobot):
         """
         This returns the absolute encoder value as a 0 to 360, not from 0 to 1
         """
-        
         return absEncoderValue * 360
             
     def disabledInit(self):
@@ -92,6 +88,10 @@ class Myrobot(wpilib.TimedRobot):
 
     def disabledPeriodic(self):
         self.readAbsoluteEncodersAndOutputToSmartDashboard()
+        """
+        this is one of the areas where we output the values in read abs encoders to the dashboard using the output
+        function periodically
+        """
 
     def disabledExit(self):
         pass
@@ -115,7 +115,10 @@ class Myrobot(wpilib.TimedRobot):
 
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
         
-        # allow joystick to be off from center without giving input
+        """
+        we initialize the joysticks periodically and set the joysticks deadband so there will be no movement
+        until the controller passes the value
+        """
 
         self.joystick_x = -self.xbox.getLeftX()
         self.joystick_y = -self.xbox.getLeftY()
@@ -125,12 +128,24 @@ class Myrobot(wpilib.TimedRobot):
         rot = applyDeadband(rot, 0.05)
         
         #1/22/2024 commented out whats below for more simplification, we dont need joystickscaling maxspeed etc.
+        """
+        self.magnitude calculates how far the joystick is pushed from the center. it calculates the square root
+        of joystick_X^2 and joystick_y^2 using pythagorean theorem to find the distance of the joystick from its center
+        """
 
         self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
+        """
+        self.angle uses a rotation 2d object and the gets the joystick values and finds out the direction the joystick is facing.
+        can be used to rotate the wheels toward the joysticks direction
+        """
+
         self.angle = Rotation2d(self.joystick_x, self.joystick_y)
 
         # self.state = SwerveModuleState(self.magnitude, self.angle)
         self.swerve.drive(self.joystick_x/3, self.joystick_y/3, rot, fieldRelativeParam)
+        '''
+        this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
+        '''
         
         wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
         

@@ -40,6 +40,10 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
         self.absEnc.setPositionOffset(absEncOffset)
         #2/2 also new code
+        '''
+        this section of __init__ sets up the arguments needed to get the specific values like the motor or encoder id's for drivetrain and the
+        offset and also creates objets for each argument to be accesible in drivetrain.
+        '''
        
 
         self.driveMotor.setInverted(False) 
@@ -55,15 +59,19 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.PIDController.setD(0)
         self.PIDController.setFF(0)
         self.PIDController.setOutputRange(-1, 1)
+        '''
+        this sets the PID loop in the code for the turnmotor to help remove more error when going to a position like accounting for the difficulty
+        when the wheel is being moved along the carpet etc.
+        '''
         # self.PIDController.setIZone(0)                                           #Maybe add later
          
-        # absolutePos = self.absEnc.getAbsolutePosition()
+        absolutePos = self.absEnc.getAbsolutePosition()
         # print(absolutePos) # Print the value as a diagnostic.
 
         # UPDATE CODE FUCTION IS FROM CTRE
-        # initPos = self.DegToTurnCount(self.absEnc.getAbsolutePosition)
         # self.turningMotor.setSelectedSensorPosition(self.absEnc.getAbsolutePosition * (150 / 7))    # 2/2 new code                                             #'''SWAP BACK TUES AM'''
-        # #print(self.turningMotor.setSelectedSensorPosition(initPos))   
+        # #print(self.turningMotor.setSelectedSensorPosition(initPos)) 
+        self.turnMotorEncoder.setPosition(absolutePos)  
         
         tempPos = self.turnMotorEncoder.getPosition()                                          #SWAP BACK TUES AM'''
 
@@ -84,7 +92,9 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         
     def getState(self) -> SwerveModuleState:
         return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
-
+    """
+    this function gets the individual speed and rotation values that the robot needs to get to
+    """
     
     def getPosition(self) -> SwerveModulePosition:
         drivePos = self.driveCountToMeters(self.driveMotorEncoder.getPosition())
@@ -132,20 +142,24 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
     def resetEncoders(self) -> None:
         self.driveEncoder.reset()
         self.turningEncoder.reset()
-    
+        #This resets the encoders to 0 when the robot starts
+
     def DegToTurnCount(self, deg):
         return deg * (1.0/360.0) * self.TURNING_GEAR_RATIO #150/7 : 1
-    
+    #deg to count 
+
     def TurnCountToDeg(self, count):
         return count * 360.0 / self.TURNING_GEAR_RATIO
-    
+    #count to deg
+
     def driveCountToMeters(self, x):
         output = (x) * (self.WHEELDIAMETER * math.pi) / self.DRIVE_GEAR_RATIO #6.75 : 1
         return output
     
     def metersToDriveCount(self, x):
         return (x / 1) / (self.WHEELDIAMETER * math.pi) * self.DRIVE_GEAR_RATIO
-    
+    #count to meters a second
+
     def driveVelocitytToMPS(self, x):
         return self.driveCountToMeters(x / 60)     #.getSelectedSensorVelocity measures counts per 1/10 of a second, rather than per second
 
@@ -208,4 +222,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
     def toggleDriveMotorInverted(self):
         self.driveMotor.setInverted(not self.driveMotor.getInverted())
-
+        '''
+        inverting the drive motors to be able to solve issue of robot drive being inverted. using a button we can press incase motors
+        are inverted in the start of a match to reinvert them
+        '''
