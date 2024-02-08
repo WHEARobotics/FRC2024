@@ -33,9 +33,17 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
         
         self.PIDController = self.turningMotor.getPIDController()
-        self.InternalEncoder = self.turningMotor.getEncoder()
+
+        self.turnMotorEncoder = self.turningMotor.getEncoder()
+        self.driveMotorEncoder = self.driveMotor.getEncoder()
 
         self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
+        self.absEnc.setPositionOffset(absEncOffset)
+        #2/2 also new code
+        '''
+        this section of __init__ sets up the arguments needed to get the specific values like the motor or encoder id's for drivetrain and the
+        offset and also creates objets for each argument to be accesible in drivetrain.
+        '''
        
 
         self.driveMotor.setInverted(False) 
@@ -51,16 +59,21 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.PIDController.setD(0)
         self.PIDController.setFF(0)
         self.PIDController.setOutputRange(-1, 1)
+        '''
+        this sets the PID loop in the code for the turnmotor to help remove more error when going to a position like accounting for the difficulty
+        when the wheel is being moved along the carpet etc.
+        '''
         # self.PIDController.setIZone(0)                                           #Maybe add later
          
-        # absolutePos = self.absEnc.getAbsolutePosition()
+        absolutePos = self.absEnc.getAbsolutePosition()
         # print(absolutePos) # Print the value as a diagnostic.
 
         # UPDATE CODE FUCTION IS FROM CTRE
-        # self.turningMotor.setSelectedSensorPosition(self.initPos)                                                  #'''SWAP BACK TUES AM'''
-        # #print(self.turningMotor.setSelectedSensorPosition(initPos))   
+        # self.turningMotor.setSelectedSensorPosition(self.absEnc.getAbsolutePosition * (150 / 7))    # 2/2 new code                                             #'''SWAP BACK TUES AM'''
+        # #print(self.turningMotor.setSelectedSensorPosition(initPos)) 
+        self.turnMotorEncoder.setPosition(absolutePos)  
         
-        tempPos = self.InternalEncoder.getPosition()                                          #SWAP BACK TUES AM'''
+        tempPos = self.turnMotorEncoder.getPosition()                                          #SWAP BACK TUES AM'''
 
         print(self.TurnCountToDeg(tempPos))
 
@@ -73,25 +86,27 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         # Try to set the Falcon, either to zero or to the absolute position.
         # initPos = 0                                                 
-        # initPos = self.DegToTurnCount(absolutePos)
+        
 
 
         
     def getState(self) -> SwerveModuleState:
-        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
-
+        return SwerveModuleState(self.driveVelocitytToMPS(self.driveMotor.getSelectedSensorVelocity()), Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs a rate in meters/sec and turning angle in radians.
+    """
+    this function gets the individual speed and rotation values that the robot needs to get to
+    """
     
     def getPosition(self) -> SwerveModulePosition:
-        drivePos = self.driveCountToMeters(self.driveMotor.getPosition())
+        drivePos = self.driveCountToMeters(self.driveMotorEncoder.getPosition())
         wpilib.SmartDashboard.putString('DB/String 4',"Pos_Degrees: {:4.2f}".format(drivePos))
-        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.InternalEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
+        return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
 
 
     def setDesiredState(self, desiredState: SwerveModuleState, open_loop: bool) -> None:
         '''This method is does all the work.  Pass it a desired SwerveModuleState (that is, wheel rim velocity and
         turning direction), and it sets the feedback loops to achieve that.'''
 
-        self.present_degrees = self.TurnCountToDeg(self.InternalEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
+        self.present_degrees = self.TurnCountToDeg(self.turnMotorEncoder.getPosition()) #Soren here, I think instead of tuning motor selected sensor, we might have to use absolute encoder
         present_rotation = Rotation2d.fromDegrees(self.present_degrees)
         state = self.optimize(desiredState, present_rotation)
 
@@ -127,20 +142,24 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
     def resetEncoders(self) -> None:
         self.driveEncoder.reset()
         self.turningEncoder.reset()
-    
+        #This resets the encoders to 0 when the robot starts
+
     def DegToTurnCount(self, deg):
         return deg * (1.0/360.0) * self.TURNING_GEAR_RATIO #150/7 : 1
-    
+    #deg to count 
+
     def TurnCountToDeg(self, count):
         return count * 360.0 / self.TURNING_GEAR_RATIO
-    
+    #count to deg
+
     def driveCountToMeters(self, x):
         output = (x) * (self.WHEELDIAMETER * math.pi) / self.DRIVE_GEAR_RATIO #6.75 : 1
         return output
     
     def metersToDriveCount(self, x):
         return (x / 1) / (self.WHEELDIAMETER * math.pi) * self.DRIVE_GEAR_RATIO
-    
+    #count to meters a second
+
     def driveVelocitytToMPS(self, x):
         return self.driveCountToMeters(x / 60)     #.getSelectedSensorVelocity measures counts per 1/10 of a second, rather than per second
 
@@ -148,10 +167,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         pass
 
         #Added Jan 26 2024, Line 266 to 269 from utilities
-    def joystickscaling(input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
-        a = 1
-        output = a * input * input * input + (1 - a) * input
-        return output
+   
 
 
     def optimize(self, desired_state: SwerveModuleState, current_angle: Rotation2d) -> SwerveModuleState:
@@ -206,4 +222,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
     def toggleDriveMotorInverted(self):
         self.driveMotor.setInverted(not self.driveMotor.getInverted())
-
+        '''
+        inverting the drive motors to be able to solve issue of robot drive being inverted. using a button we can press incase motors
+        are inverted in the start of a match to reinvert them
+        '''
