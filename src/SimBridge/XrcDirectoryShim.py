@@ -82,7 +82,8 @@ class XrcDirectoryShim:
 
         # Convert the gamepad controls (as our swerve-drive pilot uses the controller) to the equivalent (or as close as
         # possible) tank-drive controls that are expected by xRC
-        swerve_control_state = self.current_control_state.swerve_controls_to_tank_controls(self.limelight.get_botpose()[4])
+        #swerve_control_state = self.current_control_state.swerve_controls_to_tank_controls(self.limelight.get_botpose()[4])
+        swerve_control_state = self.current_control_state
 
         # Convert the controller game state into the format expected by xRCsim
         control_string = swerve_control_state.to_xrc_control_strings()

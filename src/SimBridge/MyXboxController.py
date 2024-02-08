@@ -67,10 +67,6 @@ class MyXboxController:
         self.controller_state.right_x = 0 if abs(self.controller_state.right_x) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_x
         self.controller_state.right_y = 0 if abs(self.controller_state.right_y) < MyXboxController.JOYSTICK_DEADBAND else self.controller_state.right_y
 
-        # Damp the joystick values
-        # TODO: This could be controlled dynamically. Like if the robot is in a "fine control" mode
-        self.controller_state.right_x = self.controller_state.right_x * 0.5
-        self.controller_state.right_y = self.controller_state.right_y * 0.5
 
     def on_button_pressed(self, event : pygame.event.Event, button_down : bool) -> None:
         """

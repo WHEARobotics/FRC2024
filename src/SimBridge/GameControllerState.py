@@ -83,15 +83,54 @@ class GameControllerState:
         )
 
         # Convert robot rotation to radians
-        robot_rotation = -(robot_rotation_positive_degrees % 360) * math.pi / 180
+        robot_rotation_rad = (robot_rotation_positive_degrees % 360) * math.pi / 180
 
 
-        # Calculating the rotated coordinates
-        rotated_x = tank_control.left_x * math.cos(robot_rotation) - tank_control.left_y * math.sin(robot_rotation)
-        rotated_y = tank_control.left_x * math.sin(robot_rotation) + tank_control.left_y * math.cos(robot_rotation)
+        tank_control.left_x, tank_control.left_y = self.calc_tankXY_for_swerve(robot_rotation_rad, tank_control.left_x, tank_control.left_y)
 
-        # The field is rotated and inverted relative to gamepad joystick, so we need to swap x and y and invert
-        tank_control.left_x = rotated_y
-        tank_control.left_y = -rotated_x
+        tank_control.right_x, tank_control.right_y = self.calc_tankRotation_for_swerve(robot_rotation_rad, tank_control.right_x, tank_control.right_y)
+
 
         return tank_control
+
+    def calc_tankXY_for_swerve(self, robot_rotation_rad, swerve_x, swerve_y):
+        """
+        Calculate the tank controls for a swerve drive robot.
+        """
+        # Calculating the rotated coordinates
+        rotated_x = swerve_x * math.cos(robot_rotation_rad) - swerve_x * math.sin(robot_rotation_rad)
+        rotated_y = swerve_x * math.sin(robot_rotation_rad) + swerve_y * math.cos(robot_rotation_rad)
+
+        # The field is rotated and inverted relative to gamepad joystick, so we need to swap x and y
+        left_x = -rotated_y
+        left_y = rotated_x
+        return left_x, left_y
+
+    def calc_tankRotation_for_swerve(self, robot_rotation_rad, swerve_x, swerve_y):
+        # Right joystick should be field-relative angle desired
+        desired_angle_rad = -math.atan2(swerve_y, swerve_x)
+        right_magnitude = math.sqrt(swerve_x ** 2 + swerve_y ** 2)
+
+        x = 0
+        y = 0
+        DEADZONE = 0.1
+        if right_magnitude > DEADZONE:
+            # Turn the robot towards the desired angle
+            delta_rotation = desired_angle_rad - robot_rotation_rad
+            if delta_rotation > math.pi:
+                delta_rotation -= 2 * math.pi
+            if delta_rotation < -math.pi:
+                delta_rotation += 2 * math.pi
+            # If rotation is to the left, just slam it
+            if delta_rotation < 0:
+                x = 0.2
+                y = 0
+            else:
+                x = -0.2
+                y = 0
+        else:
+            # If the joystick is not being used, stop the robot
+            x = 0
+            y = 0
+
+        return x, y
