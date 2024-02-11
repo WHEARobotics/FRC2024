@@ -23,10 +23,10 @@ class CrescendoSwerveDrivetrain:
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    ABSOLUTEPOS_1 = -0.061 #0.047  # Back Left
-    ABSOLUTEPOS_2 = -0.050  # Front Right
-    ABSOLUTEPOS_3 = -0.862  # Front Left
-    ABSOLUTEPOS_4 = -0.204 #0.148  # Back Right
+    BACK_LEFT_OFFSET =0.0# 0.941   # Back Left
+    FRONT_RIGHT_OFFSET =0.0# 0.984   # Front Right
+    FRONT_LEFT_OFFSET =0.0# 0.161   # Front Left
+    BACK_RIGHT_OFFSET =0.0# 0.895   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.
@@ -50,13 +50,13 @@ class CrescendoSwerveDrivetrain:
         '''
 
         #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
-        self.backLeft = CrescendoSwerveModule(3, 2, 2, self.ABSOLUTEPOS_1)
+        self.backLeft = CrescendoSwerveModule(4, 6, 3, self.BACK_LEFT_OFFSET)
     
-        self.frontRight = CrescendoSwerveModule(7, 6, 0, self.ABSOLUTEPOS_2)  #OG offset was 106.424  
+        self.frontRight = CrescendoSwerveModule(8, 13, 0, self.FRONT_RIGHT_OFFSET)  #OG offset was 106.424  
     
-        self.frontLeft = CrescendoSwerveModule(13, 8, 3, self.ABSOLUTEPOS_3)  #OG offset was 296.543
+        self.frontLeft = CrescendoSwerveModule(5, 3, 2, self.FRONT_LEFT_OFFSET)  #OG offset was 296.543
  
-        self.backRight = CrescendoSwerveModule(5, 4, 1, self.ABSOLUTEPOS_4)
+        self.backRight = CrescendoSwerveModule(2, 7, 1, self.BACK_RIGHT_OFFSET)
         
         self.swerve_modules = [ self.frontLeft, self.frontRight, self.backLeft, self.backRight ]
         '''
@@ -180,11 +180,12 @@ class CrescendoSwerveDrivetrain:
         '''
         This function takes in the joystick inputs and sets up the field relative to be able to operate the robot with inputs.
         '''
+        swervestate = SwerveModuleState(0.1, Rotation2d(0.0))
 
-        self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
-        self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
-        self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
-        self.backRight.setDesiredState(self.swerveModuleStates[3], True)
+        self.frontLeft.setDesiredState(swervestate, True)# (self.swerveModuleStates[0], True)
+        self.frontRight.setDesiredState(swervestate, True)# (self.swerveModuleStates[1], True)
+        self.backLeft.setDesiredState(swervestate, True)# (self.swerveModuleStates[2], True)
+        self.backRight.setDesiredState(swervestate, True)# (self.swerveModuleStates[3], True)
 
         #set desired state, updates the speed and angle on which each module has to reach periodically.
 

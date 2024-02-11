@@ -13,6 +13,7 @@ import math
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 
+
 class Myrobot(wpilib.TimedRobot):
 
  
@@ -21,9 +22,18 @@ class Myrobot(wpilib.TimedRobot):
 
         self.xbox = wpilib.XboxController(0)
         self.swerve = CrescendoSwerveDrivetrain()
-    
+        
 
+        self.motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor2 = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
 
+        #self.motor.setInverted(True)
+        self.motor.setInverted(True)
+        #self.motor2.setInverted(True)  
+        self.motor2.setInverted(False)
+
+        self.motor2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
+        self.motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         
         # analogPort = self.swerve.backRight.turningMotor.absoluteEncoderChannel # 0, 1, 2, 3
         # encoder = AnalogEncoder(analogPort)
@@ -37,12 +47,17 @@ class Myrobot(wpilib.TimedRobot):
         """
         This reads the four absolute encoders position
         """
-        self.absEnc1 = self.swerve.backLeft.absEnc.getAbsolutePosition()
-        self.absEnc2 = self.swerve.frontRight.absEnc.getAbsolutePosition()
-        self.absEnc3 = self.swerve.frontLeft.absEnc.getAbsolutePosition()
-        self.absEnc4 = self.swerve.backRight.absEnc.getAbsolutePosition()
-
-        self.turnmotor1 = self.swerve.backRight.turnMotorEncoder.getPosition()
+        self.absEnc1 = self.swerve.backLeft.correctedEncoderPosition()#* 360
+        self.absEnc2 = self.swerve.frontRight.correctedEncoderPosition()# * 360
+        self.absEnc3 = self.swerve.frontLeft.correctedEncoderPosition()# * 360
+        self.absEnc4 = self.swerve.backRight.correctedEncoderPosition()# * 360
+        self.absEnc2b = self.swerve.frontRight.correctedEncoderPosition() * 360
+        
+        self.turnmotor1 = self.swerve.backLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+    
         #It get the values of the internal encoder
 
     def outputToSmartDashboard(self) :
@@ -50,20 +65,30 @@ class Myrobot(wpilib.TimedRobot):
         This puts the raw values of the encoder
         on the SmartDashboard as DB/String[0-8].
         """
+        self.trunNurmal = self.turnmotor4 % 360.0
 
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1 ))
-        wpilib.SmartDashboard.putString('DB/String 1',"Enc Front Right {:4.3f}".format( self.absEnc2 ))
-        wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3 ))
-        wpilib.SmartDashboard.putString('DB/String 3',"Enc Back Right {:4.3f}".format( self.absEnc4 ))
-        wpilib.SmartDashboard.putString('DB/String 4',f"Turn motor pos BR  {self.turnmotor1:4.1f}")
+        #wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+        wpilib.SmartDashboard.putString('DB/String 1',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
+        wpilib.SmartDashboard.putString('DB/String 3',"Enc Back Right {:4.3f}".format( self.absEnc4))
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
+
+
+        wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
+        
+
         
         # This is the internal turning motor encoder position.
         
 
-        wpilib.SmartDashboard.putString('DB/String 5', f"Back left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc1):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
+        # wpilib.SmartDashboard.putString('DB/String 5', f"Back left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc1):.0f}")
+        # wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
+        # wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
+        # wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
 
        
     def readAbsoluteEncodersAndOutputToSmartDashboard(self) :
@@ -106,12 +131,20 @@ class Myrobot(wpilib.TimedRobot):
         pass
  
     def teleopInit(self):
-        self.halfSpeed = False
+        self.halfSpeed = True
+        self.xbox = wpilib.XboxController(0)
+        
+        self.percent_output = 0.1
 
     def teleopPeriodic(self):
          self.driveWithJoystick(True)
          self.readAbsoluteEncodersAndOutputToSmartDashboard()
 
+         
+         self.Abutton = self.xbox.getAButton()
+         self.Bbutton = self.xbox.getBButton()
+
+        
 
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
         

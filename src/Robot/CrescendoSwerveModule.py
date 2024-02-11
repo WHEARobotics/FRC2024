@@ -37,8 +37,10 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.turnMotorEncoder = self.turningMotor.getEncoder()
         self.driveMotorEncoder = self.driveMotor.getEncoder()
 
-        self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
-        self.absEnc.setPositionOffset(absEncOffset)
+        self.absEnc = wpilib.AnalogInput(absoluteEncoderChannel)
+        # self.absEnc = wpilib.AnalogEncoder(absoluteEncoderChannel)
+        # self.absEnc.setPositionOffset(absEncOffset)
+        self.absEncOffset = absEncOffset
         #2/2 also new code
         '''
         this section of __init__ sets up the arguments needed to get the specific values like the motor or encoder id's for drivetrain and the
@@ -65,13 +67,17 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         '''
         # self.PIDController.setIZone(0)                                           #Maybe add later
          
-        absolutePos = self.absEnc.getAbsolutePosition()
+        # absolutePos = self.absEnc.getAbsolutePosition() - 0.50
         # print(absolutePos) # Print the value as a diagnostic.
+        #self.initPos = self.DegToTurnCount(absolutePos)
+
+        self.turnMotorEncoder.setPosition(0.0)#self.correctedEncoderPosition() * self.TURNING_GEAR_RATIO)
+
 
         # UPDATE CODE FUCTION IS FROM CTRE
         # self.turningMotor.setSelectedSensorPosition(self.absEnc.getAbsolutePosition * (150 / 7))    # 2/2 new code                                             #'''SWAP BACK TUES AM'''
         # #print(self.turningMotor.setSelectedSensorPosition(initPos)) 
-        self.turnMotorEncoder.setPosition(absolutePos)  
+       
         
         tempPos = self.turnMotorEncoder.getPosition()                                          #SWAP BACK TUES AM'''
 
@@ -167,6 +173,9 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         pass
 
         #Added Jan 26 2024, Line 266 to 269 from utilities
+    def correctedEncoderPosition(self):
+        return self.absEnc.getAverageVoltage() / wpilib.RobotController.getVoltage5V() - self.absEncOffset
+        #return self.absEnc.getAbsolutePosition() - self.absEncOffset
    
 
 
