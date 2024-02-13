@@ -23,10 +23,10 @@ class CrescendoSwerveDrivetrain:
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    BACK_LEFT_OFFSET =0.0# 0.941   # Back Left
-    FRONT_RIGHT_OFFSET =0.0# 0.984   # Front Right
-    FRONT_LEFT_OFFSET =0.0# 0.161   # Front Left
-    BACK_RIGHT_OFFSET =0.0# 0.895   # Back Right
+    BACK_LEFT_OFFSET = 0.265   # Back Left
+    FRONT_RIGHT_OFFSET =0.214  # Front Right
+    FRONT_LEFT_OFFSET =0.032   # Front Left
+    BACK_RIGHT_OFFSET =0.865   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.

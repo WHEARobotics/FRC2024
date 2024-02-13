@@ -60,7 +60,9 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.PIDController.setI(0)
         self.PIDController.setD(0)
         self.PIDController.setFF(0)
-        self.PIDController.setOutputRange(-1, 1)
+        self.PIDController.setPositionPIDWrappingEnabled(True)
+        self.PIDController.setPositionPIDWrappingMinInput(0)
+        self.PIDController.setPositionPIDWrappingMaxInput(self.TURNING_GEAR_RATIO)
         '''
         this sets the PID loop in the code for the turnmotor to help remove more error when going to a position like accounting for the difficulty
         when the wheel is being moved along the carpet etc.
@@ -71,7 +73,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # print(absolutePos) # Print the value as a diagnostic.
         #self.initPos = self.DegToTurnCount(absolutePos)
 
-        self.turnMotorEncoder.setPosition(0.0)#self.correctedEncoderPosition() * self.TURNING_GEAR_RATIO)
+        self.turnMotorEncoder.setPosition(self.correctedEncoderPosition() * self.TURNING_GEAR_RATIO)
 
 
         # UPDATE CODE FUCTION IS FROM CTRE
@@ -174,8 +176,11 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         #Added Jan 26 2024, Line 266 to 269 from utilities
     def correctedEncoderPosition(self):
-        return self.absEnc.getAverageVoltage() / wpilib.RobotController.getVoltage5V() - self.absEncOffset
-        #return self.absEnc.getAbsolutePosition() - self.absEncOffset
+        AbsEncValue = self.absEnc.getAverageVoltage() / wpilib.RobotController.getVoltage5V() - self.absEncOffset
+        if AbsEncValue < 0.0:
+            AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
+        return AbsEncValue
+
    
 
 

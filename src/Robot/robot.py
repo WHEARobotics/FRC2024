@@ -67,17 +67,17 @@ class Myrobot(wpilib.TimedRobot):
         """
         self.trunNurmal = self.turnmotor4 % 360.0
 
-        #wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
-        wpilib.SmartDashboard.putString('DB/String 1',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+        wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
         wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
-        wpilib.SmartDashboard.putString('DB/String 3',"Enc Back Right {:4.3f}".format( self.absEnc4))
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
+        wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
+        # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
 
 
         wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
         wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
         wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
         
 
