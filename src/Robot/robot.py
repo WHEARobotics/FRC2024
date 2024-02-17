@@ -10,7 +10,7 @@ from wpilib import AnalogEncoder
 import time
 import math
 
-from vision import Vision #Vision file import
+# from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 
 
@@ -57,6 +57,8 @@ class Myrobot(wpilib.TimedRobot):
         self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
         self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
         self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+
+        self.pigeon = self.swerve.gyro.getYaw()
     
         #It get the values of the internal encoder
 
@@ -78,7 +80,8 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
         wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
         wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
         
 
         
@@ -140,9 +143,18 @@ class Myrobot(wpilib.TimedRobot):
          self.driveWithJoystick(True)
          self.readAbsoluteEncodersAndOutputToSmartDashboard()
 
-         
+
+         # self.botpose = self.vision.checkBotpose()
+
+
+         # self.current_yaw = self.botpose[5]#getting the yaw from the self.botpose table
+         # self.desired_yaw = 0 #where we want our yaw to go 
+
          self.Abutton = self.xbox.getAButton()
          self.Bbutton = self.xbox.getBButton()
+
+         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
+            self.swerve.gyro.setYaw(0)
 
         
 
@@ -158,7 +170,10 @@ class Myrobot(wpilib.TimedRobot):
         self.joystick_x = applyDeadband(self.joystick_x , 0.1)
         self.joystick_y = applyDeadband(self.joystick_y , 0.1)
         rot = -self.xbox.getRightX()
-        rot = applyDeadband(rot, 0.05)
+        rot = applyDeadband(rot, 0.15)
+
+        x_speed = self.joystickscaling(self.joystick_y)
+        y_speed = self.joystickscaling(self.joystick_x)
         
         #1/22/2024 commented out whats below for more simplification, we dont need joystickscaling maxspeed etc.
         """
@@ -175,12 +190,40 @@ class Myrobot(wpilib.TimedRobot):
         self.angle = Rotation2d(self.joystick_x, self.joystick_y)
 
         # self.state = SwerveModuleState(self.magnitude, self.angle)
-        self.swerve.drive(self.joystick_x/3, self.joystick_y/3, rot, fieldRelativeParam)
+        self.swerve.drive(x_speed/3, y_speed/3, rot, fieldRelativeParam)
         '''
         this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
         '''
         
         wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
+
+         
+    def calculate_desired_direction(self, desired_angle, current_angle):
+        if current_angle >180:
+            current_angle = current_angle - 360
+        if desired_angle >180:
+            desired_angle = desired_angle - 360
+        desired_direction = desired_angle - current_angle
+        return desired_direction
+    
+    # def robot_april_tag_orientation(self, rotation, desired_angle, current_angle):
+    #     desired_state = (0.0, Rotation2d(0.0))
+    #     if not current_angle > 0 and not current_angle < 1:
+    #         self.frontLeft.setDesiredState(desired_state, True)
+    #         self.frontRight.setDesiredState(desired_state, True)
+    #         self.backLeft.setDesiredState(desired_state, True)
+    #         self.backRight.setDesiredState(desired_state, True)
+    #     elif current_angle > 0:
+    #         desired_state = 
+    # random stuff will be worked on later
+
+    
+    def joystickscaling(self, input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
+        a = 1
+        output = a * input * input * input + (1 - a) * input
+        return output
+
+
         
         
     def teleopExit(self):

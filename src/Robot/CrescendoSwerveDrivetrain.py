@@ -5,7 +5,7 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.controller import PIDController
 from wpilib import Field2d, SmartDashboard
 import wpilib
-import phoenix5
+import phoenix6
 from phoenix5 import sensors
 import wpimath.kinematics._kinematics
 import wpimath.geometry._geometry
@@ -13,20 +13,21 @@ import wpimath.geometry._geometry
 import math
 
 from CrescendoSwerveModule import CrescendoSwerveModule
+# from vision import Vision
 
 class CrescendoSwerveDrivetrain:
     # I'd suggest not try to use the units functionality, and just stick to floats.
     # Whether we use degrees or radians for angle is debatable:
     #  - radians is going to be slightly more efficient, to not be converting back and forth.
     #  - degrees is more familiar, and the performance hit may not be that great.
-    MAX_SPEED = 3.0
+    MAX_SPEED = 2.0
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
     BACK_LEFT_OFFSET = 0.265   # Back Left
-    FRONT_RIGHT_OFFSET =0.214  # Front Right
-    FRONT_LEFT_OFFSET =0.032   # Front Left
-    BACK_RIGHT_OFFSET =0.865   # Back Right
+    FRONT_RIGHT_OFFSET = 0.215  # Front Right
+    FRONT_LEFT_OFFSET = 0.032   # Front Left
+    BACK_RIGHT_OFFSET = 0.858   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.
@@ -75,7 +76,9 @@ class CrescendoSwerveDrivetrain:
         '''
 
 
+
         self.gyro = sensors.Pigeon2(14)
+
         """
         this creates the pigeon gyro object that is used to track the robots yaw angle to be able to use field relative.
         """
@@ -161,6 +164,7 @@ class CrescendoSwerveDrivetrain:
         this updates the module position using 2d values to find the robots position with its angle and the x and y position
         '''
 
+
         # Update field sim with information
         self.fieldSim.setRobotPose(self.get_pose())
         self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
@@ -171,7 +175,7 @@ class CrescendoSwerveDrivetrain:
 
     def drive(self, xSpeed, ySpeed, rot, fieldRelative : bool) -> None:
         chassis_speeds = ChassisSpeeds(xSpeed, ySpeed, rot) if not fieldRelative \
-            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(-self.gyro.getYaw()))
+            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(self.gyro.getYaw()))
         self.swerveModuleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
@@ -180,18 +184,17 @@ class CrescendoSwerveDrivetrain:
         '''
         This function takes in the joystick inputs and sets up the field relative to be able to operate the robot with inputs.
         '''
-        swervestate = SwerveModuleState(0.1, Rotation2d(0.0))
-
-        self.frontLeft.setDesiredState(swervestate, True)# (self.swerveModuleStates[0], True)
-        self.frontRight.setDesiredState(swervestate, True)# (self.swerveModuleStates[1], True)
-        self.backLeft.setDesiredState(swervestate, True)# (self.swerveModuleStates[2], True)
-        self.backRight.setDesiredState(swervestate, True)# (self.swerveModuleStates[3], True)
+       
+        self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
+        self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
+        self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
+        self.backRight.setDesiredState(self.swerveModuleStates[3], True)
 
         #set desired state, updates the speed and angle on which each module has to reach periodically.
 
     def _updateOdometry(self):
         self.odometry.update(
-            Rotation2d.fromDegrees(-self.gyro.getYaw()),
+            Rotation2d.fromDegrees(self.gyro.getYaw()),
             self.frontLeft.getPosition(),
             self.frontRight.getPosition(),
             self.backLeft.getPosition(),
@@ -202,7 +205,7 @@ class CrescendoSwerveDrivetrain:
         '''
 
     def get_heading(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(-self.gyro.getYaw())
+        return Rotation2d.fromDegrees(self.gyro.getYaw())
 
     def get_pose(self) -> Pose2d :
         return self.odometry.getPose()
@@ -221,9 +224,3 @@ class CrescendoSwerveDrivetrain:
     def toggleDriveMotorsInverted(self):
         for module in self.swerve_modules:
             module.toggleDriveMotorInverted()
-
- 
-    def joystickscaling(input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
-        a = 1
-        output = a * input * input * input + (1 - a) * input
-        return output

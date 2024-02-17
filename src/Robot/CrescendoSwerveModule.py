@@ -51,8 +51,8 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.driveMotor.setInverted(False) 
         self.turningMotor.setInverted(True) #Positive comand resoluts in couterclockwise turning
 
-        self.driveMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
-        self.turningMotor.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.driveMotor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.turningMotor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
 
 
         #THIS WAS USED TO REPLACE THE ABOVE CTRE CODE FROM THE REV LIBRARY ON REV MIGRATING (NOT FORM READ THE DOCS)
@@ -85,7 +85,7 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
         print(self.TurnCountToDeg(tempPos))
 
-        self.MAX_SPEED = 1    #6380 rpm * (4in * 0.0254 * 3.14) / 6.75 / 60 = 5.02 METERS PER SECOND unweighted
+        self.MAX_SPEED = 0.8 #6380 rpm * (4in * 0.0254 * 3.14) / 6.75 / 60 = 5.02 METERS PER SECOND unweighted
         
         # UPDATE CODE FUCTION FROM CTRE
         # Get CANCoder position
