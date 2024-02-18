@@ -1,4 +1,3 @@
-import rev
 import wpilib
 import wpilib.drive
 import wpimath
@@ -6,12 +5,13 @@ from wpimath import applyDeadband
 from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d, Translation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
-from wpilib import AnalogEncoder
 import time
 import math
+import rev
 
-# from vision import Vision #Vision file import
+from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
+from CrescendoSwerveModule import CrescendoSwerveModule
 
 
 class Myrobot(wpilib.TimedRobot):
@@ -21,23 +21,30 @@ class Myrobot(wpilib.TimedRobot):
     def robotInit(self):
 
         self.xbox = wpilib.XboxController(0)
+
+
+        self.vision = Vision()
         self.swerve = CrescendoSwerveDrivetrain()
+
+
+
         
 
         self.motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.motor2 = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor3 = rev.CANSparkMax(9, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
 
         #self.motor.setInverted(True)
-        self.motor.setInverted(True)
+        self.motor.setInverted(False)
         #self.motor2.setInverted(True)  
-        self.motor2.setInverted(False)
+        self.motor2.setInverted(True)
+        self.motor3.setInverted(True)
 
         self.motor2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         self.motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        
-        # analogPort = self.swerve.backRight.turningMotor.absoluteEncoderChannel # 0, 1, 2, 3
-        # encoder = AnalogEncoder(analogPort)
-        # print(encoder.getAbsolutePosition())
+        self.motor3.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
+
+
 
         
         
@@ -115,11 +122,7 @@ class Myrobot(wpilib.TimedRobot):
         pass
 
     def disabledPeriodic(self):
-        self.readAbsoluteEncodersAndOutputToSmartDashboard()
-        """
-        this is one of the areas where we output the values in read abs encoders to the dashboard using the output
-        function periodically
-        """
+        pass
 
     def disabledExit(self):
         pass
@@ -128,11 +131,34 @@ class Myrobot(wpilib.TimedRobot):
         pass
 
     def autonomousPeriodic(self):
-        self.readAbsoluteEncodersAndOutputToSmartDashboard()
+        botpose = self.vision.checkBotpose()
+            
+
+        if None != botpose and len(botpose) > 0 :
+            x = botpose[0]
+            y = botpose[1]
+            wpilib.SmartDashboard.putString("DB/String 0", str(x))    
+            wpilib.SmartDashboard.putString("DB/String 1", str(y))    
+            
+            current_yaw = botpose[5]#getting the yaw from the self.botpose table
+            desired_yaw = 0 #where we want our yaw to go 
+           
+            current_yaw = botpose[5]#getting the yaw from the self.botpose table
+            desired_yaw = 0 #where we want our yaw to go 
+            direction_to_travel = self.calculate_desired_direction(desired_yaw, current_yaw)
+            if direction_to_travel > 2:
+                self.swerve.drive(0, 0, 0.2, True)
+            elif direction_to_travel < 0:
+                self.swerve.drive(0, 0, -0.2, True)
+            else:
+                self.swerve.drive(0, 0, 0.0, True)
+        else:
+           wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
+           self.swerve.drive(0, 0, 0.0, True)   
 
     def autonomousExit(self):
         pass
- 
+
     def teleopInit(self):
         self.halfSpeed = True
         self.xbox = wpilib.XboxController(0)
@@ -140,8 +166,31 @@ class Myrobot(wpilib.TimedRobot):
         self.percent_output = 0.1
 
     def teleopPeriodic(self):
-         self.driveWithJoystick(True)
-         self.readAbsoluteEncodersAndOutputToSmartDashboard()
+        self.driveWithJoystick(False)
+        self.Abutton = self.xbox.getAButton()
+        self.Bbutton = self.xbox.getBButton()
+        self.Xbutton = self.xbox.getXButton()
+        self.Ybutton = self.xbox.getYButton()
+        self.RightBumper = self.xbox.getRightBumper()
+        self.LeftBumper = self.xbox.getLeftBumper()
+
+        self.botpose = self.vision.checkBotpose()
+
+        if self.Abutton:
+            self.motor2.set(-self.percent_output * -1)
+            self.motor.set(-self.percent_output * -1)
+    
+        elif self.Bbutton:
+            self.motor.set(-self.percent_output * 5)
+            self.motor2.set(-self.percent_output * 5) 
+        
+        elif self.RightBumper:
+            self.motor3.set(-self.percent_output * 0.1)
+
+        else:
+            self.motor2.set(0)
+            self.motor.set(0)
+            self.motor.set(0)
 
 
          # self.botpose = self.vision.checkBotpose()
@@ -150,52 +199,116 @@ class Myrobot(wpilib.TimedRobot):
          # self.current_yaw = self.botpose[5]#getting the yaw from the self.botpose table
          # self.desired_yaw = 0 #where we want our yaw to go 
 
-         self.Abutton = self.xbox.getAButton()
-         self.Bbutton = self.xbox.getBButton()
+        self.Abutton = self.xbox.getAButton()
+        self.Bbutton = self.xbox.getBButton()
 
-         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
+        if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
             self.swerve.gyro.setYaw(0)
 
         
 
+        wpilib.SmartDashboard.putString('DB/String 1',"Motor 1 {:4.3f}".format(self.motor.get()))
+        wpilib.SmartDashboard.putString('DB/String 2',"Motor 2 {:4.3f}".format(self.motor2.get()))
+
+        if None != self.botpose and len(self.botpose) > 0 :
+            x = self.botpose[0]
+            y = self.botpose[1]
+            wpilib.SmartDashboard.putString("DB/String 0", str(x))    
+            wpilib.SmartDashboard.putString("DB/String 1", str(y))    
+            
+            current_yaw = self.botpose[5]#getting the yaw from the self.botpose table
+            desired_yaw = 0 #where we want our yaw to go 
+
+            speaker_x = 6.5273#the x coordinate of the speaker marked in the field drawings in cm.
+            speaker_y = 1.98#height of the speaker in meters.
+
+            bot_x = self.botpose[0]#the x coordinate from the botpose table
+            bot_y = self.botpose[1]#the y pos from the botpose table
+
+            self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
+            #fills the distance to speaker function with its required values for the calculate pitch function
+
+            self.calculate_pitch = self.calculate_desired_pitch(self.speaker_distance, bot_y)
+            #fills the calculate pitch function with necessary values to be properly called
+            pitch_in_degrees = self.radians_to_degrees(self.calculate_pitch)
+            #converts the pitch shooter angle to degrees from radians
+
+            wpilib.SmartDashboard.putString("DB/String 4", str(pitch_in_degrees))
+          
+           
+
+            
+            desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
+            wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
+            if abs(desired_direction) < 1.0:
+                wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
+            else:
+                wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
+        else:
+            wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
+
+        
+    def calculate_desired_direction(self,desired_angle,current_angle):
+        if current_angle >180:
+            current_angle = current_angle - 360
+        if desired_angle >180:
+            desired_angle = desired_angle - 360
+        desired_direction = desired_angle - current_angle
+        return desired_direction
+    '''
+    this function checks to see if the counter clockwise direction has less distance to travel than clockwise and calculates the quickest direction to the disired angle
+    '''
+    
+    def distance_to_speaker(self, bot_x, bot_y, speaker_x, speaker_y):
+        '''
+        distance to speaker calculates the distance from the robots pos to the speaker in meters. it uses the distance formula subtracting the desired x,y (the speaker)
+        by our current x, y and square roots the awnser to get our distance to be used in our shooter angle calculations 
+        '''
+        distance = math.sqrt(pow(2, speaker_x - bot_x)) + (pow(2, speaker_y - bot_y))
+        return distance
+    
+    
+    def calculate_desired_pitch(self, speaker_distance, target_height):
+        """
+        this function calculates the desired angle for the shooter at different positions. its measured by getting the distance to speaker and the height of the target
+        and dividing them and uses the arctan function to calculate the angle needed to shoot into the speaker.
+        """
+        desired_angle = math.atan2(speaker_distance, target_height) 
+        return desired_angle
+    
+    def radians_to_degrees(self, degrees):
+        '''
+        calculates radians into degrees
+        '''
+        return degrees * (180/math.pi)
+
+
+             
+    
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
         
-        """
-        we initialize the joysticks periodically and set the joysticks deadband so there will be no movement
-        until the controller passes the value
-        """
+        # allow joystick to be off from center without giving input
 
         self.joystick_x = -self.xbox.getLeftX()
         self.joystick_y = -self.xbox.getLeftY()
         self.joystick_x = applyDeadband(self.joystick_x , 0.1)
         self.joystick_y = applyDeadband(self.joystick_y , 0.1)
+
         rot = -self.xbox.getRightX()
         rot = applyDeadband(rot, 0.15)
 
         x_speed = self.joystickscaling(self.joystick_y)
         y_speed = self.joystickscaling(self.joystick_x)
         
-        #1/22/2024 commented out whats below for more simplification, we dont need joystickscaling maxspeed etc.
-        """
-        self.magnitude calculates how far the joystick is pushed from the center. it calculates the square root
-        of joystick_X^2 and joystick_y^2 using pythagorean theorem to find the distance of the joystick from its center
-        """
-
         self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
-        """
-        self.angle uses a rotation 2d object and the gets the joystick values and finds out the direction the joystick is facing.
-        can be used to rotate the wheels toward the joysticks direction
-        """
 
-        self.angle = Rotation2d(self.joystick_x, self.joystick_y)
-
-        # self.state = SwerveModuleState(self.magnitude, self.angle)
+       
         self.swerve.drive(x_speed/3, y_speed/3, rot, fieldRelativeParam)
         '''
         this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
         '''
         
-        wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
+      
 
          
     def calculate_desired_direction(self, desired_angle, current_angle):
@@ -226,6 +339,10 @@ class Myrobot(wpilib.TimedRobot):
 
         
         
+
+         
+            
+
     def teleopExit(self):
         pass
     
@@ -234,3 +351,5 @@ class Myrobot(wpilib.TimedRobot):
 
 if __name__ == '__main__':
     wpilib.run(Myrobot)
+
+	

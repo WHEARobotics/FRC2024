@@ -58,7 +58,7 @@ class Myrobot(wpilib.TimedRobot):
             desired_yaw = 0 #where we want our yaw to go 
 
             speaker_x = 6.5273#the x coordinate of the speaker marked in the field drawings in cm.
-            speaker_y = 1.98#height of the speaker in meters.
+            speaker_y = 2.18#height of the speaker in meters from the lowest point + 1 ft to get the middle of the speaker on where to aim.
 
             bot_x = self.botpose[0]#the x coordinate from the botpose table
             bot_y = self.botpose[1]#the y pos from the botpose table
@@ -72,6 +72,7 @@ class Myrobot(wpilib.TimedRobot):
             #converts the pitch shooter angle to degrees from radians
 
             wpilib.SmartDashboard.putString("DB/String 4", str(pitch_in_degrees))
+            wpilib.SmartDashboard.putString("DB/String 5", str(self.speaker_distance))
           
            
 
