@@ -7,6 +7,7 @@ from torchvision import transforms
 from cocohelper import COCOHelper
 import torch.multiprocessing as mp
 from torch.nn.utils.rnn import pad_sequence
+
 class ResizeAndPad:
     def __init__(self, size, fill=0, padding_mode='constant'):
         self.size = size
@@ -51,7 +52,6 @@ class NotesDataset(Dataset):
         self.img_dir = img_dir
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-
     def __len__(self):
         return len(self.imgs_df)
 
@@ -66,10 +66,12 @@ class NotesDataset(Dataset):
             transform = transforms.Compose([
                 ResizeAndPad(size=640),
                 transforms.ToTensor(),  # Convert image to a tensor
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the pixel values
+                #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the pixel values
             ])
             image_tensor = transform(image).to(self.device)
             assert image_tensor.shape == (3, 640, 640)
+            assert image_tensor.sum() > 0
+        image.close()
 
         #img_id = self.imgs_df.iloc
         img_id = idx #self.imgs_df.iloc[idx].id
@@ -89,6 +91,14 @@ class NotesDataset(Dataset):
 
         labels = img_anns.category_id
 
+        # Assert that the image_tensor contains at least one non-zero pixel
+        if image_tensor.sum() == 0:
+            print(f"Image tensor is all zeros for image {img_id}, {img_name}")
+            assert image_tensor.sum() > 0
+        if boxes_tensor.sum() == 0:
+            print(f"Boxes tensor is all zeros for image {img_id}")
+            assert boxes_tensor.sum() != 0
+
         sample = {'image': image_tensor, 'boxes': boxes_tensor}
 
         if len(img_anns) > 0:
@@ -101,7 +111,7 @@ class NotesDataset(Dataset):
 
 if __name__ == '__main__':
     mp.set_start_method("spawn", force=True)
-
+    torch.multiprocessing.set_sharing_strategy('file_system')
     data_dir = Path("/mnt/d/scratch_data/FRC2024")
     assert (os.path.exists(data_dir))
 
@@ -120,9 +130,11 @@ if __name__ == '__main__':
 
     img_dir = '/mnt/d/scratch_data/FRC2024/train'
     train_ds = NotesDataset(imgs_df, anns_df, img_dir)
-    train_dl = DataLoader(train_ds, batch_size=16, shuffle=True, num_workers=1, persistent_workers = False)
+    # Using multiple workers leads to file leaks (for some reason)
+    train_dl = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=0)#, persistent_workers = True, drop_last=True)
 
     for i, batch in enumerate(train_dl):
-        print(i)
-        print(batch)
-        raise Exception("Stop")
+        print(f"{i} ", end="", flush=True)
+        if i % 100 == 0:
+            print(f"Open files: {len(os.listdir('/proc/self/fd'))}")
+

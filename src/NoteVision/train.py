@@ -12,6 +12,8 @@ from torchinfo import summary
 import torchvision
 import math
 import numpy as np
+import time
+import mlflow
 
 from notesdataset import NotesDataset
 from sharkvision import SharkVision
@@ -62,15 +64,17 @@ def train_one_epoch(epoch, device, model, optimizer, loss_function, dataloader):
     for batch_ix, batch in enumerate(dataloader):
         print(".", end="", flush=True)
         input_images = batch['image']
-        boxes_batch = batch['boxes'].cpu().numpy()
-        targets = torch.from_numpy(bboxes_to_prediction_array(boxes_batch)).to(device)
+        assert input_images.sum() > 0
+        boxes_batch = batch['boxes'].float().cpu().numpy()
+        assert boxes_batch.sum() != 0
+        targets = torch.from_numpy(bboxes_to_prediction_array(boxes_batch)).to(device).float()
 
         # Forward pass
-        predictions = model(input_images)
+        predictions = model(input_images).float()
         # Compute loss
-        loss = loss_function(predictions, targets)
+        loss = loss_function(predictions, targets).float()
 
-        DEBUG_BOXES = True
+        DEBUG_BOXES = False
         if DEBUG_BOXES:
             # Get the first set of targets in the batch
             target = boxes_batch[0]
@@ -92,29 +96,89 @@ def train_one_epoch(epoch, device, model, optimizer, loss_function, dataloader):
 
         # Backward pass and optimize
         optimizer.zero_grad()  # Clears old gradients from the last step
+        assert loss.dtype == torch.float32
+        assert targets.dtype == torch.float32
+        assert predictions.dtype == torch.float32
         loss.backward()  # Computes the derivative of the loss w.r.t. the parameters
         optimizer.step()  # Updates the parameters
+        if batch_ix % 100 == 0:
+            print(f"Batch {batch_ix} loss {loss.item():.2f}")
+            mlflow.log_metric("loss", loss.item())
+            box_yes_no_f1 = calculate_box_yes_no_f1(predictions, targets)
+            mlflow.log_metric("box_yes_no_f1", box_yes_no_f1)
 
-        return loss
+    return loss
+
+def calculate_box_yes_no_f1(predictions, targets):
+    # The predictions and targets are a tensor of shape (batch_size, 500)
+    # The box yes/no f1 score is the f1 score of the yes/no classification
+    # for each of the 100 boxes, which occur every 5 elements in the tensor
+    # The first element is the yes/no classification, and the next 4 elements
+    # are the offset and scale values
+
+    # The f1 score is the harmonic mean of precision and recall
+
+    # Precision is the number of true positives divided by the number of true positives
+    # plus the number of false positives
+
+    # Recall is the number of true positives divided by the number of true positives
+    # plus the number of false negatives
+
+    true_positives = 0
+    false_positives = 0
+    true_negatives = 0
+    false_negatives = 0
+
+    for batch_ix in range(predictions.shape[0]):
+        prediction = predictions[batch_ix].detach().cpu().numpy()
+        target = targets[batch_ix].detach().cpu().numpy()
+        for i in range(0, 500, 5):
+            if target[i] == 1:
+                # This is a box
+                if prediction[i] > 0.5:
+                    # This is a true positive
+                    true_positives += 1
+                else:
+                    # This is a false negative
+                    false_negatives += 1
+            else:
+                # This is not a box
+                if prediction[i] > 0.5:
+                    # This is a false positive
+                    false_positives += 1
+                else:
+                    # This is a true negative
+                    true_negatives += 1
+        
+
+    precision = true_positives / (true_positives + false_positives + 1e-10)
+    recall = true_positives / (true_positives + false_negatives + 1e-10)
+    f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
+    return f1
+
 def train(num_epochs, device, model, optimizer, loss_function, dataloader):
-    for epoch in range(num_epochs):
-        print("Epoch", epoch + 1)
-        loss = train_one_epoch(epoch, device, model, optimizer, loss_function, dataloader)
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item()}')
+    mlflow.set_tracking_uri("sqlite:///mlruns.db")
+    mlflow.set_experiment("SharkVision")
+    with mlflow.start_run():
+        for epoch in range(num_epochs):
+            start = time.time()
+            print("Epoch", epoch + 1)
+            loss = train_one_epoch(epoch, device, model, optimizer, loss_function, dataloader)
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item()}, duration: {time.time() - start}")
 
 def main(device, imgs_df, anns_df, img_dir, train_dir):
     model = SharkVision().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
     #loss_function = torchvision.ops.generalized_box_iou_loss
     loss_function = nn.MSELoss()
     train_ds = NotesDataset(imgs_df, anns_df, img_dir)
-    train_dl = DataLoader(train_ds, batch_size=16, shuffle=True, num_workers=4, persistent_workers = False)
-    num_epochs = 5
+    train_dl = train_dl = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=0)
+    num_epochs = 50
     train(num_epochs, device, model, optimizer, loss_function, train_dl)
 
 if __name__ == '__main__':
     mp.set_start_method("spawn", force=True)
-    mp.set_sharing_strategy('file_system')
+    mp.set_sharing_strategy("file_system")
     data_dir = Path("/mnt/d/scratch_data/FRC2024")
     assert (os.path.exists(data_dir))
 
