@@ -109,7 +109,6 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         wpilib.SmartDashboard.putString('DB/String 4',"Pos_Degrees: {:4.2f}".format(drivePos))
         return SwerveModulePosition(drivePos, Rotation2d.fromDegrees(self.TurnCountToDeg(self.turnMotorEncoder.getPosition())))           # Rod: needs the distance the wheel has driven (meters), and the turning angle in radians
 
-
     def setDesiredState(self, desiredState: SwerveModuleState, open_loop: bool) -> None:
         '''This method is does all the work.  Pass it a desired SwerveModuleState (that is, wheel rim velocity and
         turning direction), and it sets the feedback loops to achieve that.'''

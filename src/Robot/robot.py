@@ -65,7 +65,7 @@ class Myrobot(wpilib.TimedRobot):
         self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
         self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
 
-        self.pigeon = self.swerve.gyro.getYaw()
+        self.pigeon = self.swerve.gyro.get_yaw()
     
         #It get the values of the internal encoder
 
@@ -202,8 +202,8 @@ class Myrobot(wpilib.TimedRobot):
         self.Abutton = self.xbox.getAButton()
         self.Bbutton = self.xbox.getBButton()
 
-        if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
-            self.swerve.gyro.setYaw(0)
+         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
+            self.swerve.gyro.set_yaw(0)
 
         
 

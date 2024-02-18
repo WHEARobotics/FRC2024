@@ -14,3 +14,4 @@ class Vision:
 
     def checkBotpose(self):
         return self.botpose.get()
+

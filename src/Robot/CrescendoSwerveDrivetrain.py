@@ -6,7 +6,7 @@ from wpimath.controller import PIDController
 from wpilib import Field2d, SmartDashboard
 import wpilib
 import phoenix6
-from phoenix5 import sensors
+from phoenix6 import hardware
 import wpimath.kinematics._kinematics
 import wpimath.geometry._geometry
 
@@ -77,7 +77,7 @@ class CrescendoSwerveDrivetrain:
 
 
 
-        self.gyro = sensors.Pigeon2(14)
+        self.gyro = hardware.Pigeon2(14)
 
         """
         this creates the pigeon gyro object that is used to track the robots yaw angle to be able to use field relative.
@@ -145,7 +145,8 @@ class CrescendoSwerveDrivetrain:
         self.fieldSim = Field2d()
         SmartDashboard.putData('Field', self.fieldSim)
 
-        self.gyro.setYaw(0)#8/3/2023 changed gyro reset to calibrate to possibly stop it from drifting
+        self.gyro.set_yaw(0)#8/3/2023 changed gyro reset to calibrate to possibly stop it from drifting
+        self.gyro_yaw = self.gyro.get_yaw().value
 
     def periodic(self):
         self._updateOdometry()
@@ -175,7 +176,7 @@ class CrescendoSwerveDrivetrain:
 
     def drive(self, xSpeed, ySpeed, rot, fieldRelative : bool) -> None:
         chassis_speeds = ChassisSpeeds(xSpeed, ySpeed, rot) if not fieldRelative \
-            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(self.gyro.getYaw()))
+            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(self.gyro.get_yaw()))
         self.swerveModuleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
@@ -194,7 +195,7 @@ class CrescendoSwerveDrivetrain:
 
     def _updateOdometry(self):
         self.odometry.update(
-            Rotation2d.fromDegrees(self.gyro.getYaw()),
+            Rotation2d.fromDegrees(self.gyro.get_yaw()),
             self.frontLeft.getPosition(),
             self.frontRight.getPosition(),
             self.backLeft.getPosition(),
@@ -205,7 +206,7 @@ class CrescendoSwerveDrivetrain:
         '''
 
     def get_heading(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(self.gyro.getYaw())
+        return Rotation2d.fromDegrees(self.gyro.get_yaw())
 
     def get_pose(self) -> Pose2d :
         return self.odometry.getPose()
