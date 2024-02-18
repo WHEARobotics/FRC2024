@@ -23,21 +23,34 @@ class Myrobot(wpilib.TimedRobot):
 
         self.frontLeft = CrescendoSwerveModule(3, 2, 0, 0)
 
+
    
 
         
+        #initializes both neo shooter motors
 
-        self.motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.motor2 = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor2 = rev.CANSparkMax(12, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor3 = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.motor4 = rev.CANSparkMax(9, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        
+        self.motor4.follow(self.motor3, True)
+        self.motor2.follow(self.motor, True)
 
-        #self.motor.setInverted(True)
-        self.motor.setInverted(False)
-        #self.motor2.setInverted(True)  
-        self.motor2.setInverted(True)
+        self.motor.setInverted(True)  
+        #self.motor2.setInverted(True)
+        self.motor3.setInverted(True)
+        self.motor4.setInverted(False)
 
         self.motor2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         self.motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
+        self.motor3.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.motor4.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
+        self.Motor4Encoder = self.motor4.getEncoder()
+        self.Motor4Encoder.setPosition(0.0)
+
+        
 
     
 
@@ -68,6 +81,11 @@ class Myrobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         self.driveWithJoystick(False)
+
+        self.motor4_position = self.Motor4Encoder.getPosition()
+
+       
+
         self.Abutton = self.xbox.getAButton()
         self.Bbutton = self.xbox.getBButton()
         self.Xbutton = self.xbox.getXButton()
@@ -75,41 +93,46 @@ class Myrobot(wpilib.TimedRobot):
         self.RightBumper = self.xbox.getRightBumper()
         self.LeftBumper = self.xbox.getLeftBumper()
 
+        # defines all of the Xbox controller buttons and initializes them
+        #outtake statement
         if self.Abutton:
-            self.motor2.set(-self.percent_output * -1)
-            self.motor.set(-self.percent_output * -1)
+            self.motor.set(self.percent_output * -1.5)
     
         elif self.Bbutton:
-            self.motor.set(-self.percent_output * 5)
-            self.motor2.set(-self.percent_output * 5) 
-        
-        # elif self.Xbutton:
-        #     self.motor2.set(self.percent_output * 5)
-        #     self.motor.set(self.percent_output * 5)
-        
-        # elif self.Ybutton:
-        #     self.motor2.set(self.percent_output * 2.5)
-        #     self.motor.set(self.percent_output * 2.5)
-        
-        # elif self.RightBumper:
-        #     self.motor2.set(self.percent_output * 7.5)
-        #     self.motor.set(self.percent_output * 7.5)
-
-        # if self.LeftBumper:
-        #      self.motor2.set(self.percent_output * 20)
-        #      self.motor.set(self.percent_output * 20)
+            self.motor.set(self.percent_output * 2.5)
         else:
-            self.motor2.set(0)
+           # self.motor2.set(0)
             self.motor.set(0)
+            self.motor3.set(0)
+
+        # shooter angle statement
+        if self.RightBumper:
+            self.motor3.set(-0.15)
+ 
+        elif self.LeftBumper:
+            self.motor3.set(0.15)
+
+        else:
+            self.motor3.set(0)
+
+        # intake statement
+        # if self.Xbutton:
+        #     self.motor4.set(-0.1)
+        # elif self.Ybutton:
+        #     self.motor4.set(0.1)
+        # else:
+        #     self.motor4.set(0.0)
 
         wpilib.SmartDashboard.putString('DB/String 1',"Motor 1 {:4.3f}".format(self.motor.get()))
-        wpilib.SmartDashboard.putString('DB/String 2',"Motor 2 {:4.3f}".format(self.motor2.get()))
+        #wpilib.SmartDashboard.putString('DB/String 2',"Motor 2 {:4.3f}".format(self.motor2.get()))
+        wpilib.SmartDashboard.putString('DB/String 2',"motor4_pos {:4.3f}".format(self.Motor4Encoder.getPosition()))
+        
 
 
              
     
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
-        
+        pass
         # allow joystick to be off from center without giving input
 
         self.joystick_x = -self.xbox.getLeftX()
@@ -143,7 +166,9 @@ class Myrobot(wpilib.TimedRobot):
         self.state = SwerveModuleState(self.magnitude, self.angle)
         self.frontLeft.setDesiredState(self.state, True)
         wpilib.SmartDashboard.putString('DB/String 1',"Rot2D {:4.3f}".format(self.angle.degrees()))
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc {:4.3f}".format(self.frontLeft.present_degrees))\
+        
+
         
 
          
