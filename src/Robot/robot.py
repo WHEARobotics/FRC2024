@@ -12,6 +12,7 @@ import rev
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
+from intake import Intake
 
 
 class Myrobot(wpilib.TimedRobot):
@@ -25,6 +26,7 @@ class Myrobot(wpilib.TimedRobot):
 
         self.vision = Vision()
         self.swerve = CrescendoSwerveDrivetrain()
+        self.intake = Intake()
 
 
 
@@ -165,6 +167,8 @@ class Myrobot(wpilib.TimedRobot):
         
         self.percent_output = 0.1
 
+        self.wrist_position = 1 # position of the wrist 1 = in 2 = out 3 = amp shot
+
     def teleopPeriodic(self):
         self.driveWithJoystick(False)
         self.Abutton = self.xbox.getAButton()
@@ -192,6 +196,17 @@ class Myrobot(wpilib.TimedRobot):
             self.motor.set(0)
             self.motor.set(0)
 
+        if self.Xbutton:
+            self.wrist_position = 1
+        elif self.Ybutton:
+            self.wrist_position = 2
+        elif self.LeftBumper:
+            self.wrist_position = 3
+
+        self.intake.periodic(self.wrist_position)
+
+        
+
 
          # self.botpose = self.vision.checkBotpose()
 
@@ -202,13 +217,20 @@ class Myrobot(wpilib.TimedRobot):
         self.Abutton = self.xbox.getAButton()
         self.Bbutton = self.xbox.getBButton()
 
-         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
+        if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
             self.swerve.gyro.set_yaw(0)
 
         
 
         wpilib.SmartDashboard.putString('DB/String 1',"Motor 1 {:4.3f}".format(self.motor.get()))
         wpilib.SmartDashboard.putString('DB/String 2',"Motor 2 {:4.3f}".format(self.motor2.get()))
+
+        # wpilib.SmartDashboard.putString('DB/String 1',f"Desired angle: {desired_angle:.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 2', f"Current angle: {current_angle:.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 3', f"Desired Turn Count: {desired_turn_count:.1f}")
+
+        # wpilib.SmartDashboard.putString('DB/String 4', f"abs_encoder_pos {self.correctedEncoderPosition():.3f}")
+        
 
         if None != self.botpose and len(self.botpose) > 0 :
             x = self.botpose[0]
