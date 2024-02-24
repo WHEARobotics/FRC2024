@@ -13,6 +13,7 @@ from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
 from intake import Intake
+from shooter import Shooter
 
 
 class Myrobot(wpilib.TimedRobot):
@@ -27,31 +28,9 @@ class Myrobot(wpilib.TimedRobot):
         self.vision = Vision()
         self.swerve = CrescendoSwerveDrivetrain()
         self.intake = Intake()
+        self.shooter = Shooter()
 
-
-
-        
-
-        self.motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.motor2 = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.motor3 = rev.CANSparkMax(9, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-
-        #self.motor.setInverted(True)
-        self.motor.setInverted(False)
-        #self.motor2.setInverted(True)  
-        self.motor2.setInverted(True)
-        self.motor3.setInverted(True)
-
-        self.motor2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.motor3.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-
-
-
-        
-        
-
-        
+    
     def readAbsoluteEncoders(self) :
         """
         This reads the four absolute encoders position
@@ -85,12 +64,14 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
 
 
-        wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+        # # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
+
+        wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.shooter.shooter_pivot_encoder.getPosition():4.1f}")
         
 
         
@@ -139,8 +120,13 @@ class Myrobot(wpilib.TimedRobot):
         if None != botpose and len(botpose) > 0 :
             x = botpose[0]
             y = botpose[1]
+            current_yaw = botpose[5]#getting the yaw from the self.botpose table
+            desired_yaw = 0 #where we want our yaw to go 
+
+            desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
             wpilib.SmartDashboard.putString("DB/String 0", str(x))    
-            wpilib.SmartDashboard.putString("DB/String 1", str(y))    
+            wpilib.SmartDashboard.putString("DB/String 1", str(y))
+            wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")    
             
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
@@ -148,14 +134,15 @@ class Myrobot(wpilib.TimedRobot):
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
             direction_to_travel = self.calculate_desired_direction(desired_yaw, current_yaw)
-            if direction_to_travel > 2:
-                self.swerve.drive(0, 0, 0.2, True)
-            elif direction_to_travel < 0:
-                self.swerve.drive(0, 0, -0.2, True)
+            if direction_to_travel < -1:
+                self.intake.periodic(1, 1)
+            elif direction_to_travel > 2:
+                self.intake.periodic(3, 2)
             else:
-                self.swerve.drive(0, 0, 0.0, True)
+                self.intake.periodic(0, 0)
         else:
            wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
+
            self.swerve.drive(0, 0, 0.0, True)   
 
     def autonomousExit(self):
@@ -164,10 +151,16 @@ class Myrobot(wpilib.TimedRobot):
     def teleopInit(self):
         self.halfSpeed = True
         self.xbox = wpilib.XboxController(0)
+
         
         self.percent_output = 0.1
 
-        self.wrist_position = 1 # position of the wrist 1 = in 2 = out 3 = amp shot
+        self.wrist_position = 1
+
+        self.intake_control = 0
+
+        self.shooter_action = 4
+        # is used to go to else, stopping the motor
 
     def teleopPeriodic(self):
         self.driveWithJoystick(False)
@@ -177,35 +170,43 @@ class Myrobot(wpilib.TimedRobot):
         self.Ybutton = self.xbox.getYButton()
         self.RightBumper = self.xbox.getRightBumper()
         self.LeftBumper = self.xbox.getLeftBumper()
+        self.leftStickButton = self.xbox.getLeftStickButton()
+        self.rightStickButton = self.xbox.getRightStickButton()
+        self.leftTrigger = self.xbox.getLeftTriggerAxis()
+        self.rightTrigger = self.xbox.getRightTriggerAxis()
+        
 
         self.botpose = self.vision.checkBotpose()
 
+        # if self.Xbutton:
+        #     self.shooter_action = 1
+        # elif self.Ybutton:
+        #     self.shooter_action = 2
+        # if self.RightBumper:
+        #     self.shooter_action = 3
+        # we commented out this for now because we dont want any position control for our first robot tests
+        if self.leftStickButton:
+            self.shooter_action = 3
+        elif self.rightStickButton:
+            self.shooter_action = 4
+        
+
         if self.Abutton:
-            self.motor2.set(-self.percent_output * -1)
-            self.motor.set(-self.percent_output * -1)
-    
-        elif self.Bbutton:
-            self.motor.set(-self.percent_output * 5)
-            self.motor2.set(-self.percent_output * 5) 
-        
-        elif self.RightBumper:
-            self.motor3.set(-self.percent_output * 0.1)
-
-        else:
-            self.motor2.set(0)
-            self.motor.set(0)
-            self.motor.set(0)
-
-        if self.Xbutton:
-            self.wrist_position = 1
-        elif self.Ybutton:
-            self.wrist_position = 2
-        elif self.LeftBumper:
             self.wrist_position = 3
+            self.intake_control = 1
+        elif self.Bbutton:
+            self.wrist_position = 4
+        elif self.LeftBumper:
+            self.wrist_position = 0
+            self.intake_control = 0
+        elif not self.Abutton or not self.Bbutton or not self.LeftBumper:
+            self.wrist_position = 0
+            self.intake_control = 0
+            
 
-        self.intake.periodic(self.wrist_position)
-
-        
+        # wrist positions for intake to move towards the requested location remove magic numbers!
+        self.intake.periodic(self.wrist_position, self.intake_control)
+        self.shooter.periodic(self.shooter_action, 4)
 
 
          # self.botpose = self.vision.checkBotpose()
@@ -221,9 +222,6 @@ class Myrobot(wpilib.TimedRobot):
             self.swerve.gyro.set_yaw(0)
 
         
-
-        wpilib.SmartDashboard.putString('DB/String 1',"Motor 1 {:4.3f}".format(self.motor.get()))
-        wpilib.SmartDashboard.putString('DB/String 2',"Motor 2 {:4.3f}".format(self.motor2.get()))
 
         # wpilib.SmartDashboard.putString('DB/String 1',f"Desired angle: {desired_angle:.1f}")
         # wpilib.SmartDashboard.putString('DB/String 2', f"Current angle: {current_angle:.1f}")
@@ -241,7 +239,7 @@ class Myrobot(wpilib.TimedRobot):
             current_yaw = self.botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
 
-            speaker_x = 6.5273#the x coordinate of the speaker marked in the field drawings in cm.
+            speaker_x = 6.5273#the x coordinate of the speaker marked in the field drawings in m.
             speaker_y = 1.98#height of the speaker in meters.
 
             bot_x = self.botpose[0]#the x coordinate from the botpose table
@@ -250,7 +248,7 @@ class Myrobot(wpilib.TimedRobot):
             self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
             #fills the distance to speaker function with its required values for the calculate pitch function
 
-            self.calculate_pitch = self.calculate_desired_pitch(self.speaker_distance, bot_y)
+            self.calculate_pitch = self.calculate_desired_pitch(self.speaker_distance, speaker_y)
             #fills the calculate pitch function with necessary values to be properly called
             pitch_in_degrees = self.radians_to_degrees(self.calculate_pitch)
             #converts the pitch shooter angle to degrees from radians
