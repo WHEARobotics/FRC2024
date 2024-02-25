@@ -7,28 +7,30 @@ class Intake:
 
     def __init__(self) -> None:
 
-        INTAKE_WRIST_ANGLE = 0
-        OUTPUT_WRIST_ANGLE = 90
+        INTAKE_WRIST_ANGLE = 90
+        OUTPUT_WRIST_ANGLE = 0
         AMP_WRIST_ANGLE = 45 # not figured out yet
-        self.WRIST_GEAR_RATIO = 5
+        self.WRIST_GEAR_RATIO = 1
 
-        kP = 0.1
-        kI = 0.0
+        kP = 5e-5
+        kI = 1e-6
         kD = 0.0
         kIz = 0.0
         kFF = 0.0
-        kMaxOutput = 0.2
-        kMinOutput = -0.2
+        kMaxOutput = 1.0
+        kMinOutput = -1.0
         maxRPM = 5700
 
-        maxVel = 10
+        maxVel = 2000
         minVel = 0
-        maxAcc = 5
+        maxAcc = 1500
 
         allowedErr = 0
         
-        self.wrist_motor = rev.CANSparkMax(4, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        # self.intake_motor = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.wrist_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.intake_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.intake_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.intake_motor.setInverted(True)  
 
 
         self.PIDController = self.wrist_motor.getPIDController()
@@ -60,7 +62,7 @@ class Intake:
 
         self.wrist_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
 
-    def periodic(self, wrist_pos):
+    def periodic(self, wrist_pos, intake_control):
         if wrist_pos < 0 or wrist_pos > 3:
             self.wrist_motor.set(0.0)
         else:
@@ -68,14 +70,33 @@ class Intake:
             desired_angle = self.wrist_in
 
             if wrist_pos == 1:
-                desired_angle = self.wrist_in
-            elif wrist_pos == 2:
                 desired_angle = self.wrist_out
-            elif wrist_pos == 3:
+            elif wrist_pos == 2:
                 desired_angle = self.wrist_amp
+            elif wrist_pos == 3:
+                self.wrist_motor.set(0.2)
+            elif wrist_pos == 4:
+                self.wrist_motor.set(-0.2)
+            #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
+            else:
+                self.wrist_motor.set(0.) # desired_angle = self.wrist_in
+
+            if intake_control == 1:
+                self.intake_motor.set(-0.15)
+            elif intake_control == 2:
+                self.intake_motor.set(0.6)
+            else: 
+                self.intake_motor.set(0.05)
+
             
             desired_turn_count = self.DegToTurnCount(desired_angle)
-            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
+            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
+
+            self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
+    
+            wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(desired_angle))
+            wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
+
 
     def DegToTurnCount(self, deg):
 
