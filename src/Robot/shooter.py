@@ -95,7 +95,7 @@ class Shooter:
                 self.shooter_pivot.set(0.3)
             elif shooter_pivot_pos == 5:
                 self.shooter_pivot.set(-0.3)
-            # simple state machine for all the sooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
+            # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
                 
             if shooter_control == 1:
                 self.shooter_wheel.set(-0.1)

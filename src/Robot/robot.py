@@ -26,27 +26,35 @@ class Myrobot(wpilib.TimedRobot):
 
 
         self.vision = Vision()
-        self.swerve = CrescendoSwerveDrivetrain()
+        # self.swerve = CrescendoSwerveDrivetrain()
         self.intake = Intake()
         self.shooter = Shooter()
+
+        self.wrist_position = 0 # position values for the wrist, intake and shooter
+
+        self.intake_control = 0
+
+        self.shooter_action = 0
+
+        self.shooter_control = 0
 
     
     def readAbsoluteEncoders(self) :
         """
         This reads the four absolute encoders position
         """
-        self.absEnc1 = self.swerve.backLeft.correctedEncoderPosition()#* 360
-        self.absEnc2 = self.swerve.frontRight.correctedEncoderPosition()# * 360
-        self.absEnc3 = self.swerve.frontLeft.correctedEncoderPosition()# * 360
-        self.absEnc4 = self.swerve.backRight.correctedEncoderPosition()# * 360
-        self.absEnc2b = self.swerve.frontRight.correctedEncoderPosition() * 360
+        # self.absEnc1 = self.swerve.backLeft.correctedEncoderPosition()#* 360
+        # self.absEnc2 = self.swerve.frontRight.correctedEncoderPosition()# * 360
+        # self.absEnc3 = self.swerve.frontLeft.correctedEncoderPosition()# * 360
+        # self.absEnc4 = self.swerve.backRight.correctedEncoderPosition()# * 360
+        # self.absEnc2b = self.swerve.frontRight.correctedEncoderPosition() * 360
         
-        self.turnmotor1 = self.swerve.backLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        # self.turnmotor1 = self.swerve.backLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        # self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        # self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        # self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
 
-        self.pigeon = self.swerve.gyro.get_yaw()
+        # self.pigeon = self.swerve.gyro.get_yaw()
     
         #It get the values of the internal encoder
 
@@ -57,11 +65,11 @@ class Myrobot(wpilib.TimedRobot):
         """
         self.trunNurmal = self.turnmotor4 % 360.0
 
-        wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
-        wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
-        wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
-        wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
-        # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
+        # wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+        # wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        # wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
+        # wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
+        # # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
 
 
         # wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
@@ -70,6 +78,10 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
         # # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
+
+        wpilib.SmartDashboard.putString('DB/String 0',"intake control {:4.3f}".format( self.intake_control))
+        wpilib.SmartDashboard.putString('DB/String 1',"wrist pos {:4.3f}".format( self.wrist_position))
+        wpilib.SmartDashboard.putString('DB/String 2',"shooter action {:4.3f}".format( self.shooter_action))
 
         wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.shooter.shooter_pivot_encoder.getPosition():4.1f}")
         
@@ -143,7 +155,7 @@ class Myrobot(wpilib.TimedRobot):
         else:
            wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
 
-           self.swerve.drive(0, 0, 0.0, True)   
+           #self.swerve.drive(0, 0, 0.0, True)   
 
     def autonomousExit(self):
         pass
@@ -152,14 +164,26 @@ class Myrobot(wpilib.TimedRobot):
         self.halfSpeed = True
         self.xbox = wpilib.XboxController(0)
 
+        self.intake_action = 1 # this action speeds up the intake motors to intake
+        self.outtake_action = 2 # this action speeds up the motors to outtake
+        self.wrist_action_up = 3 # this action raises the wrist up
+        self.wrist_action_down = 4 # this action puts the wrist down
+
+        self.shooter_pivot_start = 1 # this pivots the shooter into a 0 degree angle
+        self.shooter_pivot_max = 2 # this pivots the shooter into a 90 degree angle
+        self.shooter_pivot_sub = 3 # this pivots the shooter into a 180 degree angle
+        self.shooter_pivot_manual_up = 4 # this manually pivots the shooter up
+        self.shooter_pivot_manual_down = 5 # this manually pivots the shooter down
+
+        self.shooter_action_intake = 1 # this action moves the shooter motors to intake
+        self.shooter_action_outtake = 2 # this action moves the shooter motors to outtake
+        self.shooter_action_outtake_max = 3 # this action moves the shooter motors max speed for outtake
+
+
         
         self.percent_output = 0.1
 
-        self.wrist_position = 1
-
-        self.intake_control = 0
-
-        self.shooter_action = 4
+       
         # is used to go to else, stopping the motor
 
     def teleopPeriodic(self):
@@ -179,34 +203,50 @@ class Myrobot(wpilib.TimedRobot):
         self.botpose = self.vision.checkBotpose()
 
         # if self.Xbutton:
-        #     self.shooter_action = 1
+        #     self.shooter_intake = self.shooter_action_intake
         # elif self.Ybutton:
-        #     self.shooter_action = 2
-        # if self.RightBumper:
-        #     self.shooter_action = 3
+        #     self.shooter_outtake = self.shooter_action_outtake
+        # if self.rightTrigger:
+        #     self.shooter_outtake_max = self.shooter_action_outtake_max
+
         # we commented out this for now because we dont want any position control for our first robot tests
-        if self.leftStickButton:
-            self.shooter_action = 3
-        elif self.rightStickButton:
-            self.shooter_action = 4
+
+        # if self.leftStickButton:
+        #     self.shooter_action = self.self.shooter_pivot_manual_up
+        # elif self.rightStickButton:
+        #     self.shooter_action = self.shooter_pivot_manual_down
+
         
 
         if self.Abutton:
-            self.wrist_position = 3
-            self.intake_control = 1
+            self.intake_control = self.intake_action
+            self.wrist_position = self.wrist_action_up
         elif self.Bbutton:
-            self.wrist_position = 4
-        elif self.LeftBumper:
+            self.intake_control = self.outtake_action
+            self.wrist_position = self.wrist_action_down
+        else:
+            self.intake_control = 0 
             self.wrist_position = 0
-            self.intake_control = 0
-        elif not self.Abutton or not self.Bbutton or not self.LeftBumper:
-            self.wrist_position = 0
-            self.intake_control = 0
-            
+            # this stops the motor from moving
+
+        # elif self.Bbutton:
+        #     self.wrist_position = 4
+        # elif self.LeftBumper:
+        #     self.wrist_position = 0
+        #     self.intake_control = 0
+        # elif not self.Abutton or not self.Bbutton or not self.LeftBumper:
+        #     self.wrist_position = 0
+        #     self.intake_control = 0
+
+        # if self.Ybutton:
+        #     shooter_control = 2
+        # elif not self.Ybutton:
+        #     shooter_control = 5
+ 
 
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
-        self.shooter.periodic(self.shooter_action, 4)
+        self.shooter.periodic(self.shooter_pivot_control, self.shooter_control)
 
 
          # self.botpose = self.vision.checkBotpose()
@@ -219,7 +259,7 @@ class Myrobot(wpilib.TimedRobot):
         self.Bbutton = self.xbox.getBButton()
 
         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
-            self.swerve.gyro.set_yaw(0)
+            pass #self.swerve.gyro.set_yaw(0)
 
         
 
@@ -323,7 +363,7 @@ class Myrobot(wpilib.TimedRobot):
         self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
 
        
-        self.swerve.drive(x_speed/3, y_speed/3, rot, fieldRelativeParam)
+        # self.swerve.drive(x_speed/3, y_speed/3, rot, fieldRelativeParam)
         '''
         this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
         '''

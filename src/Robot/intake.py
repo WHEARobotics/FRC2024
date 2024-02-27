@@ -27,10 +27,15 @@ class Intake:
 
         allowedErr = 0
         
-        self.wrist_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.intake_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.wrist_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.intake_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+
         self.intake_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.intake_motor.setInverted(True)  
+        self.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+
+        self.intake_motor.setInverted(True)
+        self.wrist_motor.setInverted(True) 
+
 
 
         self.PIDController = self.wrist_motor.getPIDController()
@@ -52,6 +57,9 @@ class Intake:
         self.wrist_in = INTAKE_WRIST_ANGLE
         self.wrist_out = OUTPUT_WRIST_ANGLE
         self.wrist_amp = AMP_WRIST_ANGLE
+
+
+        self.desired_angle = self.wrist_in
         
 
       
@@ -67,34 +75,34 @@ class Intake:
             self.wrist_motor.set(0.0)
         else:
 
-            desired_angle = self.wrist_in
+            
 
-            if wrist_pos == 1:
-                desired_angle = self.wrist_out
-            elif wrist_pos == 2:
-                desired_angle = self.wrist_amp
-            elif wrist_pos == 3:
+            # if wrist_pos == 1:
+            #     desired_angle = self.wrist_out
+            # elif wrist_pos == 2:
+            #     desired_angle = self.wrist_amp
+            if wrist_pos == 3:
                 self.wrist_motor.set(0.2)
             elif wrist_pos == 4:
                 self.wrist_motor.set(-0.2)
             #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
             else:
-                self.wrist_motor.set(0.) # desired_angle = self.wrist_in
+                self.wrist_motor.set(0.0) # desired_angle = self.wrist_in
 
             if intake_control == 1:
                 self.intake_motor.set(-0.15)
             elif intake_control == 2:
                 self.intake_motor.set(0.6)
             else: 
-                self.intake_motor.set(0.05)
+                self.intake_motor.set(0.0)
 
             
-            desired_turn_count = self.DegToTurnCount(desired_angle)
+            desired_turn_count = self.DegToTurnCount(self.desired_angle)
             self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
 
             self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
     
-            wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(desired_angle))
+            wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
             wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
 
 
