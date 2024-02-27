@@ -31,7 +31,7 @@ class Shooter:
         self.shooter_wheel = rev.CANSparkMax(12, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooter_wheel_2 = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.kicker = rev.CANSparkMax(16, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        
+
         self.shooter_wheel_2.follow(self.shooter_wheel, True)
         self.shooter_pivot_2.follow(self.shooter_pivot, True)
 
@@ -41,12 +41,47 @@ class Shooter:
         self.shooter_wheel_2.setInverted(False)
         self.kicker.setInverted(False)
 
+        self.shooter_pivot.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.shooter_pivot.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.shooter_pivot.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.shooter_pivot.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 100)        
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 500)
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 500)
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.shooter_pivot_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+
+        self.shooter_wheel.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.shooter_wheel.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.shooter_wheel.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.shooter_wheel.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+        
+        
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 100)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 500)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 500)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 500)
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 500)
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+
        
         self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.kicker.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+
 
         self.shooter_pivot_encoder = self.shooter_pivot.getEncoder()
         self.shooter_pivot_encoder.setPosition(0.0)
