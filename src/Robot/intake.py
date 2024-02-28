@@ -111,8 +111,8 @@ class Intake:
                 self.intake_motor.set(0.0)
 
             
-            desired_turn_count = self.DegToTurnCount(self.desired_angle)
-            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
+            # desired_turn_count = self.DegToTurnCount(self.desired_angle)
+            # self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
 
             self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
     

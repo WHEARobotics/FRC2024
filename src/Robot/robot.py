@@ -22,21 +22,14 @@ class Myrobot(wpilib.TimedRobot):
 
     def robotInit(self):
 
-        self.xbox = wpilib.XboxController(0)
-
 
         self.vision = Vision()
         # self.swerve = CrescendoSwerveDrivetrain()
         self.intake = Intake()
         self.shooter = Shooter()
 
-        self.wrist_position = 0 # position values for the wrist, intake and shooter
+        self.xbox = wpilib.XboxController(0)
 
-        self.intake_control = 0
-
-        self.shooter_action = 0
-
-        self.shooter_control = 0
 
     
     def readAbsoluteEncoders(self) :
@@ -63,7 +56,7 @@ class Myrobot(wpilib.TimedRobot):
         This puts the raw values of the encoder
         on the SmartDashboard as DB/String[0-8].
         """
-        self.trunNurmal = self.turnmotor4 % 360.0
+        # self.trunNurmal = self.turnmotor4 % 360.0
 
         # wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
         # wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
@@ -79,9 +72,7 @@ class Myrobot(wpilib.TimedRobot):
         # # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
 
-        wpilib.SmartDashboard.putString('DB/String 0',"intake control {:4.3f}".format( self.intake_control))
-        wpilib.SmartDashboard.putString('DB/String 1',"wrist pos {:4.3f}".format( self.wrist_position))
-        wpilib.SmartDashboard.putString('DB/String 2',"shooter action {:4.3f}".format( self.shooter_action))
+      
 
         wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.shooter.shooter_pivot_encoder.getPosition():4.1f}")
         
@@ -162,10 +153,17 @@ class Myrobot(wpilib.TimedRobot):
 
     def teleopInit(self):
         self.halfSpeed = True
-        self.xbox = wpilib.XboxController(0)
+
+        self.wrist_position = 0 # position values for the wrist, intake and shooter
+
+        self.intake_control = 0
+
+        self.shooter_control = 0
+
+        self.shooter_pivot_control = 0
 
         self.intake_action = 1 # this action speeds up the intake motors to intake
-        self.outtake_action = 2 # this action speeds up the motors to outtake
+        self.outtake_action = 2 # this action speeds up the intake motors to outtake
         self.wrist_action_up = 3 # this action raises the wrist up
         self.wrist_action_down = 4 # this action puts the wrist down
 
@@ -177,7 +175,7 @@ class Myrobot(wpilib.TimedRobot):
 
         self.shooter_action_intake = 1 # this action moves the shooter motors to intake
         self.shooter_action_outtake = 2 # this action moves the shooter motors to outtake
-        self.shooter_action_outtake_max = 3 # this action moves the shooter motors max speed for outtake
+        self.shooter_action_kicker = 3 # this action moves the kicker motors and feed the note into the shooter
 
 
         
@@ -198,37 +196,46 @@ class Myrobot(wpilib.TimedRobot):
         self.rightStickButton = self.xbox.getRightStickButton()
         self.leftTrigger = self.xbox.getLeftTriggerAxis()
         self.rightTrigger = self.xbox.getRightTriggerAxis()
+
+        self.readAbsoluteEncodersAndOutputToSmartDashboard()
         
 
         self.botpose = self.vision.checkBotpose()
 
-        # if self.Xbutton:
-        #     self.shooter_intake = self.shooter_action_intake
-        # elif self.Ybutton:
-        #     self.shooter_outtake = self.shooter_action_outtake
-        # if self.rightTrigger:
-        #     self.shooter_outtake_max = self.shooter_action_outtake_max
+        if self.Xbutton:
+            self.shooter_control = self.shooter_action_intake
+        elif self.rightTrigger:
+            self.shooter_control = self.shooter_action_kicker
+        elif self.Ybutton:
+            self.shooter_control = self.shooter_action_outtake
+        else:
+            self.shooter_control = 0
+
 
         # we commented out this for now because we dont want any position control for our first robot tests
 
-        # if self.leftStickButton:
-        #     self.shooter_action = self.self.shooter_pivot_manual_up
-        # elif self.rightStickButton:
-        #     self.shooter_action = self.shooter_pivot_manual_down
+        if self.leftStickButton:
+            self.shooter_pivot_control = self.shooter_pivot_manual_up
+        elif self.rightStickButton:
+            self.shooter_pivot_control = self.shooter_pivot_manual_down
+        else:
+            self.shooter_pivot_control = 0
 
         
 
-        if self.Abutton:
-            self.intake_control = self.intake_action
-            self.wrist_position = self.wrist_action_up
-        elif self.Bbutton:
-            self.intake_control = self.outtake_action
-            self.wrist_position = self.wrist_action_down
-        else:
-            self.intake_control = 0 
-            self.wrist_position = 0
-            # this stops the motor from moving
+        # if self.Abutton:
+        #     self.intake_control = self.intake_action
+        #     self.wrist_position = self.wrist_action_up
+        # elif self.Bbutton:
+        #     self.intake_control = self.outtake_action
+        #     self.wrist_position = self.wrist_action_down
+        # else:
+        #     self.intake_control = 0 
+        #     self.wrist_position = 0
+        #     # this stops the motor from moving
+        
 
+      
         # elif self.Bbutton:
         #     self.wrist_position = 4
         # elif self.LeftBumper:
@@ -238,12 +245,20 @@ class Myrobot(wpilib.TimedRobot):
         #     self.wrist_position = 0
         #     self.intake_control = 0
 
-        # if self.Ybutton:
+        # if self.Xbutton:
+        #     shooter_control = 1
+        # elif self.Ybutton:
         #     shooter_control = 2
+        # if self.rightTrigger:
+        #     shooter_control = 3
         # elif not self.Ybutton:
-        #     shooter_control = 5
+        #     shooter_control = 0
  
 
+        wpilib.SmartDashboard.putString('DB/String 2',"intake control {:4.0f}".format( self.intake_control))
+        wpilib.SmartDashboard.putString('DB/String 3',"wrist pos {:4.0f}".format( self.wrist_position))
+        wpilib.SmartDashboard.putString('DB/String 4',"shooter action {:4.0f}".format( self.shooter_control))
+            
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         self.shooter.periodic(self.shooter_pivot_control, self.shooter_control)

@@ -12,6 +12,7 @@ class Shooter:
         self.WRIST_GEAR_RATIO = 1
 
         kP = 0.1
+        kP_2 = 0.01
         kI = 0.0
         kD = 0.0
         kIz = 0.0
@@ -68,25 +69,32 @@ class Shooter:
         self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
         self.shooter_wheel_2.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
 
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 500)
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 500)
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
-        self.shooter_kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
 
        
-        self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_pivot_2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
+        self.shooter_wheel_2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
         self.kicker.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
 
         self.shooter_pivot_encoder = self.shooter_pivot.getEncoder()
         self.shooter_pivot_encoder.setPosition(0.0)
 
-        
+        self.PIDController_flywheel = self.shooter_wheel.getPIDController()
+        self.PIDController_flywheel.setP(kP_2)
+        self.PIDController_flywheel.setI(kI)
+        self.PIDController_flywheel.setD(kD)
+        self.PIDController_flywheel.setIZone(kIz)
+        self.PIDController_flywheel.setFF(kFF)
+        self.PIDController_flywheel.setOutputRange(kMinOutput,kMaxOutput)
+
         self.PIDController = self.shooter_pivot.getPIDController()
         self.PIDController.setP(kP)
         self.PIDController.setI(kI)
@@ -112,39 +120,59 @@ class Shooter:
         self.shooter_out = SHOOTER_MAX_ANGLE
         self.shooter_sub = SHOOTER_SUB_ANGLE
 
+        self.automatic = True
+        self.set_speed = 0
+
     def periodic(self, shooter_pivot_pos, shooter_control):
             
-        if shooter_pivot_pos < 0 or shooter_pivot_pos > 3:
-            self.shooter_pivot.set(0.0)
+      
+
+        desired_angle = self.shooter_in
+
+        if shooter_pivot_pos > 3:
+            self.automatic = False
+            if shooter_pivot_pos == 4:
+                self.shooter_pivot.set(0.3)
+            elif shooter_pivot_pos == 5:
+                self.shooter_pivot.set(-0.3)
+            else:
+                self.shooter_pivot.set(0.0)
         else:
-
-            desired_angle = self.shooter_in
-
             if shooter_pivot_pos == 1:
+                self.automatic = True
                 desired_angle = self.shooter_in
             elif shooter_pivot_pos == 2:
                 desired_angle = self.shooter_out
             elif shooter_pivot_pos == 3:
                 desired_angle = self.shooter_sub
-            elif shooter_pivot_pos == 4:
-                self.shooter_pivot.set(0.3)
-            elif shooter_pivot_pos == 5:
-                self.shooter_pivot.set(-0.3)
-            # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
-                
-            if shooter_control == 1:
-                self.shooter_wheel.set(-0.1)
-                self.kicker.set(-0.15)
-            if shooter_control == 2:
-                self.shooter_wheel.set(0.5)
-                self.kicker.set(0.15)
-            if shooter_control == 3:
-                self.shooter_wheel.set(1.0)
             else:
-                self.shooter_wheel.set(0.0)
-            
+                self.shooter_pivot.set(0.0)
+
+        if self.automatic == True:
             desired_turn_count = self.DegToTurnCount(desired_angle)
             self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
+        # the if statement that checks to see if the shooter pivot action is greater than 3. if it is less we use the set reference and if it is
+        # greater than 3 we use the set speed command but the set speed will fight with set refernce and the first if statement will stop that.
+
+        # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
+            
+        
+        
+        if shooter_control > 0:
+            shooter_automatic = True
+            if shooter_control == 1:
+                self.set_speed = 2500
+            elif shooter_control == 2:
+                self.set_speed = -5700
+            elif shooter_control == 3:
+                self.kicker.set(-0.3)
+
+            self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
+        else:
+                self.shooter_wheel.set(0.0)
+                self.kicker.set(0.0)
+
+    
 
     def DegToTurnCount(self, deg):
 
@@ -160,3 +188,4 @@ class Shooter:
         if AbsEncValue < 0.0:
             AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
         return AbsEncValue
+    
