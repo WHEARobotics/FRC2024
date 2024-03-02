@@ -68,10 +68,12 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
 
 
-        wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+
+
+        # wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
+        # wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 8',f"Botpose thinks angle is {self.botpose[5]:4.1f}")
@@ -197,6 +199,7 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_action_intake = 1 # this action moves the shooter motors to intake
         self.shooter_action_outtake = 2 # this action moves the shooter motors to outtake
         self.shooter_action_kicker = 3 # this action moves the kicker motors and feed the note into the shooter
+        self.kicker_shoot = 2
 
 
         
@@ -231,6 +234,8 @@ class Myrobot(wpilib.TimedRobot):
 
         if self.rightTrigger:
             self.kicker_action = self.kicker_outtake
+        elif self.leftTrigger:
+            self.kicker_action = self.kicker_shoot
         else:
             self.kicker_action = 0
 

@@ -2,6 +2,9 @@ import rev
 from rev import CANSparkLowLevel
 import wpilib
 from wpilib import DutyCycleEncoder
+from shooterdropcompensation import compensation, compensation_table
+
+
 
 class Shooter:
     def __init__(self) -> None:
@@ -10,6 +13,8 @@ class Shooter:
         SHOOTER_START_ANGLE = 0
         SHOOTER_MAX_ANGLE = 90
         self.WRIST_GEAR_RATIO = 1
+
+        ABSOLUTE_ENCODER_OFFSET = 0
 
         kP = 0.1
         kP_2 = 0.01
@@ -32,6 +37,10 @@ class Shooter:
         self.shooter_wheel = rev.CANSparkMax(12, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooter_wheel_2 = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.kicker = rev.CANSparkMax(16, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+   
+        self.absolute_encoder = wpilib.DutyCycleEncoder(1)
+        self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
+        self.abs_enc_offset = ABSOLUTE_ENCODER_OFFSET
 
         self.shooter_wheel_2.follow(self.shooter_wheel, True)
         self.shooter_pivot_2.follow(self.shooter_pivot, True)
@@ -75,7 +84,7 @@ class Shooter:
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
-
+        #the status code here give the difrent packed from the encoders serten speed to not overload the CANBuss. defult speed is 20ms.
        
         self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.shooter_pivot_2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
@@ -112,12 +121,9 @@ class Shooter:
         self.PIDController.setSmartMotionMinOutputVelocity(minVel, smartmotionslot)
         self.PIDController.setSmartMotionAllowedClosedLoopError(allowedErr, smartmotionslot)
 
-        
-
-        self.abs_encoder = DutyCycleEncoder(1)     
-        self.abs_enc_offset = 0.0
-
         self.shooter_pivot_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
+
+
 
         self.shooter_in = SHOOTER_START_ANGLE
         self.shooter_out = SHOOTER_MAX_ANGLE
@@ -159,6 +165,8 @@ class Shooter:
 
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
+        wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.shooter_pivot_encoder))
+            
         
         
         if shooter_control > 0:
@@ -174,8 +182,10 @@ class Shooter:
 
         if kicker_action == 1:
             self.kicker.set(-0.3)
+        elif kicker_action == 2:
+            self.kicker.set(0.5)
         else:
-            self.kicker.set(0.0)
+            self.kicker.set(0.0) 
 
     
 
@@ -189,7 +199,7 @@ class Shooter:
     #count to deg
 
     def correctedEncoderPosition(self):
-        AbsEncValue =  self.abs_encoder.getAbsolutePosition() - self.abs_enc_offset
+        AbsEncValue =  self.absolute_encoder_pos - self.abs_enc_offset
         if AbsEncValue < 0.0:
             AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
         return AbsEncValue
