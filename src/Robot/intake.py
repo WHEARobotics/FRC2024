@@ -7,10 +7,10 @@ class Intake:
 
     def __init__(self) -> None:
 
+        WRIST_RESTING_ANGLE = 0
         INTAKE_WRIST_ANGLE = 90
-        OUTPUT_WRIST_ANGLE = 0
         AMP_WRIST_ANGLE = 45 # not figured out yet
-        self.WRIST_GEAR_RATIO = 1
+        self.WRIST_GEAR_RATIO = 80
 
         kP = 5e-5
         kP_2 = 0.01
@@ -78,7 +78,7 @@ class Intake:
 
 
         self.wrist_in = INTAKE_WRIST_ANGLE
-        self.wrist_out = OUTPUT_WRIST_ANGLE
+        self.wrist_out = WRIST_RESTING_ANGLE
         self.wrist_amp = AMP_WRIST_ANGLE
 
         self.set_speed = 0.0
@@ -132,9 +132,14 @@ class Intake:
             # self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
 
             self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
+
+            self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
     
             wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
             wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
+            wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
+
+
 
 
     def DegToTurnCount(self, deg):

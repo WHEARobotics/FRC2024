@@ -1,3 +1,5 @@
+
+
 # !/usr/bin/env python3
 """
     WHEA Robotics code for the MAKO robot project.
@@ -55,8 +57,6 @@ class MAKORobot(wpilib.TimedRobot):
             "c" : [5.42, 2.88] ,
         }
 
-        print('REACHED HERE')
-
         # # Create and configure the drive train controllers and motors, all Rev. Robotics SparkMaxes driving NEO motors.
         self.drive_rr = rev.CANSparkMax(1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.drive_rf = rev.CANSparkMax(3, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
@@ -88,6 +88,21 @@ class MAKORobot(wpilib.TimedRobot):
         # Add more variables for additional states in auto 
         self.autonomous_state_active = self.AUTONOMOUS_STATE_NOTE_YAWING
 
+        ally = DriverStation.getAlliance()
+        if ally is not None:
+            if ally == DriverStation.Alliance.kRed:
+                self.speaker_x = 8.31
+                self.desired_x_for_autonomous_driving = 5.5
+                #set x value to the red side x
+                pass
+            elif ally == DriverStation.Alliance.kBlue:
+                self.speaker_x = -8.31
+                self.desired_x_for_autonomous_driving = -5.5
+                #set the x value to the blue side
+        else:
+            self.speaker_x = 8.31
+            self.desired_x_for_autonomous_driving = 5.5
+
     def disabledInit(self):
         """This function gets called once when the robot is disabled.
            In the past, we have not used this function, but it could occasionally
@@ -108,17 +123,7 @@ class MAKORobot(wpilib.TimedRobot):
     def autonomousInit(self):
         """This function is run once each time the robot enters autonomous mode."""
         self.gyro.reset()  # Reset at the beginning of a match, because the robot could have been sitting for a while, gyro drifting.
-        ally = DriverStation.getAlliance()
-        if ally is not None:
-            if ally == DriverStation.Alliance.kRed:
-                self.speaker_x = 8.31
-                #set x value to the red side x
-                pass
-            elif ally == DriverStation.Alliance.kBlue:
-                self.speaker_x = -8.31
-                #set the x value to the blue side
-        else:
-            self.speaker_x = 8.31
+        
 
         
         # get desired note position 
@@ -140,7 +145,7 @@ class MAKORobot(wpilib.TimedRobot):
 
     def get_rotation_autonomous_periodic_for_speaker_shot(self, botpose, current_yaw):
         x = botpose[0]
-        desired_x = 5.5
+        desired_x = self.desired_x_for_autonomous_driving
         y = botpose[1]
         wpilib.SmartDashboard.putString("DB/String 0", str(x))    
         wpilib.SmartDashboard.putString("DB/String 1", str(y))
@@ -175,8 +180,8 @@ class MAKORobot(wpilib.TimedRobot):
         elif rot < -max_rot_value: 
             rot = -max_rot_value
             # this sets makes sure that the rot value does not pass the maximum we give
-        wpilib.SmartDashboard.putString("DB/String 5", f"{desired_bot_angle:3.1f}")    
-        wpilib.SmartDashboard.putString("DB/String 6", f"{direction_to_travel:3.1f}")    
+        wpilib.SmartDashboard.putString("DB/String 5", f"desired_bot_angle {desired_bot_angle:3.1f}")    
+        wpilib.SmartDashboard.putString("DB/String 6", f"direction_to_travel {direction_to_travel:3.1f}")    
 
 
         return rot, direction_to_travel
@@ -184,28 +189,13 @@ class MAKORobot(wpilib.TimedRobot):
     def rotate_towards_speaker_shot_periodic(self, botpose, current_yaw):
         rot, direction_to_travel = self.get_rotation_autonomous_periodic_for_speaker_shot(botpose, current_yaw)
 
-        wpilib.SmartDashboard.putString("DB/String 2", f"{current_yaw:3.1f}")   
+        wpilib.SmartDashboard.putString("DB/String 2", f"current_yaw {current_yaw:3.1f}")   
     
-        if direction_to_travel < -2:
-            self.drivetrain.driveCartesian(0, 0, -rot, geometry.Rotation2d(-self.gyro.getAngle()))
-            wpilib.SmartDashboard.putString("DB/String 3", f"{rot:3.1f}")    
-        elif direction_to_travel > 2:
-            self.drivetrain.driveCartesian(0, 0, -rot, geometry.Rotation2d(-self.gyro.getAngle()))
-            wpilib.SmartDashboard.putString("DB/String 3", f"{rot:3.1f}")    
-        else:
-            self.drivetrain.driveCartesian(0, 0, 0, geometry.Rotation2d(-self.gyro.getAngle()))
+    
+        self.drivetrain.driveCartesian(0, 0, -rot, geometry.Rotation2d(-self.gyro.getAngle()))
+        wpilib.SmartDashboard.putString("DB/String 3", f"rotation {rot:3.1f}")      
 
-    #     if x_distance_to_travel < 5.4:
-    #         self.drivetrain.driveCartesian(0.2, 0.1, 0, geometry.Rotation2d(-self.gyro.getAngle()))
-    #         wpilib.SmartDashboard.putString("DB/String 3", f"{rot:3.1f}")    
-    #     elif x_distance_to_travel > 5.6:
-    #         self.drivetrain.driveCartesian(-x_speed, 0, 0, geometry.Rotation2d(-self.gyro.getAngle()))
-    #         wpilib.SmartDashboard.putString("DB/String 3", f"{rot:3.1f}")    
-    #     else:
-    #         self.drivetrain.driveCartesian(0, 0, 0, geometry.Rotation2d(-self.gyro.getAngle()))
-    # else:
-    #    wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose"))
-        if abs(direction_to_travel) < 2.0:
+        if abs(direction_to_travel) < 0.25:
             return False
         else:
             return True
@@ -233,22 +223,31 @@ class MAKORobot(wpilib.TimedRobot):
 
             current_pitch = self.get_current_pitch()
 
-            wpilib.SmartDashboard.putString("DB/String 0", f"Current robot state: {self.autonomous_state_active}")
+            wpilib.SmartDashboard.putString("DB/String 7", f"Current robot state: {self.autonomous_state_active}")
             self.timer = wpilib.Timer()
             self.timer.reset()
             self.timer.start()
 
             if self.autonomous_state_active == self.AUTONOMOUS_STATE_SPEAKER_YAWING :
-                is_still_rotating = self.rotate_towards_speaker_shot_periodic(botpose, current_yaw)
+                is_still_rotating = self.rotate_towards_speaker_shot_periodic(botpose, current_yaw) 
+                not_rotating_anymore = not is_still_rotating
                 is_still_pitching = self.pitch_towards_speaker_shot_periodic(botpose, current_pitch)
-                if not (is_still_pitching and is_still_rotating):
+                not_pitching_anymore = not is_still_pitching 
+
+                if (not_rotating_anymore and not_pitching_anymore):
                     # rotation is less than 2 degrees and pitch is okay, so shoot
                     self.autonomous_state_active = self.AUTONOMOUS_STATE_SPEAKER_SHOOTING
+                    self.timer.reset()
+                    self.timer.start()
+                wpilib.SmartDashboard.putString("DB/String 4", f"p:{is_still_pitching} y:{is_still_rotating} {not_pitching_anymore and not_rotating_anymore}")
+
             elif self.autonomous_state_active == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
                 if self.timer.advanceIfElapsed(1):
                     raise Exception("Implement auto shoot")
+                
             elif self.autonomous_state_active == self.AUTONOMOUS_STATE_NOTE_YAWING:
                 raise Exception("Implement yaw towards note")
+            
             elif self.autonomous_state_active == self.AUTONOMOUS_STATE_NOTE_DRIVING :
                 raise Exception("Implement drive towards note")
 
@@ -259,9 +258,30 @@ class MAKORobot(wpilib.TimedRobot):
         self.print_timer.start() # Now it starts counting.
         self.gyro.reset() # Also reset the gyro angle.  This means you should always start in a known orientation.
 
+        self.drive_rr.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.drive_rf.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.drive_lr.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.drive_lf.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+
+    def do_teleop_speaker_align(self):
+        wpilib.SmartDashboard.putString("DB/String 0", "do_teleop_speaker_align()")
+        botpose = self.vision.checkBotpose()
+
+        if None != botpose and len(botpose) > 0 :
+            current_yaw = botpose[5]#getting the yaw from the self.botpose table
+            if current_yaw < 0:
+                current_yaw += 360 
+
+            is_still_rotating = self.rotate_towards_speaker_shot_periodic(botpose, current_yaw) 
+            wpilib.SmartDashboard.putString("DB/String 1", f"Still rotating {is_still_rotating}")
+
     def teleopPeriodic(self):
         """This function is called periodically during teleop."""
         
+
+        if self.xbox.getAButtonPressed():
+            self.do_teleop_speaker_align()
+
         # Get values from either the joystick or the Xbox controller, and put them into temporary values we can 
         # access later in this method.  This way we can switch between joystick and Xbox by changing comments on two lines
         # in robotInit() and on the relevant sections below
@@ -286,7 +306,9 @@ class MAKORobot(wpilib.TimedRobot):
         # that makes +Z up, and positive angle starting at X and moving toward Y would be CCW when viewed from above the robot.
         # I'm not sure about whether the gyro angle should be negated or not.  We'll have to try.
         # self.drivetrain.driveCartesian(move_y / 4, move_x / 4, move_z / 4, wpimath.geometry._geometry.Rotation2d(0.0))
-        self.drivetrain.driveCartesian(move_x / 4, move_y / 4, move_z / 4, geometry.Rotation2d(-self.gyro.getAngle()))
+        DEADBAND = 0.1
+        if abs(move_z) > DEADBAND:
+            self.drivetrain.driveCartesian(move_x / 4, move_y / 4, move_z / 4, geometry.Rotation2d(-self.gyro.getAngle()))
 
         # The timer's advanceIfElapsed() method returns true if the time has passed, and updates
         # the timer's internal "start time".  This period is 0.2 seconds.
