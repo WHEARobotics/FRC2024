@@ -13,6 +13,7 @@ class Intake:
         self.WRIST_GEAR_RATIO = 1
 
         kP = 5e-5
+        kP_2 = 0.01
         kI = 1e-6
         kD = 0.0
         kIz = 0.0
@@ -27,8 +28,8 @@ class Intake:
 
         allowedErr = 0
         
-        self.wrist_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.intake_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.wrist_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.intake_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
 
         self.intake_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
@@ -52,6 +53,14 @@ class Intake:
         self.intake_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
         self.intake_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
 
+        self.PIDController_intake = self.intake_motor.getPIDController()
+        self.PIDController_intake.setP(kP_2)
+        self.PIDController_intake.setI(kI)
+        self.PIDController_intake.setD(kD)
+        self.PIDController_intake.setIZone(kIz)
+        self.PIDController_intake.setFF(kFF)
+        self.PIDController_intake.setOutputRange(kMinOutput, kMaxOutput)
+
         self.PIDController = self.wrist_motor.getPIDController()
         self.PIDController.setP(kP)
         self.PIDController.setI(kI)
@@ -72,6 +81,8 @@ class Intake:
         self.wrist_out = OUTPUT_WRIST_ANGLE
         self.wrist_amp = AMP_WRIST_ANGLE
 
+        self.set_speed = 0.0
+
 
         self.desired_angle = self.wrist_in
         
@@ -85,7 +96,8 @@ class Intake:
         self.wrist_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
 
     def periodic(self, wrist_pos, intake_control):
-        if wrist_pos < 0 or wrist_pos > 3:
+        wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_pos}')
+        if wrist_pos < 0 or wrist_pos > 4:
             self.wrist_motor.set(0.0)
         else:
 
@@ -96,19 +108,24 @@ class Intake:
             # elif wrist_pos == 2:
             #     desired_angle = self.wrist_amp
             if wrist_pos == 3:
-                self.wrist_motor.set(0.2)
+                self.wrist_motor.set(0.3)
             elif wrist_pos == 4:
-                self.wrist_motor.set(-0.2)
+                wpilib.SmartDashboard.putString("DB/String 1", 'wrist down')
+                self.wrist_motor.set(-0.3)
             #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
             else:
                 self.wrist_motor.set(0.0) # desired_angle = self.wrist_in
 
+        
             if intake_control == 1:
-                self.intake_motor.set(-0.15)
+                self.set_speed =  0.7
             elif intake_control == 2:
-                self.intake_motor.set(0.6)
-            else: 
-                self.intake_motor.set(0.0)
+                self.set_speed = -0.3
+                 #intake action
+            else:
+                self.set_speed = 0.0
+
+            self.intake_motor.set(self.set_speed)
 
             
             # desired_turn_count = self.DegToTurnCount(self.desired_angle)

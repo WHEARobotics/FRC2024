@@ -24,15 +24,62 @@ class CrescendoSwerveDrivetrain:
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    BACK_LEFT_OFFSET = 0.265   # Back Left
-    FRONT_RIGHT_OFFSET = 0.215  # Front Right
-    FRONT_LEFT_OFFSET = 0.032   # Front Left
-    BACK_RIGHT_OFFSET = 0.858   # Back Right
+    BACK_LEFT_OFFSET = 0.708    # Back Left
+    FRONT_RIGHT_OFFSET = 0.768  # Front Right
+    FRONT_LEFT_OFFSET = 0.363   # Front Left
+    BACK_RIGHT_OFFSET = 0.516   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.
     """
+
+    #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
     
+    def _initSwerveModuleFor(self, name : str, makeInverted = False) -> CrescendoSwerveModule:
+        '''Maps from a given logical name to the appropriate IDS '''
+
+        # These are IDs taken from the physical wiring.
+        SWERVE_BACK_LEFT_DRIVE = 2
+        SWERVE_BACK_LEFT_ANGLE = 3
+        SWERVE_BACK_LEFT_ENCODER_CHANNEL = 3
+        
+        SWERVE_FRONT_RIGHT_DRIVE = 4
+        SWERVE_FRONT_RIGHT_ANGLE = 5
+        SWERVE_FRONT_RIGHT_ENCODER_CHANNEL = 0
+        
+        SWERVE_FRONT_LEFT_DRIVE = 6
+        SWERVE_FRONT_LEFT_ANGLE = 7
+        SWERVE_FRONT_LEFT_ENCODER_CHANNEL = 2
+        
+        SWERVE_BACK_RIGHT_DRIVE = 9
+        SWERVE_BACK_RIGHT_ANGLE = 8
+        SWERVE_BACK_RIGHT_ENCODER_CHANNEL = 1
+
+        # Gather the related constants together and associate them with a logical name
+        swerve_module_constants = {
+            'back_left' : [ SWERVE_BACK_LEFT_DRIVE, SWERVE_BACK_LEFT_ANGLE, SWERVE_BACK_LEFT_ENCODER_CHANNEL, self.BACK_LEFT_OFFSET ],
+            'front_right' : [SWERVE_FRONT_RIGHT_DRIVE, SWERVE_FRONT_RIGHT_ANGLE, SWERVE_FRONT_RIGHT_ENCODER_CHANNEL, self.FRONT_RIGHT_OFFSET],
+            'front_left' : [SWERVE_FRONT_LEFT_DRIVE, SWERVE_FRONT_LEFT_ANGLE, SWERVE_FRONT_LEFT_ENCODER_CHANNEL, self.FRONT_LEFT_OFFSET],
+            'back_right' : [ SWERVE_BACK_RIGHT_DRIVE, SWERVE_BACK_RIGHT_ANGLE, SWERVE_BACK_RIGHT_ENCODER_CHANNEL, self.BACK_RIGHT_OFFSET]
+        }
+
+        # Initialize a CrescendoSwerveModule with the constant values for the given name
+        drive = swerve_module_constants[name][0]
+        angle = swerve_module_constants[name][1]
+        channel = swerve_module_constants[name][2]
+        offset = swerve_module_constants[name][3]
+        module = CrescendoSwerveModule(drive, angle, channel, offset)
+        if makeInverted:
+            module.toggleDriveMotorInverted()
+
+        # Try to get some debugging information: Did anything go wrong? Is there any way to quickly find a problem at this point?
+        if module == None:
+            raise Exception(f"Could not initialize Crescendo Swerve Module {name}")
+        position = module.getPosition()
+        print(f"Initial position of {name} swerve module: angle {position.angle} direction {position.distance}")
+
+        # Return the initialized module
+        return module
 
     def __init__(self):
 
@@ -50,15 +97,13 @@ class CrescendoSwerveDrivetrain:
         at its origin positive x is forward and positive y is left for the 2d translation
         '''
 
-        #2024- CHANGE ALL THESE TO THE CANSPARKMAX MOTOR CONTROLLER NUMBERS SOREN SET IN THE REV CLIENT- I.E. THE LABELS OF EACH MOTOR CONTROLLER
-        self.backLeft = CrescendoSwerveModule(4, 6, 3, self.BACK_LEFT_OFFSET)
-    
-        self.frontRight = CrescendoSwerveModule(8, 13, 0, self.FRONT_RIGHT_OFFSET)  #OG offset was 106.424  
-    
-        self.frontLeft = CrescendoSwerveModule(5, 3, 2, self.FRONT_LEFT_OFFSET)  #OG offset was 296.543
- 
-        self.backRight = CrescendoSwerveModule(2, 7, 1, self.BACK_RIGHT_OFFSET)
-        
+        self.backLeft = self._initSwerveModuleFor("back_left") #CrescendoSwerveModule(SWERVE_BACK_LEFT_DRIVE, SWERVE_BACK_LEFT_ANGLE, SWERVE_BACK_LEFT_ENCODER_CHANNEL, self.BACK_LEFT_OFFSET)
+        self.frontRight = self._initSwerveModuleFor("front_right")#CrescendoSwerveModule(SWERVE_FRONT_RIGHT_DRIVE, SWERVE_FRONT_RIGHT_ANGLE, SWERVE_FRONT_RIGHT_ENCODER_CHANNEL, self.FRONT_RIGHT_OFFSET)  #OG offset was 106.424  
+        self.frontLeft = self._initSwerveModuleFor("front_left")#CrescendoSwerveModule(SWERVE_FRONT_LEFT_DRIVE, SWERVE_FRONT_LEFT_ANGLE, SWERVE_FRONT_LEFT_ENCODER_CHANNEL, self.FRONT_LEFT_OFFSET)  #OG offset was 296.543 
+        self.backRight = self._initSwerveModuleFor("back_right")#CrescendoSwerveModule(SWERVE_BACK_RIGHT_DRIVE, SWERVE_BACK_RIGHT_ANGLE, SWERVE_BACK_RIGHT_ENCODER_CHANNEL, self.BACK_RIGHT_OFFSET)
+        wpilib.SmartDashboard.putString("DB/String 9", f"back_left.encoderPos : {self.backLeft.correctedEncoderPosition():.2f}")
+
+
         self.swerve_modules = [ self.frontLeft, self.frontRight, self.backLeft, self.backRight ]
         '''
         this section above creates 4 swerve modules and sets the id's of each of them in this order:
@@ -176,7 +221,7 @@ class CrescendoSwerveDrivetrain:
 
     def drive(self, xSpeed, ySpeed, rot, fieldRelative : bool) -> None:
         chassis_speeds = ChassisSpeeds(xSpeed, ySpeed, rot) if not fieldRelative \
-            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(self.gyro.get_yaw()))
+            else ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(self.gyro.get_yaw().value))
         self.swerveModuleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         self.swerveModuleStates = SwerveDrive4Kinematics.desaturateWheelSpeeds(self.swerveModuleStates, self.MAX_SPEED)
@@ -195,7 +240,7 @@ class CrescendoSwerveDrivetrain:
 
     def _updateOdometry(self):
         self.odometry.update(
-            Rotation2d.fromDegrees(self.gyro.get_yaw()),
+            Rotation2d.fromDegrees(self.gyro.get_yaw().value),
             self.frontLeft.getPosition(),
             self.frontRight.getPosition(),
             self.backLeft.getPosition(),
@@ -206,7 +251,7 @@ class CrescendoSwerveDrivetrain:
         '''
 
     def get_heading(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(self.gyro.get_yaw())
+        return Rotation2d.fromDegrees(self.gyro.get_yaw().v)
 
     def get_pose(self) -> Pose2d :
         return self.odometry.getPose()

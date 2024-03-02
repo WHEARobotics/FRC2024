@@ -95,6 +95,9 @@ class Shooter:
         self.PIDController_flywheel.setFF(kFF)
         self.PIDController_flywheel.setOutputRange(kMinOutput,kMaxOutput)
 
+        self.PIDController_flywheel.setOutputRange(-1, 1)
+        #sets the maximum output power that could be used for the voltage control
+
         self.PIDController = self.shooter_pivot.getPIDController()
         self.PIDController.setP(kP)
         self.PIDController.setI(kI)
@@ -123,7 +126,7 @@ class Shooter:
         self.automatic = True
         self.set_speed = 0
 
-    def periodic(self, shooter_pivot_pos, shooter_control):
+    def periodic(self, shooter_pivot_pos, shooter_control, kicker_action):
             
       
 
@@ -161,16 +164,18 @@ class Shooter:
         if shooter_control > 0:
             shooter_automatic = True
             if shooter_control == 1:
-                self.set_speed = 2500
+                self.set_speed = 2500 # intake for shooter speed
             elif shooter_control == 2:
-                self.set_speed = -5700
-            elif shooter_control == 3:
-                self.kicker.set(-0.3)
-
+                self.set_speed = -5700 # maximum rpm for the neo motor
             self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
         else:
                 self.shooter_wheel.set(0.0)
                 self.kicker.set(0.0)
+
+        if kicker_action == 1:
+            self.kicker.set(-0.3)
+        else:
+            self.kicker.set(0.0)
 
     
 
