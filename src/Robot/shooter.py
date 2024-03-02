@@ -165,7 +165,7 @@ class Shooter:
 
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
-        wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.shooter_pivot_encoder))
+        wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
             
         
         
