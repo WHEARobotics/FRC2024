@@ -132,12 +132,11 @@ class Shooter:
         self.automatic = True
         self.set_speed = 0
 
-    def periodic(self, shooter_pivot_pos, shooter_control, kicker_action):
-            
-      
-
+    def periodic(self, distance_to_speaker_m, shooter_pivot_pos, shooter_control, kicker_action):
         desired_angle = self.shooter_in
 
+        drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
+        
         if shooter_pivot_pos > 3:
             self.automatic = False
             if shooter_pivot_pos == 4:
@@ -157,6 +156,8 @@ class Shooter:
             else:
                 self.shooter_pivot.set(0.0)
 
+        # TODO: Add drop compensation to desired_angle!
+
         if self.automatic == True:
             desired_turn_count = self.DegToTurnCount(desired_angle)
             self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
@@ -166,6 +167,7 @@ class Shooter:
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
         wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
+        wpilib.SmartDashboard.putString('DB/String 7', f"drop compensation {drop_compensation_degrees:4.1f}")
             
         
         

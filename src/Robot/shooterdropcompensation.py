@@ -28,7 +28,10 @@ def compensation(compensation_table, current_distance):
     low_key_distance, high_key_distance = closest_keys_to_current_distance(compensation_table.keys(),current_distance)
     low_value_degrees, high_value_degrees = degrees_for_ranges(compensation_table, low_key_distance, high_key_distance)
     delta_degrees = high_value_degrees - low_value_degrees
-    percent_current_distance_between_low_distance_and_high_distance = (current_distance - low_key_distance) / (high_key_distance - low_key_distance)
+    if high_key_distance - low_key_distance != 0:
+        percent_current_distance_between_low_distance_and_high_distance = (current_distance - low_key_distance) / (high_key_distance - low_key_distance)
+    else:
+        percent_current_distance_between_low_distance_and_high_distance = 0.0
     correction_for_lower_distance = low_value_degrees
     linear_interpolation = percent_current_distance_between_low_distance_and_high_distance * delta_degrees
     return correction_for_lower_distance + linear_interpolation

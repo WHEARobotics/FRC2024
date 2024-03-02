@@ -92,13 +92,16 @@ class MAKORobot(wpilib.TimedRobot):
         if ally is not None:
             if ally == DriverStation.Alliance.kRed:
                 self.speaker_x = 8.31
+                self.desired_x_for_autonomous_driving = 5.5
                 #set x value to the red side x
                 pass
             elif ally == DriverStation.Alliance.kBlue:
                 self.speaker_x = -8.31
+                self.desired_x_for_autonomous_driving = -5.5
                 #set the x value to the blue side
         else:
             self.speaker_x = 8.31
+            self.desired_x_for_autonomous_driving = 5.5
 
     def disabledInit(self):
         """This function gets called once when the robot is disabled.
@@ -142,7 +145,7 @@ class MAKORobot(wpilib.TimedRobot):
 
     def get_rotation_autonomous_periodic_for_speaker_shot(self, botpose, current_yaw):
         x = botpose[0]
-        desired_x = 5.5
+        desired_x = self.desired_x_for_autonomous_driving
         y = botpose[1]
         wpilib.SmartDashboard.putString("DB/String 0", str(x))    
         wpilib.SmartDashboard.putString("DB/String 1", str(y))
