@@ -22,8 +22,8 @@ class Shooter:
         kD = 0.0
         kIz = 0.0
         kFF = 0.0
-        kMaxOutput = 0.2
-        kMinOutput = -0.2
+        kMaxOutput = 0.5
+        kMinOutput = -0.5
         maxRPM = 5700
 
         maxVel = 10
@@ -38,7 +38,7 @@ class Shooter:
         self.shooter_wheel_2 = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.kicker = rev.CANSparkMax(16, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
    
-        self.absolute_encoder = wpilib.DutyCycleEncoder(2)
+        self.absolute_encoder = wpilib.DutyCycleEncoder(3)
         self.absolute_encoder_pos = -1
         self.abs_enc_offset = ABSOLUTE_ENCODER_OFFSET
 
@@ -173,10 +173,12 @@ class Shooter:
 
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
-        wpilib.SmartDashboard.putString('DB/String 6',"spe position {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
-        wpilib.SmartDashboard.putString('DB/String 8',"abs encoder pos {:4.3f}".format(self.corrected_encoder_pos))
-        wpilib.SmartDashboard.putString('DB/String 7', f"drop compensation {drop_compensation_degrees:4.1f}")
-        wpilib.SmartDashboard.putString('DB/String 1', f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
+        wpilib.SmartDashboard.putString('DB/String 6',"") #spe position {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
+        wpilib.SmartDashboard.putString('DB/String 8',"cor abs enc pos {:4.3f}".format(self.corrected_encoder_pos))
+        wpilib.SmartDashboard.putString('DB/String 7', "") #f"drop compensation {drop_compensation_degrees:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 1', f"internal enc {self.shooter_pivot_encoder.getPosition():4.4f}")
+        wpilib.SmartDashboard.putString('DB/String 2', "")#f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
+
             
         if shooter_control > 0:
             shooter_automatic = True
@@ -208,7 +210,7 @@ class Shooter:
     #count to deg
 
     def correctedEncoderPosition(self):
-        AbsEncValue =  self.absolute_encoder_pos - self.abs_enc_offset
+        AbsEncValue =  self.absolute_encoder.getAbsolutePosition() - self.abs_enc_offset
         while AbsEncValue < 0.0:
             AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
         return AbsEncValue

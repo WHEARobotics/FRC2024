@@ -135,7 +135,7 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 9', f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
+        wpilib.SmartDashboard.putString('DB/String 9', "")#f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
 
        
     def readAbsoluteEncodersAndOutputToSmartDashboard(self) :

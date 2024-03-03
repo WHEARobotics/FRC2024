@@ -115,7 +115,9 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         # print(f'absolute {absoluteEncoderChannel}: {absolutePos:.1f}') # The ":.1f" tells it to print only one digit after the decimal.
 
         # Try to set the Falcon, either to zero or to the absolute position.
-        # initPos = 0                                                 
+        # initPos = 0                    
+        
+                                     
         
 
 
