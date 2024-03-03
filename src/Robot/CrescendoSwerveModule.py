@@ -32,6 +32,28 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         self.turningMotor = rev.CANSparkMax(turningMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
         
+
+        #this PeriodicFrame/ status code slow do the sta frames so the canbuss dose not get over loaded. the encoder sent packed of info of the motor to the canbuss of difrent values and paramerters.
+        #https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 20)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 100)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 20)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+        self.turningMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus7, 500)
+
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 20)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus1, 100)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus2, 20)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
+        self.driveMotor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus7, 500)
+
+
         self.PIDController = self.turningMotor.getPIDController()
 
         self.turnMotorEncoder = self.turningMotor.getEncoder()
