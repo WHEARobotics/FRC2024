@@ -12,9 +12,9 @@ class Shooter:
         SHOOTER_SUB_ANGLE = 180
         SHOOTER_START_ANGLE = 0
         SHOOTER_MAX_ANGLE = 90
-        self.WRIST_GEAR_RATIO = 1
+        self.SHOOTER_PIVOT_GEAR_RATIO = 100
 
-        ABSOLUTE_ENCODER_OFFSET = 0
+        ABSOLUTE_ENCODER_OFFSET = -0.005
 
         kP = 0.1
         kP_2 = 0.01
@@ -38,8 +38,8 @@ class Shooter:
         self.shooter_wheel_2 = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.kicker = rev.CANSparkMax(16, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
    
-        self.absolute_encoder = wpilib.DutyCycleEncoder(1)
-        self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
+        self.absolute_encoder = wpilib.DutyCycleEncoder(2)
+        self.absolute_encoder_pos = -1
         self.abs_enc_offset = ABSOLUTE_ENCODER_OFFSET
 
         self.shooter_wheel_2.follow(self.shooter_wheel, True)
@@ -94,7 +94,6 @@ class Shooter:
 
 
         self.shooter_pivot_encoder = self.shooter_pivot.getEncoder()
-        self.shooter_pivot_encoder.setPosition(0.0)
 
         self.PIDController_flywheel = self.shooter_wheel.getPIDController()
         self.PIDController_flywheel.setP(kP_2)
@@ -121,7 +120,11 @@ class Shooter:
         self.PIDController.setSmartMotionMinOutputVelocity(minVel, smartmotionslot)
         self.PIDController.setSmartMotionAllowedClosedLoopError(allowedErr, smartmotionslot)
 
-        self.shooter_pivot_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
+        self.corrected_encoder_pos = self.correctedEncoderPosition()
+        wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
+
+        self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)   
+        wpilib.SmartDashboard.putString("DB/String 3", f"init spe pos {self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO:.3f}")
 
 
 
@@ -135,7 +138,11 @@ class Shooter:
     def periodic(self, distance_to_speaker_m, shooter_pivot_pos, shooter_control, kicker_action):
         desired_angle = self.shooter_in
 
+        self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
+
         drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
+
+        self.corrected_encoder_pos = self.correctedEncoderPosition()
         
         if shooter_pivot_pos > 3:
             self.automatic = False
@@ -166,11 +173,11 @@ class Shooter:
 
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
-        wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
+        wpilib.SmartDashboard.putString('DB/String 6',"spe position {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
+        wpilib.SmartDashboard.putString('DB/String 8',"abs encoder pos {:4.3f}".format(self.corrected_encoder_pos))
         wpilib.SmartDashboard.putString('DB/String 7', f"drop compensation {drop_compensation_degrees:4.1f}")
+        wpilib.SmartDashboard.putString('DB/String 1', f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
             
-        
-        
         if shooter_control > 0:
             shooter_automatic = True
             if shooter_control == 1:
@@ -179,8 +186,8 @@ class Shooter:
                 self.set_speed = -5700 # maximum rpm for the neo motor
             self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
         else:
-                self.shooter_wheel.set(0.0)
-                self.kicker.set(0.0)
+            self.shooter_wheel.set(0.0)
+            self.kicker.set(0.0)
 
         if kicker_action == 1:
             self.kicker.set(-0.3)
@@ -193,16 +200,16 @@ class Shooter:
 
     def DegToTurnCount(self, deg):
 
-        return deg * (1.0/360.0) * self.WRIST_GEAR_RATIO #150/7 : 1
+        return deg * (1.0/360.0) * self.SHOOTER_PIVOT_GEAR_RATIO #150/7 : 1
     #deg to count 
 
     def TurnCountToDeg(self, count):
-        return count * 360.0 / self.WRIST_GEAR_RATIO
+        return count * 360.0 / self.SHOOTER_PIVOT_GEAR_RATIO
     #count to deg
 
     def correctedEncoderPosition(self):
         AbsEncValue =  self.absolute_encoder_pos - self.abs_enc_offset
-        if AbsEncValue < 0.0:
+        while AbsEncValue < 0.0:
             AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
         return AbsEncValue
     

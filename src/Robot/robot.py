@@ -51,6 +51,30 @@ class Myrobot(wpilib.TimedRobot):
         else:
             self.speaker_x = 8.31
             self.desired_x_for_autonomous_driving = 5.5
+
+        # Autonomous state machine
+        self.AUTONOMOUS_STATE_AIMING = 1
+        self.AUTONOMOUS_STATE_SPEAKER_SHOOTING = 2
+        self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
+
+        self.wrist_position = 0 # position values for the wrist, intake and shooter
+
+        self.intake_control = 0
+
+        self.shooter_control = 0
+
+        self.shooter_pivot_control = 0
+
+        self.kicker_action = 0
+
+        self.kicker_outtake = 1
+
+        self.x_speed = 0.0
+        self.y_speed = 0.0
+        self.rot = 0.0
+
+        
+        
     
     def readAbsoluteEncoders(self) :
         """
@@ -68,6 +92,8 @@ class Myrobot(wpilib.TimedRobot):
         self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
 
         self.pigeon = self.swerve.gyro.get_yaw()
+
+        self.shooter_absolute_encoder_pos = self.shooter.absolute_encoder_pos
     
         #It get the values of the internal encoder
 
@@ -109,6 +135,7 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
+        wpilib.SmartDashboard.putString('DB/String 9', f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
 
        
     def readAbsoluteEncodersAndOutputToSmartDashboard(self) :
@@ -133,6 +160,7 @@ class Myrobot(wpilib.TimedRobot):
 
     def disabledPeriodic(self):
         self.readAbsoluteEncodersAndOutputToSmartDashboard()
+        self.shooter.periodic(0, 0, 0, 0)
 
         self.intake.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.frontLeft.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
@@ -145,12 +173,12 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousInit(self):
         """ Initialize for autonomous here."""
-        pass
+        self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
+        
 
-    def autonomousPeriodic(self):
-        botpose = self.vision.checkBotpose()
+    def autonomous_periodic_aiming(self, botpose):
             
-        if None != botpose and len(botpose) > 0 :
+
             x = botpose[0]
             y = botpose[1]
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
@@ -164,19 +192,45 @@ class Myrobot(wpilib.TimedRobot):
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
            
-            current_yaw = botpose[5]#getting the yaw from the self.botpose table
-            desired_yaw = 0 #where we want our yaw to go 
             direction_to_travel = self.calculate_desired_direction(desired_yaw, current_yaw)
+            self.vision.get_rotation_autonomous_periodic_for_speaker_shot(self.botpose, current_yaw)
+
             if direction_to_travel < -1:
                 self.intake.periodic(1, 1)
             elif direction_to_travel > 2:
                 self.intake.periodic(3, 2)
             else:
-                self.intake.periodic(0, 0)
+               self.rot = 0.0
+            # How can we tell that we have completed turning? When we do that
+            # self.automous_state = self.AUTONOMOUS_STATE_SPEAKER_SHOOTING
+
+    def autonomous_periodic_shooting(self, botpose):
+        print("NOT IMPLEMENTED")
+        pass
+
+
+    def autonomousPeriodic(self):
+        self.botpose = self.vision.checkBotpose()
+        self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
+        # during the whole autonomous gamemode.
+            
+        if None != self.botpose and len(self.botpose) > 0 :
+            if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
+                self.autonomous_periodic_aiming(self.botpose)
+            elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
+                self.autonomous_periodic_shooting(self.botpose)
         else:
            wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
 
-           #self.swerve.drive(0, 0, 0.0, True)   
+        self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
+        # wrist positions for intake to move towards the requested location remove magic numbers!
+        self.intake.periodic(self.wrist_position, self.intake_control)
+        if self.botpose is not None and len(self.botpose) > 1:
+            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+        else:
+            # No botpose!
+            speaker_distance_m = 0
+        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
     def autonomousExit(self):
         pass
@@ -189,18 +243,6 @@ class Myrobot(wpilib.TimedRobot):
         self.swerve.frontRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backLeft.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-
-        self.wrist_position = 0 # position values for the wrist, intake and shooter
-
-        self.intake_control = 0
-
-        self.shooter_control = 0
-
-        self.shooter_pivot_control = 0
-
-        self.kicker_action = 0
-
-        self.kicker_outtake = 1
 
         self.intake_action = 1 # this action speeds up the intake motors to intake
         self.outtake_action = 2 # this action speeds up the intake motors to outtake
@@ -377,44 +419,7 @@ class Myrobot(wpilib.TimedRobot):
                 wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
         else:
             wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
-
-        
-    def calculate_desired_direction(self,desired_angle,current_angle):
-        if current_angle >180:
-            current_angle = current_angle - 360
-        if desired_angle >180:
-            desired_angle = desired_angle - 360
-        desired_direction = desired_angle - current_angle
-        return desired_direction
-    '''
-    this function checks to see if the counter clockwise direction has less distance to travel than clockwise and calculates the quickest direction to the disired angle
-    '''
     
-    def distance_to_speaker(self, bot_x, bot_y, speaker_x, speaker_y):
-        '''
-        distance to speaker calculates the distance from the robots pos to the speaker in meters. it uses the distance formula subtracting the desired x,y (the speaker)
-        by our current x, y and square roots the awnser to get our distance to be used in our shooter angle calculations 
-        '''
-        distance = math.sqrt(pow(2, speaker_x - bot_x)) + (pow(2, speaker_y - bot_y))
-        return distance
-    
-    
-    def calculate_desired_pitch(self, speaker_distance, target_height):
-        """
-        this function calculates the desired angle for the shooter at different positions. its measured by getting the distance to speaker and the height of the target
-        and dividing them and uses the arctan function to calculate the angle needed to shoot into the speaker.
-        """
-        desired_angle = math.atan2(speaker_distance, target_height) 
-        return desired_angle
-    
-    def radians_to_degrees(self, degrees):
-        '''
-        calculates radians into degrees
-        '''
-        return degrees * (180/math.pi)
-
-
-             
     
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
         

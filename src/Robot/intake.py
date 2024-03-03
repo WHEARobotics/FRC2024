@@ -90,7 +90,7 @@ class Intake:
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
-        self.abs_encoder = DutyCycleEncoder(0)     
+        self.abs_encoder = DutyCycleEncoder(1)     
         self.abs_enc_offset = 0.0
 
         self.wrist_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
@@ -135,9 +135,9 @@ class Intake:
 
             self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
     
-            wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
-            wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
-            wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
+            # wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
+            # wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
+            # wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
 
 
 
