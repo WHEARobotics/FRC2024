@@ -1,25 +1,23 @@
 import rev
 import wpilib
-from wpilib import DutyCycleEncoder
 from rev import CANSparkMax, CANSparkLowLevel
 
 class Intake:
 
     def __init__(self) -> None:
 
-        WRIST_RESTING_ANGLE = 0
-        INTAKE_WRIST_ANGLE = 90
-        AMP_WRIST_ANGLE = 45 # not figured out yet
+        self.WRIST_IN_ANGLE = 0
+        self.INTAKE_WRIST_ANGLE = 152
         self.WRIST_GEAR_RATIO = 80
 
-        kP = 5e-5
+        kP = 0.075
         kP_2 = 0.01
-        kI = 1e-6
+        kI = 0
         kD = 0.0
         kIz = 0.0
         kFF = 0.0
-        kMaxOutput = 1.0
-        kMinOutput = -1.0
+        kMaxOutput = 0.4
+        kMinOutput = -0.4
         maxRPM = 5700
 
         maxVel = 2000
@@ -35,7 +33,7 @@ class Intake:
         self.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
         self.intake_motor.setInverted(True)
-        self.wrist_motor.setInverted(True) 
+        self.wrist_motor.setInverted(False) 
 
 
 
@@ -75,61 +73,54 @@ class Intake:
         self.PIDController.setSmartMotionMinOutputVelocity(minVel, smartmotionslot)
         self.PIDController.setSmartMotionAllowedClosedLoopError(allowedErr, smartmotionslot)
 
-
-
-        self.wrist_in = INTAKE_WRIST_ANGLE
-        self.wrist_out = WRIST_RESTING_ANGLE
-        self.wrist_amp = AMP_WRIST_ANGLE
-
+        
         self.set_speed = 0.0
 
+        self.intake_move_on_init = True
 
-        self.desired_angle = self.wrist_in
+
+        self.desired_angle = self.WRIST_IN_ANGLE
+
+        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyOpen)
         
 
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
-        self.abs_encoder = DutyCycleEncoder(1)     
-        self.abs_enc_offset = 0.0
+        if self.wrist_limit_switch.get() == True:
+            self.wrist_encoder.setPosition(0.0)
+            self.desired_angle = self.WRIST_IN_ANGLE
+            self.intake_move_on_init = False
 
-        self.wrist_encoder.setPosition(self.correctedEncoderPosition() * self.WRIST_GEAR_RATIO)   
+   
 
     def periodic(self, wrist_pos, intake_control):
         wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_pos}')
-        if wrist_pos < 0 or wrist_pos > 4:
-            self.wrist_motor.set(0.0)
+
+
+        if self.wrist_limit_switch.get() == True:
+            self.wrist_encoder.setPosition(0.0)
+            self.desired_angle = self.WRIST_IN_ANGLE
+            self.intake_move_on_init = False
+
+        if self.intake_move_on_init == True:
+            self.wrist_motor.set(-0.2)
         else:
-
-            
-
-            # if wrist_pos == 1:
-            #     desired_angle = self.wrist_out
-            # elif wrist_pos == 2:
-            #     desired_angle = self.wrist_amp
-            if wrist_pos == 3:
-                self.wrist_motor.set(0.3)
-            elif wrist_pos == 4:
-                wpilib.SmartDashboard.putString("DB/String 1", 'wrist down')
-                self.wrist_motor.set(-0.3)
-            #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
+            if wrist_pos == 1:
+                self.desired_angle = self.WRIST_IN_ANGLE
+            elif wrist_pos == 2:
+                self.desired_angle = self.INTAKE_WRIST_ANGLE
+            # if wrist_pos == 3:
+            #     self.wrist_motor.set(0.3)
+            # elif wrist_pos == 4:
+            #     # wpilib.SmartDashboard.putString("DB/String 1", 'wrist down')
+            #     self.wrist_motor.set(-0.3)
+            # #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
             else:
-                self.wrist_motor.set(0.0) # desired_angle = self.wrist_in
-
-        
-            if intake_control == 1:
-                self.set_speed =  0.7
-            elif intake_control == 2:
-                self.set_speed = -0.3
-                 #intake action
-            else:
-                self.set_speed = 0.0
-
-            self.intake_motor.set(self.set_speed)
-
+                self.desired_angle = self.WRIST_IN_ANGLE
             
-            # desired_turn_count = self.DegToTurnCount(self.desired_angle)
-            # self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kSmartMotion)
+            desired_turn_count = self.DegToTurnCount(self.desired_angle)
+            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
             self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
 
@@ -138,6 +129,16 @@ class Intake:
             # wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
             # wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
             # wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
+
+        if intake_control == 1:
+            self.set_speed =  -0.3
+        elif intake_control == 2:
+            self.set_speed = 0.3
+                #intake action
+        else:
+            self.set_speed = 0.0
+
+        self.intake_motor.set(self.set_speed)
 
 
 
@@ -150,10 +151,4 @@ class Intake:
     def TurnCountToDeg(self, count):
         return count * 360.0 / self.WRIST_GEAR_RATIO
     #count to deg
-
-    def correctedEncoderPosition(self):
-        AbsEncValue =  self.abs_encoder.getAbsolutePosition() - self.abs_enc_offset
-        if AbsEncValue < 0.0:
-            AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
-        return AbsEncValue
 

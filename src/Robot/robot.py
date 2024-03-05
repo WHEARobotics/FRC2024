@@ -94,6 +94,8 @@ class Myrobot(wpilib.TimedRobot):
         self.pigeon = self.swerve.gyro.get_yaw()
 
         self.shooter_absolute_encoder_pos = self.shooter.absolute_encoder_pos
+
+        self.wrist_encoder = self.intake.wrist_encoder.getPosition()
     
         #It get the values of the internal encoder
 
@@ -110,7 +112,7 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
         # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
 
-
+        wpilib.SmartDashboard.putString('DB/String 0',"Wrist Enc {:4.3f}".format(self.wrist_encoder))
 
 
         # wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
@@ -135,7 +137,7 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
         # wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 9', "")#f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
+        wpilib.SmartDashboard.putString('DB/String 9', f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
 
        
     def readAbsoluteEncodersAndOutputToSmartDashboard(self) :
@@ -246,8 +248,8 @@ class Myrobot(wpilib.TimedRobot):
 
         self.intake_action = 1 # this action speeds up the intake motors to intake
         self.outtake_action = 2 # this action speeds up the intake motors to outtake
-        self.wrist_action_up = 3 # this action raises the wrist up
-        self.wrist_action_down = 4 # this action puts the wrist down
+        self.wrist_intake_action = 2 # this action raises the wrist up
+        self.wrist_in_action = 1 # this action puts the wrist down
 
         self.shooter_pivot_start = 1 # this pivots the shooter into a 0 degree angle
         self.shooter_pivot_max = 2 # this pivots the shooter into a 90 degree angle
@@ -279,6 +281,7 @@ class Myrobot(wpilib.TimedRobot):
         self.rightStickButton = self.xbox_operator.getRightStickButton()
         self.leftTrigger = self.xbox_operator.getLeftTriggerAxis()
         self.rightTrigger = self.xbox_operator.getRightTriggerAxis()
+        self.startButton = self.xbox_operator.getStartButton()
 
         self.readAbsoluteEncodersAndOutputToSmartDashboard()
 
@@ -310,10 +313,13 @@ class Myrobot(wpilib.TimedRobot):
         
 
         if self.Abutton:
-            self.wrist_position = self.wrist_action_up
+            self.wrist_position = self.wrist_intake_action
+            self.intake_control = self.intake_action
         elif self.Bbutton:
             self.intake_control = self.outtake_action
-            self.wrist_position = self.wrist_action_down
+            self.wrist_position = 0
+            self.kicker_action = 1
+        #     pass
         else:
             self.intake_control = 0 
             self.wrist_position = 0
@@ -323,13 +329,18 @@ class Myrobot(wpilib.TimedRobot):
             self.intake_control = self.intake_action
         elif self.RightBumper:
             self.intake_control = self.outtake_action
-        else:
-            self.intake_control = 0
+        # else:
+        #     self.intake_control = 0
         
 
       
-        # elif self.Bbutton:
-        #     self.wrist_position = 4
+        if self.Bbutton:
+            self.shooter_pivot_control = 2
+        elif self.startButton:
+            self.shooter_pivot_control = 3
+        # elif self.LeftBumper:
+        #     self.shooter_pivot_control = 4
+        
         # elif self.LeftBumper:
         #     self.wrist_position = 0
         #     self.intake_control = 0
@@ -349,7 +360,9 @@ class Myrobot(wpilib.TimedRobot):
 
         # wpilib.SmartDashboard.putString('DB/String 2',"intake control {:4.0f}".format( self.intake_control))
         # wpilib.SmartDashboard.putString('DB/String 3',"wrist pos {:4.0f}".format( self.wrist_position))
-        # wpilib.SmartDashboard.putString('DB/String 4',"shooter action {:4.0f}".format( self.shooter_control))
+        wpilib.SmartDashboard.putString('DB/String 6',"shooter action {:4.0f}".format( self.shooter_control))
+        wpilib.SmartDashboard.putString('DB/String 2',"shooter action {:4.0f}".format( self.shooter_pivot_control))
+        
             
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
@@ -418,7 +431,8 @@ class Myrobot(wpilib.TimedRobot):
             else:
                 wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
         else:
-            wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
+            # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
+            pass
     
     
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
