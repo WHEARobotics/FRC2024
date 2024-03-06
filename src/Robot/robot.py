@@ -254,13 +254,16 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_pivot_start = 1 # this pivots the shooter into a 0 degree angle
         self.shooter_pivot_max = 2 # this pivots the shooter into a 90 degree angle
         self.shooter_pivot_sub = 3 # this pivots the shooter into a 180 degree angle
-        self.shooter_pivot_manual_up = 4 # this manually pivots the shooter up
-        self.shooter_pivot_manual_down = 5 # this manually pivots the shooter down
+        self.shooter_pivot_manual_up = 5 # this manually pivots the shooter up
+        self.shooter_pivot_manual_down = 6 # this manually pivots the shooter down
 
         self.shooter_action_intake = 1 # this action moves the shooter motors to intake
         self.shooter_action_outtake = 2 # this action moves the shooter motors to outtake
         self.shooter_action_kicker = 3 # this action moves the kicker motors and feed the note into the shooter
         self.kicker_shoot = 2
+
+        self.timer = wpilib.Timer()
+        self.timer.reset()
 
 
         
@@ -287,28 +290,15 @@ class Myrobot(wpilib.TimedRobot):
 
         self.botpose = self.vision.checkBotpose()
 
-        if self.Xbutton:
-            self.shooter_control = self.shooter_action_intake
-        elif self.Ybutton:
-            self.shooter_control = self.shooter_action_outtake
-        else:
-            self.shooter_control = 0
-
-        if self.rightTrigger:
-            self.kicker_action = self.kicker_outtake
-        elif self.leftTrigger:
-            self.kicker_action = self.kicker_shoot
-        else:
-            self.kicker_action = 0
 
 
         # we commented out this for now because we dont want any position control for our first robot tests
-        if self.leftStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_up
-        elif self.rightStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_down
-        else:
-            self.shooter_pivot_control = 0
+        # if self.leftStickButton:
+        #     self.shooter_pivot_control = self.shooter_pivot_manual_up
+        # elif self.rightStickButton:
+        #     self.shooter_pivot_control = self.shooter_pivot_manual_down
+        # else:
+        #     self.shooter_pivot_control = 0
 
         
 
@@ -319,25 +309,36 @@ class Myrobot(wpilib.TimedRobot):
             self.intake_control = self.outtake_action
             self.wrist_position = 0
             self.kicker_action = 1
-        #     pass
+            self.shooter_pivot_control = 2
+        elif self.Xbutton:
+            self.kicker_action = 2 # amp
+        elif self.rightTrigger:
+            self.kicker_action = 4
         else:
             self.intake_control = 0 
             self.wrist_position = 0
+            self.kicker_action = 0
             # this stops the motor from moving
+
+        if self.Ybutton:
+            self.shooter_control = 2
+        else: self.shooter_control = 0
         
-        if self.LeftBumper:
-            self.intake_control = self.intake_action
-        elif self.RightBumper:
-            self.intake_control = self.outtake_action
-        # else:
+        # if self.LeftBumper:
+        #     self.intake_control = self.intake_action
+        # elif self.RightBumper:
+        #     self.intake_control = self.outtake_action
+        # # else:
         #     self.intake_control = 0
         
 
       
-        if self.Bbutton:
-            self.shooter_pivot_control = 2
-        elif self.startButton:
+
+        if self.startButton:
             self.shooter_pivot_control = 3
+        elif self.leftTrigger:
+            self.shooter_pivot_control = 4
+            self.wrist_position = 3
         # elif self.LeftBumper:
         #     self.shooter_pivot_control = 4
         
@@ -347,15 +348,6 @@ class Myrobot(wpilib.TimedRobot):
         # elif not self.Abutton or not self.Bbutton or not self.LeftBumper:
         #     self.wrist_position = 0
         #     self.intake_control = 0
-
-        # if self.Xbutton:
-        #     shooter_control = 1
-        # elif self.Ybutton:
-        #     shooter_control = 2
-        # if self.rightTrigger:
-        #     shooter_control = 3
-        # elif not self.Ybutton:
-        #     shooter_control = 0
  
 
         # wpilib.SmartDashboard.putString('DB/String 2',"intake control {:4.0f}".format( self.intake_control))

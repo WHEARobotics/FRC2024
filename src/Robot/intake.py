@@ -8,6 +8,7 @@ class Intake:
 
         self.WRIST_IN_ANGLE = 0
         self.INTAKE_WRIST_ANGLE = 152
+        self.WRIST_AWAY_ANGLE = 60
         self.WRIST_GEAR_RATIO = 80
 
         kP = 0.075
@@ -81,16 +82,12 @@ class Intake:
 
         self.desired_angle = self.WRIST_IN_ANGLE
 
-        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyOpen)
+        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyClosed)
         
 
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
-
-        if self.wrist_limit_switch.get() == True:
-            self.wrist_encoder.setPosition(0.0)
-            self.desired_angle = self.WRIST_IN_ANGLE
-            self.intake_move_on_init = False
+            
 
    
 
@@ -102,6 +99,7 @@ class Intake:
             self.wrist_encoder.setPosition(0.0)
             self.desired_angle = self.WRIST_IN_ANGLE
             self.intake_move_on_init = False
+            print("true")
 
         if self.intake_move_on_init == True:
             self.wrist_motor.set(-0.2)
@@ -110,6 +108,8 @@ class Intake:
                 self.desired_angle = self.WRIST_IN_ANGLE
             elif wrist_pos == 2:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
+            elif wrist_pos == 3:
+                self.desired_angle = self.WRIST_AWAY_ANGLE
             # if wrist_pos == 3:
             #     self.wrist_motor.set(0.3)
             # elif wrist_pos == 4:
@@ -127,11 +127,12 @@ class Intake:
             self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
     
             # wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
-            # wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
-            # wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
+            wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
+            wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
 
         if intake_control == 1:
             self.set_speed =  -0.3
+            self.intake_state = 1
         elif intake_control == 2:
             self.set_speed = 0.3
                 #intake action

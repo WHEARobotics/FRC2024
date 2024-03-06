@@ -12,13 +12,15 @@ class Shooter:
         
         SHOOTER_AMP_ANGLE = 120
         SHOOTER_START_ANGLE = 0
-        SHOOTER_FEEDING_ANGLE = -35
-        SHOOTER_SUB_ANGLE = 45
+        SHOOTER_FEEDING_ANGLE = -18
+
+        SHOOTER_SUB_ANGLE = -60
 
 
         self.SHOOTER_PIVOT_GEAR_RATIO = 100
 
         ABSOLUTE_ENCODER_OFFSET = 0.0
+
 
         kP = 0.125
         kP_2 = 0.01
@@ -148,19 +150,23 @@ class Shooter:
         self.set_speed = 0
         self.desired_angle = self.shooter_feeder
 
+        self.kicker_state = 0
+
+
+
     def periodic(self, distance_to_speaker_m, shooter_pivot_pos, shooter_control, kicker_action):
 
         self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
 
-        drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
+        # drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
 
         self.corrected_encoder_pos = self.correctedEncoderPosition()
         
-        if shooter_pivot_pos > 3:
+        if shooter_pivot_pos > 4:
             self.automatic = False
-            if shooter_pivot_pos == 4:
+            if shooter_pivot_pos == 5:
                 self.shooter_pivot.set(0.3)
-            elif shooter_pivot_pos == 5:
+            elif shooter_pivot_pos == 6:
                 self.shooter_pivot.set(-0.3)
             else:
                 self.shooter_pivot.set(0.0)
@@ -174,8 +180,6 @@ class Shooter:
                 self.desired_angle = self.shooter_amp
             elif shooter_pivot_pos == 4:
                 self.desired_angle = self.shooter_sub
-            else:
-                self.desired_angle = self.shooter_feeder
 
         # TODO: Add drop compensation to desired_angle!
 
@@ -192,6 +196,32 @@ class Shooter:
         # wpilib.SmartDashboard.putString('DB/String 7', "") #f"drop compensation {drop_compensation_degrees:4.1f}")
         # wpilib.SmartDashboard.putString('DB/String 1', f"internal enc {self.shooter_pivot_encoder.getPosition():4.4f}")
         # wpilib.SmartDashboard.putString('DB/String 2', "")#f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
+            
+        # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
+        # once we let go we want the state machine to set the state to 3 to kick it back for a bit away from the flywheels so they 
+        # could speed up
+            
+        if self.kicker_state == 0:
+            if  kicker_action ==  1:
+                self.kicker_state = 1
+            elif kicker_action == 4:
+                self.kicker_state = 3
+
+        elif self.kicker_state == 1:
+            if self.kicker_state != 1:
+                self.kicker_state = 2
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+
+        elif self.kicker_state == 2:
+            if self.wiggleTimer.advanceIfElapsed(0.3):
+                self.kicker_state = 0
+
+        elif self.kicker_state == 3:
+            if kicker_action != 4:
+                self.kicker_state = 0
+        else:
+            kicker_action = 0
 
             
         if shooter_control > 0:
@@ -208,9 +238,20 @@ class Shooter:
         if kicker_action == 1:
             self.kicker.set(-0.3)
         elif kicker_action == 2:
+            # the amp scoring
             self.kicker.set(0.5)
+        elif kicker_action == 3:
+            self.kicker.set(0.3)
+        elif kicker_action == 4:
+            self.kicker.set(-0.9)
+        elif kicker_action == 0:
+            self.kicker.set(0.0)
         else:
-            self.kicker.set(0.0) 
+            self.kicker.set(0.0)
+        
+        wpilib.SmartDashboard.putString('DB/String 6',f"{kicker_action}")
+
+        
 
 
     
