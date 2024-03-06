@@ -15,7 +15,16 @@ from CrescendoSwerveModule import CrescendoSwerveModule
 from intake import Intake
 from shooter import Shooter
 from wpilib import DriverStation
+from dataclasses import dataclass
 
+@dataclass(frozen=True)
+class FieldPositions:
+    speaker_x_red = 8.31
+    speaker_x_blue = -8.31
+    speaker_y = 1.44
+
+    desired_x_for_autonomous_driving_red = 5.5
+    desired_x_for_autonomous_driving_blue = -5.5
 
 class Myrobot(wpilib.TimedRobot):
 
@@ -25,7 +34,6 @@ class Myrobot(wpilib.TimedRobot):
         """ Robot initialization. Run once on startup. Do all one-time
         initialization here."""
 
-        self.vision = Vision()
         self.swerve = CrescendoSwerveDrivetrain()
         self.intake = Intake()
         self.shooter = Shooter()
@@ -36,21 +44,23 @@ class Myrobot(wpilib.TimedRobot):
         # Sets a factor for slowing down the overall speed. 1 is no modification. 2 is half-speed, etc.
         self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 3
 
-        self.speaker_y = 1.44 #m (either side)
+
         ally = DriverStation.getAlliance()
         if ally is not None:
             if ally == DriverStation.Alliance.kRed:
-                self.speaker_x = 8.31
-                self.desired_x_for_autonomous_driving = 5.5
+                self.speaker_x = FieldPositions.speaker_x_red
+                self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
                 #set x value to the red side x
                 pass
             elif ally == DriverStation.Alliance.kBlue:
-                self.speaker_x = -8.31
-                self.desired_x_for_autonomous_driving = -5.5
+                self.speaker_x = FieldPositions.speaker_x_blue
+                self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_blue
                 #set the x value to the blue side
         else:
-            self.speaker_x = 8.31
-            self.desired_x_for_autonomous_driving = 5.5
+            print("No alliance found, defaulting to red")
+            self.speaker_x = FieldPositions.speaker_x_red
+            self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
+        self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
 
         # Autonomous state machine
         self.AUTONOMOUS_STATE_AIMING = 1
@@ -228,7 +238,7 @@ class Myrobot(wpilib.TimedRobot):
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         if self.botpose is not None and len(self.botpose) > 1:
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
         else:
             # No botpose!
             speaker_distance_m = 0

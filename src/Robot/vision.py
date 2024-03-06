@@ -7,7 +7,10 @@ import time # Temporary for diagnostics
 class Vision:
                                                      
     
-    def __init__(self) -> None:
+    def __init__(self, desired_auto_x, speaker_x) -> None:
+        self.desired_x_for_autonomous_driving = desired_auto_x
+        self.speaker_x = speaker_x
+
         self.networktables = ntcore.NetworkTableInstance.getDefault()
         self.limelight_table = self.networktables.getTable("limelight")
         self.botpose = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
