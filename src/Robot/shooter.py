@@ -146,12 +146,24 @@ class Shooter:
         self.shooter_feeder = SHOOTER_FEEDING_ANGLE
         self.shooter_amp = SHOOTER_AMP_ANGLE
         self.shooter_sub = SHOOTER_SUB_ANGLE
+        # these are the different shooter angles 
 
         self.automatic = True
+        # automatic is a mode set to switch between set reference and manual control to not interfere with eachother
         self.set_speed = 0
         self.desired_angle = self.shooter_feeder
+        # we might want to change this ti the sub angle to make sure its ready to shoot in autonomous
 
         self.kicker_state = 0
+
+        self.shooter_pivot_in_action = 1
+        self.shooter_pivot_feeder_action = 2
+        self.shooter_pivot_amp_action = 3
+        self.shooter_pivot_sub_action = 4
+
+        self.shooter_pivot_manual_up = 5
+        self.shooter_pivot_manual_down = 6
+
 
 
 
@@ -165,21 +177,21 @@ class Shooter:
         
         if shooter_pivot_pos > 4:
             self.automatic = False
-            if shooter_pivot_pos == 5:
+            if shooter_pivot_pos == self.shooter_pivot_manual_up:
                 self.shooter_pivot.set(0.3)
-            elif shooter_pivot_pos == 6:
+            elif shooter_pivot_pos == self.shooter_pivot_manual_down:
                 self.shooter_pivot.set(-0.3)
             else:
                 self.shooter_pivot.set(0.0)
         else:
-            if shooter_pivot_pos == 1:
+            if shooter_pivot_pos == self.shooter_pivot_in_action:
                 self.automatic = True
                 self.desired_angle = self.shooter_in
-            elif shooter_pivot_pos == 2:
+            elif shooter_pivot_pos == self.shooter_pivot_feeder_action:
                 self.desired_angle = self.shooter_feeder
-            elif shooter_pivot_pos == 3:
+            elif shooter_pivot_pos == self.shooter_pivot_amp_action:
                 self.desired_angle = self.shooter_amp
-            elif shooter_pivot_pos == 4:
+            elif shooter_pivot_pos == self.shooter_pivot_sub_action:
                 self.desired_angle = self.shooter_sub
 
         # TODO: Add drop compensation to desired_angle!
@@ -242,13 +254,15 @@ class Shooter:
             # the amp scoring
             self.kicker.set(0.5)
         elif kicker_action == 3:
-            self.kicker.set(0.3)
-        elif kicker_action == 4:
             self.kicker.set(-0.9)
+        elif kicker_action == 4:
+            self.kicker.set(0.3)
         elif kicker_action == 0:
             self.kicker.set(0.0)
         else:
             self.kicker.set(0.0)
+
+        # kicker state machine
         
         wpilib.SmartDashboard.putString('DB/String 6',f"{kicker_action}")
 

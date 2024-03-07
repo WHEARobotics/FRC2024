@@ -74,6 +74,7 @@ class Intake:
         self.PIDController.setSmartMotionMaxVelocity(maxVel, smartmotionslot)
         self.PIDController.setSmartMotionMinOutputVelocity(minVel, smartmotionslot)
         self.PIDController.setSmartMotionAllowedClosedLoopError(allowedErr, smartmotionslot)
+        # this sets up the the pid control for the intake and sets things up for pid and smart motion control  
 
         
         self.set_speed = 0.0
@@ -88,8 +89,14 @@ class Intake:
 
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
-            
 
+
+        self.intake_action = 1
+        self.outtake_action = 2
+
+        self.wrist_in_action = 1
+        self.wrist_intake_action = 2
+        self.wrist_mid_action = 3
    
 
     def periodic(self, wrist_pos, intake_control):
@@ -105,11 +112,11 @@ class Intake:
         if self.intake_move_on_init == True:
             self.wrist_motor.set(-0.2)
         else:
-            if wrist_pos == 1:
+            if wrist_pos == self.wrist_in_action:
                 self.desired_angle = self.WRIST_IN_ANGLE
-            elif wrist_pos == 2:
+            elif wrist_pos == self.wrist_intake_action:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
-            elif wrist_pos == 3:
+            elif wrist_pos == self.wrist_mid_action:
                 self.desired_angle = self.WRIST_AWAY_ANGLE
             else:
                 self.desired_angle = self.WRIST_IN_ANGLE
@@ -122,10 +129,10 @@ class Intake:
             self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
 
 
-        if intake_control == 1:
+        if intake_control == self.intake_action:
             self.set_speed =  -0.3
             self.intake_state = 1
-        elif intake_control == 2:
+        elif intake_control == self.outtake_action:
             self.set_speed = 0.3
                 #intake action
         else:

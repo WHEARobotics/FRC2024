@@ -131,7 +131,7 @@ class Myrobot(wpilib.TimedRobot):
         """
         # down below is code setting up the DB buttons. they are found in the smart dashboard basic tab and we can push them through the
         # dashboard to do a few actions, in this case changing between different string values.
-        sd_button_1 = wpilib.SmartDashboard.getBoolean("DB/Button 0", False)
+        sd_button_1 = wpilib.SmartDashboard.getBoolean("New Name 0", False)
         sd_button_2 = wpilib.SmartDashboard.getBoolean("DB/Button 1", False)
         sd_button_3 = wpilib.SmartDashboard.getBoolean("DB/Button 2", False)
         sd_button_4 = wpilib.SmartDashboard.getBoolean("DB/Button 3", False)
@@ -308,17 +308,27 @@ class Myrobot(wpilib.TimedRobot):
         self.outtake_action = 2 # this action speeds up the intake motors to outtake
         self.wrist_intake_action = 2 # this action raises the wrist up
         self.wrist_in_action = 1 # this action puts the wrist down
+        self.wrist_mid_action = 3 # action to move the intake to a position not in the way with the shooter and note
 
         self.shooter_pivot_start = 1 # this pivots the shooter into a 0 degree angle
         self.shooter_pivot_max = 2 # this pivots the shooter into a 90 degree angle
-        self.shooter_pivot_sub = 3 # this pivots the shooter into a 180 degree angle
+        self.shooter_pivot_amp = 3 # this pivots the shooter into a 180 degree angle
+        self.shooter_pivot_sub = 4 # subwoofer angle to move the shooter to the sub angle
         self.shooter_pivot_manual_up = 5 # this manually pivots the shooter up
         self.shooter_pivot_manual_down = 6 # this manually pivots the shooter down
 
         self.shooter_action_intake = 1 # this action moves the shooter motors to intake
-        self.shooter_action_outtake = 2 # this action moves the shooter motors to outtake
-        self.shooter_action_kicker = 3 # this action moves the kicker motors and feed the note into the shooter
-        self.kicker_shoot = 2
+        self.shooter_action_shot = 2 # this action moves the shooter motors to outtake
+        
+        self.kicker_intake = 1 # this action moves the kicker motors and feed the note into the shooter
+        self.kicker_amp_shot = 2 # this utilizes the kicker to shoot into the amp.
+        self.kicker_shooter = 3 # this speeds up the kicker to be able to shoot with it at high speeds into the flywheels
+
+        self.intake_idle = 0
+        self.shooter_pivot_idle = 0
+        self.shooter_flywheel_idle = 0
+        self.wrist_idle = 0
+        self.kicker_idle = 0
 
         self.timer = wpilib.Timer()
         self.timer.reset()
@@ -366,24 +376,24 @@ class Myrobot(wpilib.TimedRobot):
         elif self.Bbutton:
             self.intake_control = self.outtake_action
             self.wrist_position = 0
-            self.kicker_action = 1
+            self.kicker_action = self.kicker_intake
             self.shooter_pivot_control = 2
         # this is the button to transfer the note from the intake into the shooter kicker
         elif self.Xbutton:
-            self.kicker_action = 2 # amp shot to shoot into the amp
+            self.kicker_action = self.kicker_amp_shot # amp shot to shoot into the amp
         elif self.rightTrigger:
-            self.kicker_action = 4
+            self.kicker_action = self.kicker_shooter
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
-            self.intake_control = 0 
-            self.wrist_position = 0
-            self.kicker_action = 0
+            self.intake_control = self.intake_idle
+            self.wrist_position = self.wrist_idle
+            self.kicker_action = self.kicker_idle
             # this stops the motor from moving
 
         if self.Ybutton:
-            self.shooter_control = 2
+            self.shooter_control = self.shooter_action_shot
         else:
-            self.shooter_control = 0
+            self.shooter_control = self.shooter_flywheel_idle
         # this button speeds up the shooter flywheels before shooting the note
         
         # if self.LeftBumper:
@@ -400,10 +410,10 @@ class Myrobot(wpilib.TimedRobot):
       
 
         if self.startButton:
-            self.shooter_pivot_control = 3
+            self.shooter_pivot_control = self.shooter_pivot_amp
         elif self.leftTrigger:
-            self.shooter_pivot_control = 4
-            self.wrist_position = 3
+            self.shooter_pivot_control = self.shooter_pivot_sub
+            self.wrist_position = self.wrist_mid_action
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
     
 
