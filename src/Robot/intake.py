@@ -38,7 +38,8 @@ class Intake:
 
 
 
-        #This function slows dow can states frames to not over load the canbuss
+        # This function slows dow can states frames to not over load the canbus by slowing down the amount of things are needed to be checked
+        # in a certain amount of time and we slowed down the amount of time needed for less important things on the canbus
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
@@ -110,12 +111,6 @@ class Intake:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
             elif wrist_pos == 3:
                 self.desired_angle = self.WRIST_AWAY_ANGLE
-            # if wrist_pos == 3:
-            #     self.wrist_motor.set(0.3)
-            # elif wrist_pos == 4:
-            #     # wpilib.SmartDashboard.putString("DB/String 1", 'wrist down')
-            #     self.wrist_motor.set(-0.3)
-            # #these are temporary movements for the wrist to be able to do tests i=on the robot using motor power not position control 
             else:
                 self.desired_angle = self.WRIST_IN_ANGLE
             
@@ -125,10 +120,7 @@ class Intake:
             self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
 
             self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
-    
-            # wpilib.SmartDashboard.putString('DB/String 6',"desired angle {:4.3f}".format(self.desired_angle))
-            wpilib.SmartDashboard.putString('DB/String 7',"motor_pos {:4.3f}".format(self.motor_pos_degrees))
-            wpilib.SmartDashboard.putString('DB/String 5',"Wrist_motor_pos {:4.3f}".format(self.wrist_encoder.getPosition()))
+
 
         if intake_control == 1:
             self.set_speed =  -0.3

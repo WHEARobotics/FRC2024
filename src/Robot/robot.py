@@ -60,7 +60,10 @@ class Myrobot(wpilib.TimedRobot):
             print("No alliance found, defaulting to red")
             self.speaker_x = FieldPositions.speaker_x_red
             self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
+        # this checks wether we have set ourselves through the smartdashbard our alliance side and color. for vision we want to check to change
+        # the x value to use the same april tags but use them as if we were on either side of the field.
         self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
+        # gets the vision class and sets the arguments in init to be used in the file
 
         # Autonomous state machine
         self.AUTONOMOUS_STATE_AIMING = 1
@@ -82,72 +85,112 @@ class Myrobot(wpilib.TimedRobot):
         self.x_speed = 0.0
         self.y_speed = 0.0
         self.rot = 0.0
+        # speed values for the swerve to be changed throughout the different states to drive
+        # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
         
         
     
     def readAbsoluteEncoders(self) :
-        """
-        This reads the four absolute encoders position
-        """
+        '''
+        getting necessary values to be able to send the values to the smart dashboard to be able to be viewed.
+        '''
+
+        to_degrees = 360
+        #constant set to set positions of encoders to degrees iff they measure 0-1
+
+
         self.absEnc1 = self.swerve.backLeft.correctedEncoderPosition()#* 360
         self.absEnc2 = self.swerve.frontRight.correctedEncoderPosition()# * 360
         self.absEnc3 = self.swerve.frontLeft.correctedEncoderPosition()# * 360
         self.absEnc4 = self.swerve.backRight.correctedEncoderPosition()# * 360
         self.absEnc2b = self.swerve.frontRight.correctedEncoderPosition() * 360
         
-        self.turnmotor1 = self.swerve.backLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
-        self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * 360
+        self.turnmotor1 = self.swerve.backLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
+        self.turnmotor2 = self.swerve.frontRight.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
+        self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
+        self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
 
         self.pigeon = self.swerve.gyro.get_yaw()
 
-        self.shooter_absolute_encoder_pos = self.shooter.absolute_encoder_pos
 
-        self.wrist_encoder = self.intake.wrist_encoder.getPosition()
+        self.shooter_encoder = self.shooter.shooter_pivot_encoder.getPosition() * to_degrees
+        self.shooter_absolute_encoder_pos = self.shooter.corrected_encoder_pos * to_degrees
+        self.shooter_desired_pos = self.shooter.desired_angle
+        self.shooter_flywheel_speed = self.shooter.shooter_wheel_encoder.getCountsPerRevolution()
+
+        self.wrist_encoder = self.intake.wrist_encoder.getPosition() * to_degrees
+        self.wrist_limit_switch = self.intake.wrist_limit_switch.get()
+        self.wrist_desired_pos = self.intake.desired_angle
     
-        #It get the values of the internal encoder
 
     def outputToSmartDashboard(self) :
         """
         This puts the raw values of the encoder
         on the SmartDashboard as DB/String[0-8].
         """
-        # self.trunNurmal = self.turnmotor4 % 360.0
-
-        # wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
-        # wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
-        # wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
-        # wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
-        # wpilib.SmartDashboard.putString('DB/String 0',"Enc FR angel {:4.3f}".format( self.absEnc2b))
-
-        wpilib.SmartDashboard.putString('DB/String 0',"Wrist Enc {:4.3f}".format(self.wrist_encoder))
+        # down below is code setting up the DB buttons. they are found in the smart dashboard basic tab and we can push them through the
+        # dashboard to do a few actions, in this case changing between different string values.
+        sd_button_1 = wpilib.SmartDashboard.getBoolean("DB/Button 0", False)
+        sd_button_2 = wpilib.SmartDashboard.getBoolean("DB/Button 1", False)
+        sd_button_3 = wpilib.SmartDashboard.getBoolean("DB/Button 2", False)
+        sd_button_4 = wpilib.SmartDashboard.getBoolean("DB/Button 3", False)
 
 
-        # wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 9',f"Back right Nurmal  {self.trunNurmal:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 8',f"Botpose thinks angle is {self.botpose[5]:4.1f}")
-        # wpilib.SmartDashboar.putString('DB/String 7', f"Gyro<->Botpose disagreement {self.pigeon-self.botpose[5]:4.1f}")
+        if sd_button_1 == True:
+            wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+            wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
+            wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
+            wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
 
-      
+            wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
+            wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+            wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
+            wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
 
-        # wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.shooter.shooter_pivot_encoder.getPosition():4.1f}")
-        
+            wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}") 
+        # swerve drive preset with absolute and motor encoder poses with gyro
+            
+        elif sd_button_2 == True:
+            wpilib.SmartDashboard.putString('DB/String 0',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 1',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
 
-        
-        # This is the internal turning motor encoder position.
-        
+            wpilib.SmartDashboard.putString('DB/String 2',f"shooter_abs_deg {self.shooter_absolute_encoder_pos:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
 
-        # wpilib.SmartDashboard.putString('DB/String 5', f"Back left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc1):.0f}")
-        # wpilib.SmartDashboard.putString('DB/String 6', f"Front right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc2):.0f}")
-        # wpilib.SmartDashboard.putString('DB/String 7', f"Front left deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc3):.0f}")
-        # wpilib.SmartDashboard.putString('DB/String 8', f"Back right deg: {self.calculateDegreesFromAbsoluteEncoderValue(self.absEnc4):.0f}")
-        wpilib.SmartDashboard.putString('DB/String 9', f"shooter_pos {self.shooter_absolute_encoder_pos:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 5',f"des_shooter_pos{self.shooter_desired_pos:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 6',f"des_wrist_pos{self.wrist_desired_pos:1.3f}")
+
+            wpilib.SmartDashboard.putString('DB/String 7',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
+
+            wpilib.SmartDashboard.putString('DB/String 8',"wrist_action {:4.0f}".format( self.wrist_position))
+            wpilib.SmartDashboard.putString('DB/String 9',"shooter_pivot_action {:4.0f}".format( self.shooter_pivot_control))
+        # shooter and intake preset with the intake and shooter motor poses + limit switch value and abs shooter encoder pos
+            
+        elif sd_button_3 == True:
+            pass
+        # vision preset with botpose: x, y, yaw(the other values are not important to us), disred angle to speaker, distance to speaker,
+        # desired pitch needed to get to the speaker, and more later.
+        elif sd_button_4 == True:
+            
+            wpilib.SmartDashboard.putString('DB/String 0',f"gyro_pos{self.pigeon:4.1f}")
+
+            wpilib.SmartDashboard.putString('DB/String 1',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 2',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
+
+            wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
+            wpilib.SmartDashboard.putString('DB/String 4',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
+
+            # wpilib.SmartDashboard.putString('DB/String 5',f"gyro+bot_yaw_diff{self.:4.1f}")
+            # set this up to see the difference between the pigeon and botpose yaw we cant add because vision is not fully complete
+
+            # also figure out how to get the meters per second speed o swerve modules.
+
+        # competition preset to have values needed duting competition like the intake + shooter angle, gyro angle, desired pitch,
+        # angle to speaker, the limit switch value, and anything else
+        else:
+            pass
+        # this will be used for just testing and to print anything we want when a smart dashboard button is not pushed
 
        
     def readAbsoluteEncodersAndOutputToSmartDashboard(self) :
@@ -179,6 +222,8 @@ class Myrobot(wpilib.TimedRobot):
         self.swerve.frontRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backLeft.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+
+        # we can set the motors to make sure they are on break when disabled
 
     def disabledExit(self):
         pass
@@ -217,6 +262,9 @@ class Myrobot(wpilib.TimedRobot):
             # self.automous_state = self.AUTONOMOUS_STATE_SPEAKER_SHOOTING
 
     def autonomous_periodic_shooting(self, botpose):
+        """
+        this will get the angle needed for the shooter to be able to shoot from different positions by calculating through trig
+        """
         print("NOT IMPLEMENTED")
         pass
 
@@ -320,10 +368,12 @@ class Myrobot(wpilib.TimedRobot):
             self.wrist_position = 0
             self.kicker_action = 1
             self.shooter_pivot_control = 2
+        # this is the button to transfer the note from the intake into the shooter kicker
         elif self.Xbutton:
-            self.kicker_action = 2 # amp
+            self.kicker_action = 2 # amp shot to shoot into the amp
         elif self.rightTrigger:
             self.kicker_action = 4
+        # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
             self.intake_control = 0 
             self.wrist_position = 0
@@ -332,7 +382,9 @@ class Myrobot(wpilib.TimedRobot):
 
         if self.Ybutton:
             self.shooter_control = 2
-        else: self.shooter_control = 0
+        else:
+            self.shooter_control = 0
+        # this button speeds up the shooter flywheels before shooting the note
         
         # if self.LeftBumper:
         #     self.intake_control = self.intake_action
@@ -340,6 +392,9 @@ class Myrobot(wpilib.TimedRobot):
         #     self.intake_control = self.outtake_action
         # # else:
         #     self.intake_control = 0
+        
+        # we could use manual intake to do without changing the wrist to move the note farther in. i could be wrong and we might just want
+        # to hold intake longer to push the note farther.
         
 
       
@@ -349,21 +404,9 @@ class Myrobot(wpilib.TimedRobot):
         elif self.leftTrigger:
             self.shooter_pivot_control = 4
             self.wrist_position = 3
-        # elif self.LeftBumper:
-        #     self.shooter_pivot_control = 4
-        
-        # elif self.LeftBumper:
-        #     self.wrist_position = 0
-        #     self.intake_control = 0
-        # elif not self.Abutton or not self.Bbutton or not self.LeftBumper:
-        #     self.wrist_position = 0
-        #     self.intake_control = 0
- 
+        # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
+    
 
-        # wpilib.SmartDashboard.putString('DB/String 2',"intake control {:4.0f}".format( self.intake_control))
-        # wpilib.SmartDashboard.putString('DB/String 3',"wrist pos {:4.0f}".format( self.wrist_position))
-        wpilib.SmartDashboard.putString('DB/String 6',"shooter action {:4.0f}".format( self.shooter_control))
-        wpilib.SmartDashboard.putString('DB/String 2',"shooter action {:4.0f}".format( self.shooter_pivot_control))
         
             
         # wrist positions for intake to move towards the requested location remove magic numbers!

@@ -15,6 +15,8 @@ class Vision:
         self.limelight_table = self.networktables.getTable("limelight")
         self.botpose = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
 
+        
+
     def checkBotpose(self):
         return self.botpose.get()
     

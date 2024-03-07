@@ -47,6 +47,7 @@ class Shooter:
         self.absolute_encoder = wpilib.DutyCycleEncoder(3)
         self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
         self.abs_enc_offset = ABSOLUTE_ENCODER_OFFSET
+        self.shooter_wheel_encoder = self.shooter_wheel.getEncoder()
 
         self.shooter_wheel_2.follow(self.shooter_wheel, True)
         self.shooter_pivot_2.follow(self.shooter_pivot, True)
