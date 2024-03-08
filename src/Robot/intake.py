@@ -3,14 +3,14 @@ import wpilib
 from rev import CANSparkMax, CANSparkLowLevel
 from dataclasses import dataclass
 
-@dataclass
-class WristAngleCommands(frozen=True):
+@dataclass(frozen=True)
+class WristAngleCommands:
     wrist_stow_action = 1
     wrist_intake_action = 2
     wrist_mid_action = 3
 
-@dataclass
-class IntakeCommands(frozen=True):
+@dataclass(frozen=True)
+class IntakeCommands:
     idle = 0
     intake_action = 1
     outtake_action = 2
