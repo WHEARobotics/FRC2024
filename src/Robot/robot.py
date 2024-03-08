@@ -12,7 +12,7 @@ import rev
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
-from intake import Intake
+from intake import Intake, WristAngleCommands, IntakeCommands
 from shooter import Shooter
 from wpilib import DriverStation
 from dataclasses import dataclass
@@ -70,9 +70,9 @@ class Myrobot(wpilib.TimedRobot):
         self.AUTONOMOUS_STATE_SPEAKER_SHOOTING = 2
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
-        self.wrist_position = 0 # position values for the wrist, intake and shooter
-
-        self.intake_control = 0
+        # Initialize commands sent to the mechanisms.
+        self.wrist_position = WristAngleCommands.wrist_stow_action
+        self.intake_control = IntakeCommands.idle
 
         self.shooter_control = 0
 
@@ -371,11 +371,11 @@ class Myrobot(wpilib.TimedRobot):
         
 
         if self.Abutton:
-            self.wrist_position = self.wrist_intake_action
-            self.intake_control = self.intake_action
+            self.wrist_position = WristAngleCommands.wrist_intake_action
+            self.intake_control = IntakeCommands.intake_action
         elif self.Bbutton:
-            self.intake_control = self.outtake_action
-            self.wrist_position = 0
+            self.wrist_position = WristAngleCommands.wrist_stow_action
+            self.intake_control = IntakeCommands.outtake_action
             self.kicker_action = self.kicker_intake
             self.shooter_pivot_control = 2
         # this is the button to transfer the note from the intake into the shooter kicker
@@ -385,8 +385,8 @@ class Myrobot(wpilib.TimedRobot):
             self.kicker_action = self.kicker_shooter
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
-            self.intake_control = self.intake_idle
-            self.wrist_position = self.wrist_idle
+            self.intake_control = IntakeCommands.idle
+            self.wrist_position = WristAngleCommands.wrist_stow_action
             self.kicker_action = self.kicker_idle
             # this stops the motor from moving
 
@@ -397,11 +397,11 @@ class Myrobot(wpilib.TimedRobot):
         # this button speeds up the shooter flywheels before shooting the note
         
         # if self.LeftBumper:
-        #     self.intake_control = self.intake_action
+        #     self.intake_control = IntakeCommands.intake_action
         # elif self.RightBumper:
-        #     self.intake_control = self.outtake_action
+        #     self.intake_control = IntakeCommands.outtake_action
         # # else:
-        #     self.intake_control = 0
+        #     self.intake_control = IntakeCommands.idle
         
         # we could use manual intake to do without changing the wrist to move the note farther in. i could be wrong and we might just want
         # to hold intake longer to push the note farther.
@@ -413,7 +413,7 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_pivot_control = self.shooter_pivot_amp
         elif self.leftTrigger:
             self.shooter_pivot_control = self.shooter_pivot_sub
-            self.wrist_position = self.wrist_mid_action
+            self.wrist_position = WristAngleCommands.wrist_mid_action
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
     
 
