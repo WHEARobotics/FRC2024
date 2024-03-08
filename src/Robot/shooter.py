@@ -174,31 +174,47 @@ class Shooter:
         # drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
 
         self.corrected_encoder_pos = self.correctedEncoderPosition()
-        
-        if shooter_pivot_pos > 4:
-            self.automatic = False
-            if shooter_pivot_pos == self.shooter_pivot_manual_up:
+
+    # setting the desired angles the shooter pivot needs to go to to reach different positions
+        if self.automatic:
+            if shooter_pivot_pos == self.shooter_pivot_in_action: # 1
+                self.desired_angle = self.shooter_in
+            elif shooter_pivot_pos == self.shooter_pivot_feeder_action: # 2
+                self.desired_angle = self.shooter_feeder
+            elif shooter_pivot_pos == self.shooter_pivot_amp_action: # 2
+                self.desired_angle = self.shooter_amp
+            elif shooter_pivot_pos == self.shooter_pivot_sub_action: # 3
+                self.desired_angle = self.shooter_sub
+            
+
+
+            # sets the shooter pivot to move to the desired angle using different control types like position or smart motion control 
+            desired_turn_count = self.DegToTurnCount(self.desired_angle)
+            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
+
+            # this checks if we are using the manual states in the code to switch from automatic to manual control
+            if shooter_pivot_pos == self.shooter_pivot_manual_up or shooter_pivot_pos == self.shooter_pivot_manual_down:
+                self.automatic = False
+                
+            # setting the speeds of the pivot motors to use a manual control for things like adjustment and climbing
+        else:
+            if shooter_pivot_pos == self.shooter_pivot_manual_up: # 5
                 self.shooter_pivot.set(0.3)
-            elif shooter_pivot_pos == self.shooter_pivot_manual_down:
+            elif shooter_pivot_pos == self.shooter_pivot_manual_down: # 6
                 self.shooter_pivot.set(-0.3)
             else:
                 self.shooter_pivot.set(0.0)
-        else:
-            if shooter_pivot_pos == self.shooter_pivot_in_action:
+            
+            # what this does is it checks if we have not set a command to go to automatic and checks if we are not using any of the 2 manual up or
+            # down and if it is not zero either to use zero as the else to not have the pivot move when we let go of the button
+            if shooter_pivot_pos != self.shooter_pivot_manual_up and shooter_pivot_pos != self.shooter_pivot_manual_down and shooter_pivot_pos != self.shooter_pivot_idle:   
                 self.automatic = True
-                self.desired_angle = self.shooter_in
-            elif shooter_pivot_pos == self.shooter_pivot_feeder_action:
-                self.desired_angle = self.shooter_feeder
-            elif shooter_pivot_pos == self.shooter_pivot_amp_action:
-                self.desired_angle = self.shooter_amp
-            elif shooter_pivot_pos == self.shooter_pivot_sub_action:
-                self.desired_angle = self.shooter_sub
+           
+            
+           
 
         # TODO: Add drop compensation to desired_angle!
 
-        if self.automatic == True:
-            desired_turn_count = self.DegToTurnCount(self.desired_angle)
-            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
         # the if statement that checks to see if the shooter pivot action is greater than 3. if it is less we use the set reference and if it is
         # greater than 3 we use the set speed command but the set speed will fight with set refernce and the first if statement will stop that.
 

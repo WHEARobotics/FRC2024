@@ -174,6 +174,7 @@ class MAKORobot(wpilib.TimedRobot):
             x_speed = x_max_speed
         elif x_speed < -x_max_speed:
             x_speed = -x_max_speed
+
         if rot > max_rot_value:
             rot = max_rot_value
         elif rot < -max_rot_value: 

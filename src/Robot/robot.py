@@ -361,12 +361,12 @@ class Myrobot(wpilib.TimedRobot):
 
 
         # we commented out this for now because we dont want any position control for our first robot tests
-        # if self.leftStickButton:
-        #     self.shooter_pivot_control = self.shooter_pivot_manual_up
-        # elif self.rightStickButton:
-        #     self.shooter_pivot_control = self.shooter_pivot_manual_down
-        # else:
-        #     self.shooter_pivot_control = 0
+        if self.leftStickButton:
+            self.shooter_pivot_control = self.shooter_pivot_manual_up
+        elif self.rightStickButton:
+            self.shooter_pivot_control = self.shooter_pivot_manual_down
+        else:
+            self.shooter_pivot_control = 0
 
         
 
