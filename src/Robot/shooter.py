@@ -4,7 +4,32 @@ import wpilib
 import time
 from wpilib import DutyCycleEncoder
 from shooterdropcompensation import compensation, compensation_table
+import dataclasses
+from dataclasses import dataclass
 
+@dataclass(frozen=True)
+class ShooterPivotCommands:
+    shooter_pivot_in_action = 1
+    shooter_pivot_feeder_action = 2
+    shooter_pivot_amp_action = 3
+    shooter_pivot_sub_action = 4
+
+    shooter_pivot_manual_up = 5
+    shooter_pivot_manual_down = 6
+
+@dataclass(frozen=True)
+class ShooterKickerCommands:
+    kicker_intake = 1
+    kicker_amp_shot = 2
+    kicker_shot = 3
+    kicker_adjustment = 4
+    kicker_idle = 0
+
+@dataclass(frozen=True)
+class ShooterControlCommands:
+    shooter_wheel_idle = 1
+    shooter_wheel_intake = 2
+    shooter_wheel_outtake = 3
 
 
 class Shooter:
@@ -153,16 +178,7 @@ class Shooter:
         self.set_speed = 0
         self.desired_angle = self.shooter_feeder
         # we might want to change this ti the sub angle to make sure its ready to shoot in autonomous
-
-        self.kicker_state = 0
-
-        self.shooter_pivot_in_action = 1
-        self.shooter_pivot_feeder_action = 2
-        self.shooter_pivot_amp_action = 3
-        self.shooter_pivot_sub_action = 4
-
-        self.shooter_pivot_manual_up = 5
-        self.shooter_pivot_manual_down = 6
+        
 
 
 
@@ -177,13 +193,13 @@ class Shooter:
 
     # setting the desired angles the shooter pivot needs to go to to reach different positions
         if self.automatic:
-            if shooter_pivot_pos == self.shooter_pivot_in_action: # 1
+            if shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_in_action: # 1
                 self.desired_angle = self.shooter_in
-            elif shooter_pivot_pos == self.shooter_pivot_feeder_action: # 2
+            elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_feeder_action: # 2
                 self.desired_angle = self.shooter_feeder
-            elif shooter_pivot_pos == self.shooter_pivot_amp_action: # 2
+            elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_amp_action: # 3
                 self.desired_angle = self.shooter_amp
-            elif shooter_pivot_pos == self.shooter_pivot_sub_action: # 3
+            elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_sub_action: # 4
                 self.desired_angle = self.shooter_sub
             
 
@@ -193,21 +209,21 @@ class Shooter:
             self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
             # this checks if we are using the manual states in the code to switch from automatic to manual control
-            if shooter_pivot_pos == self.shooter_pivot_manual_up or shooter_pivot_pos == self.shooter_pivot_manual_down:
+            if shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_manual_up or shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_manual_down:
                 self.automatic = False
                 
             # setting the speeds of the pivot motors to use a manual control for things like adjustment and climbing
         else:
-            if shooter_pivot_pos == self.shooter_pivot_manual_up: # 5
+            if shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_manual_up: # 5
                 self.shooter_pivot.set(0.3)
-            elif shooter_pivot_pos == self.shooter_pivot_manual_down: # 6
+            elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_manual_down: # 6
                 self.shooter_pivot.set(-0.3)
             else:
                 self.shooter_pivot.set(0.0)
             
             # what this does is it checks if we have not set a command to go to automatic and checks if we are not using any of the 2 manual up or
             # down and if it is not zero either to use zero as the else to not have the pivot move when we let go of the button
-            if shooter_pivot_pos != self.shooter_pivot_manual_up and shooter_pivot_pos != self.shooter_pivot_manual_down and shooter_pivot_pos != self.shooter_pivot_idle:   
+            if shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_up and shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_down and shooter_pivot_pos != self.shooter_pivot_idle:   
                 self.automatic = True
            
             
@@ -226,55 +242,31 @@ class Shooter:
         # wpilib.SmartDashboard.putString('DB/String 1', f"internal enc {self.shooter_pivot_encoder.getPosition():4.4f}")
         # wpilib.SmartDashboard.putString('DB/String 2', "")#f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
             
-        # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
-        # once we let go we want the state machine to set the state to 3 to kick it back for a bit away from the flywheels so they 
-        # could speed up
-            
-        if self.kicker_state == 0:
-            if  kicker_action ==  1:
-                self.kicker_state = 1
-            elif kicker_action == 4:
-                self.kicker_state = 3
-
-        elif self.kicker_state == 1:
-            if self.kicker_state != 1:
-                self.kicker_state = 2
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-
-        elif self.kicker_state == 2:
-            if self.wiggleTimer.advanceIfElapsed(0.3):
-                self.kicker_state = 0
-
-        elif self.kicker_state == 3:
-            if kicker_action != 4:
-                self.kicker_state = 0
-        else:
-            kicker_action = 0
 
             
-        if shooter_control > 0:
+        if shooter_control != ShooterControlCommands.shooter_wheel_idle: #0
             shooter_automatic = True
-            if shooter_control == 1:
+            if shooter_control == ShooterControlCommands.shooter_wheel_intake: #1
                 self.set_speed = 2500 # intake for shooter speed
-            elif shooter_control == 2:
+            elif shooter_control == ShooterControlCommands.shooter_wheel_outtake: #2
                 self.set_speed = -5700 # maximum rpm for the neo motor
             self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
         else:
             self.shooter_wheel.set(0.0)
             self.kicker.set(0.0)
 
-        if kicker_action == 1:
+        # intake with kicker wheels when handoff
+        if kicker_action == ShooterKickerCommands.kicker_intake: # 1
             self.kicker.set(-0.3)
-        elif kicker_action == 2:
-            # the amp scoring
+        # the amp scoring
+        elif kicker_action == ShooterKickerCommands.kicker_amp_shot: # 2:
             self.kicker.set(0.5)
-        elif kicker_action == 3:
+        # kicker shoot 
+        elif kicker_action == ShooterKickerCommands.kicker_shot: # 3
             self.kicker.set(-0.9)
-        elif kicker_action == 4:
+        # the 4th state for the kicker is to push the note back and adjust it so it is not hitting the fly wheels too early
+        elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
             self.kicker.set(0.3)
-        elif kicker_action == 0:
-            self.kicker.set(0.0)
         else:
             self.kicker.set(0.0)
 

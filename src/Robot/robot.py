@@ -13,7 +13,7 @@ from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
 from intake import Intake, WristAngleCommands, IntakeCommands
-from shooter import Shooter
+from shooter import Shooter, ShooterControlCommands, ShooterKickerCommands, ShooterPivotCommands
 from wpilib import DriverStation
 from dataclasses import dataclass
 
@@ -88,6 +88,7 @@ class Myrobot(wpilib.TimedRobot):
         # speed values for the swerve to be changed throughout the different states to drive
         # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
+        self.wiggleTimer = wpilib.Timer()
         
         
     
@@ -330,14 +331,16 @@ class Myrobot(wpilib.TimedRobot):
         self.wrist_idle = 0
         self.kicker_idle = 0
 
-        self.timer = wpilib.Timer()
-        self.timer.reset()
+
+        self.wiggleTimer.reset()
 
 
         
         self.percent_output = 0.1
 
-       
+        self.kicker_state = 0
+
+
         # is used to go to else, stopping the motor
 
     def teleopPeriodic(self):
@@ -376,18 +379,18 @@ class Myrobot(wpilib.TimedRobot):
         elif self.Bbutton:
             self.wrist_position = WristAngleCommands.wrist_stow_action
             self.intake_control = IntakeCommands.outtake_action
-            self.kicker_action = self.kicker_intake
+            self.kicker_action = ShooterKickerCommands.kicker_intake
             self.shooter_pivot_control = 2
         # this is the button to transfer the note from the intake into the shooter kicker
         elif self.Xbutton:
-            self.kicker_action = self.kicker_amp_shot # amp shot to shoot into the amp
+            self.kicker_action = ShooterKickerCommands.kicker_amp_shot # amp shot to shoot into the amp
         elif self.rightTrigger:
-            self.kicker_action = self.kicker_shooter
+            self.kicker_action = ShooterKickerCommands.kicker_shooter
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
             self.intake_control = IntakeCommands.idle
             self.wrist_position = WristAngleCommands.wrist_stow_action
-            self.kicker_action = self.kicker_idle
+            self.kicker_action = ShooterKickerCommands.kicker_idle
             # this stops the motor from moving
 
         if self.Ybutton:
@@ -415,9 +418,44 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_pivot_control = self.shooter_pivot_sub
             self.wrist_position = WristAngleCommands.wrist_mid_action
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
-    
+            
+        # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
+        # once we let go we want the state machine to set the state to 3 to kick it back for a bit away from the flywheels so they 
+        # could speed up
+                
 
-        
+        # the goal of this state machine is when the state has memory of intaking with the wrist and then after when the kicker intakes to
+        # the shooter we check to see if the state has memory of both happening and we let go of the kicker intake button, the state completes
+        # and the kicker adjusts the note back away from the flywheels. 
+             
+        if self.kicker_state == 0: 
+        # we start by checking if we intook with the wristy
+            if self.intake_control == IntakeCommands.intake_action:
+               self.kicker_state = 1 
+        elif self.kicker_state == 1:
+        # we check to see if we have the wrist tucked back
+            if self.intake.motor_pos_degrees < 5:
+                self.kicker_state = 2
+        elif self.kicker_state == 2:
+        # we check to see if we started doing the kicker intake action
+            if self.kicker_action == ShooterKickerCommands.kicker_intake:
+                self.kicker_state = 3
+            elif self.intake_control == IntakeCommands.intake_action:
+                self.kicker_state = 0
+        elif self.kicker_state == 3:
+        # check to see if we finished intaking with the kicker and stopped
+            if self.kicker_action != ShooterKickerCommands.kicker_intake:
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+                self.kicker_state = 4
+        elif self.kicker_state == 4:
+        # adjusts the kicker to move the note back until the timer passes the 0.3 seconds
+            if self.wiggleTimer.advanceIfElapsed(0.3): #0.3 seconds are change-able
+                self.kicker_action = ShooterKickerCommands.kicker_idle
+                self.kicker_state = 0
+            else:
+                self.kicker_action = ShooterKickerCommands.kicker_adjustment # 4
+
             
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
