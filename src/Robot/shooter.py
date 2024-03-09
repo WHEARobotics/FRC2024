@@ -36,7 +36,7 @@ class ShooterControlCommands:
 class Shooter:
     def __init__(self) -> None:
         
-        SHOOTER_AMP_ANGLE = 120
+        SHOOTER_AMP_ANGLE = 110
         SHOOTER_START_ANGLE = 0
         SHOOTER_FEEDING_ANGLE = -23
 
@@ -159,7 +159,7 @@ class Shooter:
 
         self.wiggleTimer = wpilib.Timer()
         self.wiggleTimer.start()
-        time.sleep(1.5)
+        time.sleep(1.75)
         self.corrected_encoder_pos = self.correctedEncoderPosition()
         wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
         self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)

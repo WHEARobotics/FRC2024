@@ -139,10 +139,10 @@ class Myrobot(wpilib.TimedRobot):
 
 
         # if sd_button_1 == True:
-        #     wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
-        #     wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
-        #     wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
-        #     wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+        wpilib.SmartDashboard.putString('DB/String 5',"Enc Back Right {:4.3f}".format( self.absEnc4))
+        wpilib.SmartDashboard.putString('DB/String 4',"Enc Front Left {:4.3f}".format( self.absEnc3))
+        wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
 
         #     wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
         #     wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
@@ -164,8 +164,8 @@ class Myrobot(wpilib.TimedRobot):
 
         #     wpilib.SmartDashboard.putString('DB/String 7',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
 
-        wpilib.SmartDashboard.putString('DB/String 4',"wrist_action {:4.0f}".format( self.wrist_position))
-        wpilib.SmartDashboard.putString('DB/String 5',"shooter_pivot_action {:4.0f}".format( self.shooter_pivot_control))
+        # wpilib.SmartDashboard.putString('DB/String 4',"wrist_action {:4.0f}".format( self.wrist_position))
+        # wpilib.SmartDashboard.putString('DB/String 5',"shooter_pivot_action {:4.0f}".format( self.shooter_pivot_control))
         # # shooter and intake preset with the intake and shooter motor poses + limit switch value and abs shooter encoder pos
             
         # elif sd_button_3 == True:
@@ -234,11 +234,15 @@ class Myrobot(wpilib.TimedRobot):
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
         self.auto_state = 1
+        self.shooter_pivot_auto = 0
+        self.shooter_control_auto = 0
+        self.shooter_kicker_auto = 0
         
+        self.wiggleTimer.reset()
+        self.wiggleTimer.start()
 
     def autonomous_periodic_aiming(self, botpose):
             
-
             x = botpose[0]
             y = botpose[1]
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
@@ -247,11 +251,12 @@ class Myrobot(wpilib.TimedRobot):
             desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
             wpilib.SmartDashboard.putString("DB/String 0", str(x))    
             wpilib.SmartDashboard.putString("DB/String 1", str(y))
-            wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")    
+            #wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")    
             
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
            
+
             direction_to_travel = self.calculate_desired_direction(desired_yaw, current_yaw)
             self.vision.get_rotation_autonomous_periodic_for_speaker_shot(self.botpose, current_yaw)
 
@@ -276,16 +281,29 @@ class Myrobot(wpilib.TimedRobot):
         self.botpose = self.vision.checkBotpose()
 
         if self.auto_state == 1:
-            self.wiggleTimer.reset()
-            self.wiggleTimer.start()
-            self.x_speed = 0.75
+            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
+            self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_sub_action
             if self.wiggleTimer.advanceIfElapsed(2):
                 self.auto_state = 2
-        elif self.auto_state == 2:
+        if self.auto_state == 2:
+            self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
+            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
+            if self.wiggleTimer.advanceIfElapsed(1.5):
+                self.auto_state = 3
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+        elif self.auto_state == 3:
+            self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
+            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
+            self.x_speed = 0.15
+            if self.wiggleTimer.advanceIfElapsed(3):
+                self.auto_state = 4
+        elif self.auto_state == 4:
             self.x_speed = 0.0
             self.wiggleTimer.reset()
         
         self.swerve.drive(self.x_speed, 0, 0, True)
+        self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
         # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             

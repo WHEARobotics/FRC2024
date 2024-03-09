@@ -26,7 +26,7 @@ class CrescendoSwerveDrivetrain:
     # UPDATE NUMBERS
     BACK_LEFT_OFFSET = 0.708    # Back Left
     FRONT_RIGHT_OFFSET = 0.768  # Front Right
-    FRONT_LEFT_OFFSET = 0.363   # Front Left
+    FRONT_LEFT_OFFSET = 0.568   # Front Left
     BACK_RIGHT_OFFSET = 0.516   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
@@ -101,7 +101,7 @@ class CrescendoSwerveDrivetrain:
         self.frontRight = self._initSwerveModuleFor("front_right")#CrescendoSwerveModule(SWERVE_FRONT_RIGHT_DRIVE, SWERVE_FRONT_RIGHT_ANGLE, SWERVE_FRONT_RIGHT_ENCODER_CHANNEL, self.FRONT_RIGHT_OFFSET)  #OG offset was 106.424  
         self.frontLeft = self._initSwerveModuleFor("front_left")#CrescendoSwerveModule(SWERVE_FRONT_LEFT_DRIVE, SWERVE_FRONT_LEFT_ANGLE, SWERVE_FRONT_LEFT_ENCODER_CHANNEL, self.FRONT_LEFT_OFFSET)  #OG offset was 296.543 
         self.backRight = self._initSwerveModuleFor("back_right")#CrescendoSwerveModule(SWERVE_BACK_RIGHT_DRIVE, SWERVE_BACK_RIGHT_ANGLE, SWERVE_BACK_RIGHT_ENCODER_CHANNEL, self.BACK_RIGHT_OFFSET)
-        wpilib.SmartDashboard.putString("DB/String 9", f"back_left.encoderPos : {self.backLeft.correctedEncoderPosition():.2f}")
+        wpilib.SmartDashboard.putString("DB/String 9", f"front_leftencPos : {self.frontLeft.correctedEncoderPosition():.2f}")
 
 
         self.swerve_modules = [ self.frontLeft, self.frontRight, self.backLeft, self.backRight ]
