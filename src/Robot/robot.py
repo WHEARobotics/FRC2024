@@ -275,7 +275,7 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             
-        if None != self.botpose and len(self.botpose) > 0 :
+        if None != self.botpose and len(self.botpose) > 0  and self.botpose[0] > 0 and self.botpose[1] > 0 and self.botpose[2] > 0:
             if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
                 self.autonomous_periodic_aiming(self.botpose)
             elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
@@ -460,7 +460,7 @@ class Myrobot(wpilib.TimedRobot):
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         
-        if self.botpose is not None and len(self.botpose) > 1:
+        if self.botpose is not None and len(self.botpose) > 1 and self.botpose[0] > 0 and self.botpose[1] > 0 and self.botpose[2] > 0:
             speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
         else:
             # No botpose!

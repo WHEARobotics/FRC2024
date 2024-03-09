@@ -13,13 +13,16 @@ class Vision:
 
         self.networktables = ntcore.NetworkTableInstance.getDefault()
         self.limelight_table = self.networktables.getTable("limelight")
-        self.botpose = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
-
-        
+        self.botpose_subscription = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
+        self.botpose = [-1, -1, -1, -1, -1, -1]
 
     def checkBotpose(self):
-        return self.botpose.get()
-    
+        botpose = self.botpose_subscription.get()
+        # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
+        if botpose is not None and len(botpose > 3) and (botpose[0] + botpose[1] + botpose[2] != 0):
+            self.botpose = botpose
+        return self.botpose
+
     def calculate_desired_direction(self, desired_angle, current_angle):
         desired_direction = desired_angle - current_angle
         if desired_direction > 180:
