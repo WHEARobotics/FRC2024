@@ -42,7 +42,7 @@ class Myrobot(wpilib.TimedRobot):
         self.xbox_operator = wpilib.XboxController(1)
 
         # Sets a factor for slowing down the overall speed. 1 is no modification. 2 is half-speed, etc.
-        self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 3
+        self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 1.5
 
 
         ally = DriverStation.getAlliance()
@@ -138,49 +138,49 @@ class Myrobot(wpilib.TimedRobot):
         sd_button_4 = wpilib.SmartDashboard.getBoolean("DB/Button 3", False)
 
 
-        if sd_button_1 == True:
-            wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
-            wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
-            wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
-            wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        # if sd_button_1 == True:
+        #     wpilib.SmartDashboard.putString('DB/String 0',"Enc Back Left {:4.3f}".format( self.absEnc1))
+        #     wpilib.SmartDashboard.putString('DB/String 1',"Enc Back Right {:4.3f}".format( self.absEnc4))
+        #     wpilib.SmartDashboard.putString('DB/String 2',"Enc Front Left {:4.3f}".format( self.absEnc3))
+        #     wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
 
-            wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
-            wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
-            wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
-            wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
 
-            wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}") 
-        # swerve drive preset with absolute and motor encoder poses with gyro
+        #     wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}") 
+        # # swerve drive preset with absolute and motor encoder poses with gyro
             
-        elif sd_button_2 == True:
-            wpilib.SmartDashboard.putString('DB/String 0',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
-            wpilib.SmartDashboard.putString('DB/String 1',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
+        # elif sd_button_2 == True:
+        #     wpilib.SmartDashboard.putString('DB/String 0',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 1',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
 
-            wpilib.SmartDashboard.putString('DB/String 2',f"shooter_abs_deg {self.shooter_absolute_encoder_pos:1.3f}")
-            wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 2',f"shooter_abs_deg {self.shooter_absolute_encoder_pos:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
 
-            wpilib.SmartDashboard.putString('DB/String 5',f"des_shooter_pos{self.shooter_desired_pos:1.3f}")
-            wpilib.SmartDashboard.putString('DB/String 6',f"des_wrist_pos{self.wrist_desired_pos:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 5',f"des_shooter_pos{self.shooter_desired_pos:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 6',f"des_wrist_pos{self.wrist_desired_pos:1.3f}")
 
-            wpilib.SmartDashboard.putString('DB/String 7',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 7',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
 
-            wpilib.SmartDashboard.putString('DB/String 8',"wrist_action {:4.0f}".format( self.wrist_position))
-            wpilib.SmartDashboard.putString('DB/String 9',"shooter_pivot_action {:4.0f}".format( self.shooter_pivot_control))
-        # shooter and intake preset with the intake and shooter motor poses + limit switch value and abs shooter encoder pos
+        wpilib.SmartDashboard.putString('DB/String 4',"wrist_action {:4.0f}".format( self.wrist_position))
+        wpilib.SmartDashboard.putString('DB/String 5',"shooter_pivot_action {:4.0f}".format( self.shooter_pivot_control))
+        # # shooter and intake preset with the intake and shooter motor poses + limit switch value and abs shooter encoder pos
             
-        elif sd_button_3 == True:
-            pass
-        # vision preset with botpose: x, y, yaw(the other values are not important to us), disred angle to speaker, distance to speaker,
-        # desired pitch needed to get to the speaker, and more later.
-        elif sd_button_4 == True:
+        # elif sd_button_3 == True:
+        #     pass
+        # # vision preset with botpose: x, y, yaw(the other values are not important to us), disred angle to speaker, distance to speaker,
+        # # desired pitch needed to get to the speaker, and more later.
+        # elif sd_button_4 == True:
             
-            wpilib.SmartDashboard.putString('DB/String 0',f"gyro_pos{self.pigeon:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 0',f"gyro_pos{self.pigeon:4.1f}")
 
-            wpilib.SmartDashboard.putString('DB/String 1',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
-            wpilib.SmartDashboard.putString('DB/String 2',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 1',f"shooter_pos_deg {self.shooter_encoder:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 2',f"wrist_pos_deg {self.wrist_encoder:1.3f}")
 
-            wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
-            wpilib.SmartDashboard.putString('DB/String 4',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
+        #     wpilib.SmartDashboard.putString('DB/String 3',f"limit_switch {self.wrist_limit_switch:1.3f}")
+        #     wpilib.SmartDashboard.putString('DB/String 4',f"shooter_speed_rpm{self.shooter_flywheel_speed:4.1f}")
 
             # wpilib.SmartDashboard.putString('DB/String 5',f"gyro+bot_yaw_diff{self.:4.1f}")
             # set this up to see the difference between the pigeon and botpose yaw we cant add because vision is not fully complete
@@ -189,8 +189,8 @@ class Myrobot(wpilib.TimedRobot):
 
         # competition preset to have values needed duting competition like the intake + shooter angle, gyro angle, desired pitch,
         # angle to speaker, the limit switch value, and anything else
-        else:
-            pass
+        # else:
+        #     pass
         # this will be used for just testing and to print anything we want when a smart dashboard button is not pushed
 
        
@@ -232,6 +232,8 @@ class Myrobot(wpilib.TimedRobot):
     def autonomousInit(self):
         """ Initialize for autonomous here."""
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
+
+        self.auto_state = 1
         
 
     def autonomous_periodic_aiming(self, botpose):
@@ -272,26 +274,38 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousPeriodic(self):
         self.botpose = self.vision.checkBotpose()
-        self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
+
+        if self.auto_state == 1:
+            self.wiggleTimer.reset()
+            self.wiggleTimer.start()
+            self.x_speed = 0.75
+            if self.wiggleTimer.advanceIfElapsed(2):
+                self.auto_state = 2
+        elif self.auto_state == 2:
+            self.x_speed = 0.0
+            self.wiggleTimer.reset()
+        
+        self.swerve.drive(self.x_speed, 0, 0, True)
+        # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             
-        if None != self.botpose and len(self.botpose) > 0 :
-            if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
-                self.autonomous_periodic_aiming(self.botpose)
-            elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
-                self.autonomous_periodic_shooting(self.botpose)
-        else:
-           wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
+        # if None != self.botpose and len(self.botpose) > 0 :
+        #     if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
+        #         self.autonomous_periodic_aiming(self.botpose)
+        #     elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
+        #         self.autonomous_periodic_shooting(self.botpose)
+        # else:
+        #    wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
 
-        self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
-        # wrist positions for intake to move towards the requested location remove magic numbers!
-        self.intake.periodic(self.wrist_position, self.intake_control)
-        if self.botpose is not None and len(self.botpose) > 1:
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
-        else:
-            # No botpose!
-            speaker_distance_m = 0
-        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+        # self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
+        # # wrist positions for intake to move towards the requested location remove magic numbers!
+        # self.intake.periodic(self.wrist_position, self.intake_control)
+        # if self.botpose is not None and len(self.botpose) > 1:
+        #     speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
+        # else:
+        #     # No botpose!
+        #     speaker_distance_m = 0
+        # self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
     def autonomousExit(self):
         pass
@@ -318,8 +332,8 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_pivot_manual_up = 5 # this manually pivots the shooter up
         self.shooter_pivot_manual_down = 6 # this manually pivots the shooter down
 
-        self.shooter_action_intake = 1 # this action moves the shooter motors to intake
-        self.shooter_action_shot = 2 # this action moves the shooter motors to outtake
+        self.shooter_action_intake = 2 # this action moves the shooter motors to intake
+        self.shooter_action_shot = 3 # this action moves the shooter motors to outtake
         
         self.kicker_intake = 1 # this action moves the kicker motors and feed the note into the shooter
         self.kicker_amp_shot = 2 # this utilizes the kicker to shoot into the amp.
@@ -365,17 +379,18 @@ class Myrobot(wpilib.TimedRobot):
 
         # we commented out this for now because we dont want any position control for our first robot tests
         if self.leftStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_up
+            self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_manual_up
         elif self.rightStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_down
+            self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_manual_down
         else:
-            self.shooter_pivot_control = 0
+            self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_idle
 
         
 
         if self.Abutton:
             self.wrist_position = WristAngleCommands.wrist_intake_action
             self.intake_control = IntakeCommands.intake_action
+            self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_feeder_action
         elif self.Bbutton:
             self.wrist_position = WristAngleCommands.wrist_stow_action
             self.intake_control = IntakeCommands.outtake_action
@@ -385,7 +400,7 @@ class Myrobot(wpilib.TimedRobot):
         elif self.Xbutton:
             self.kicker_action = ShooterKickerCommands.kicker_amp_shot # amp shot to shoot into the amp
         elif self.rightTrigger:
-            self.kicker_action = ShooterKickerCommands.kicker_shooter
+            self.kicker_action = ShooterKickerCommands.kicker_shot
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
             self.intake_control = IntakeCommands.idle
@@ -428,43 +443,44 @@ class Myrobot(wpilib.TimedRobot):
         # the shooter we check to see if the state has memory of both happening and we let go of the kicker intake button, the state completes
         # and the kicker adjusts the note back away from the flywheels. 
              
-        if self.kicker_state == 0: 
-        # we start by checking if we intook with the wristy
-            if self.intake_control == IntakeCommands.intake_action:
-               self.kicker_state = 1 
-        elif self.kicker_state == 1:
-        # we check to see if we have the wrist tucked back
-            if self.intake.motor_pos_degrees < 5:
-                self.kicker_state = 2
-        elif self.kicker_state == 2:
-        # we check to see if we started doing the kicker intake action
-            if self.kicker_action == ShooterKickerCommands.kicker_intake:
-                self.kicker_state = 3
-            elif self.intake_control == IntakeCommands.intake_action:
-                self.kicker_state = 0
-        elif self.kicker_state == 3:
-        # check to see if we finished intaking with the kicker and stopped
-            if self.kicker_action != ShooterKickerCommands.kicker_intake:
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-                self.kicker_state = 4
-        elif self.kicker_state == 4:
-        # adjusts the kicker to move the note back until the timer passes the 0.3 seconds
-            if self.wiggleTimer.advanceIfElapsed(0.3): #0.3 seconds are change-able
-                self.kicker_action = ShooterKickerCommands.kicker_idle
-                self.kicker_state = 0
-            else:
-                self.kicker_action = ShooterKickerCommands.kicker_adjustment # 4
+        # if self.kicker_state == 0: 
+        # # we start by checking if we intook with the wristy
+        #     if self.intake_control == IntakeCommands.intake_action:
+        #        self.kicker_state = 1 
+        # elif self.kicker_state == 1:
+        # # we check to see if we have the wrist tucked back
+        #     if self.intake.motor_pos_degrees < 5:
+        #         self.kicker_state = 2
+        # elif self.kicker_state == 2:
+        # # we check to see if we started doing the kicker intake action
+        #     if self.kicker_action == ShooterKickerCommands.kicker_intake:
+        #         self.kicker_state = 3
+        #     elif self.intake_control == IntakeCommands.intake_action:
+        #         self.kicker_state = 0
+        # elif self.kicker_state == 3:
+        # # check to see if we finished intaking with the kicker and stopped
+        #     if self.kicker_action != ShooterKickerCommands.kicker_intake:
+        #         self.wiggleTimer.reset()
+        #         self.wiggleTimer.start()
+        #         self.kicker_state = 4
+        # elif self.kicker_state == 4:
+        # # adjusts the kicker to move the note back until the timer passes the 0.3 seconds
+        #     if self.wiggleTimer.advanceIfElapsed(0.3): #0.3 seconds are change-able
+        #         self.kicker_action = ShooterKickerCommands.kicker_idle
+        #         self.kicker_state = 0
+        #     else:
+        #         self.kicker_action = ShooterKickerCommands.kicker_adjustment # 4
 
             
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         
-        if self.botpose is not None and len(self.botpose) > 1:
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
-        else:
-            # No botpose!
-            speaker_distance_m = 0
+        # if self.botpose is not None and len(self.botpose) > 1:
+        #     speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+        speaker_distance_m = 1
+        # else:
+        #     # No botpose!
+        #     speaker_distance_m = 0
         self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
 
@@ -504,28 +520,28 @@ class Myrobot(wpilib.TimedRobot):
             bot_x = self.botpose[0]#the x coordinate from the botpose table
             bot_y = self.botpose[1]#the y pos from the botpose table
 
-            self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
-            #fills the distance to speaker function with its required values for the calculate pitch function
+            # self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
+            # #fills the distance to speaker function with its required values for the calculate pitch function
 
-            self.calculate_pitch = self.calculate_desired_pitch(self.speaker_distance, speaker_y)
-            #fills the calculate pitch function with necessary values to be properly called
-            pitch_in_degrees = self.radians_to_degrees(self.calculate_pitch)
-            #converts the pitch shooter angle to degrees from radians
+            # self.calculate_pitch = self.calculate_desired_pitch(self.speaker_distance, speaker_y)
+            # #fills the calculate pitch function with necessary values to be properly called
+            # pitch_in_degrees = self.radians_to_degrees(self.calculate_pitch)
+            # #converts the pitch shooter angle to degrees from radians
 
-            wpilib.SmartDashboard.putString("DB/String 4", str(pitch_in_degrees))
+            # wpilib.SmartDashboard.putString("DB/String 4", str(pitch_in_degrees))
           
            
 
             
-            desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
-            wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
-            if abs(desired_direction) < 1.0:
-                wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
-            else:
-                wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
-        else:
-            # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
-            pass
+        #     desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
+        #     wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
+        #     if abs(desired_direction) < 1.0:
+        #         wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
+        #     else:
+        #         wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
+        # else:
+        #     # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
+        #     pass
     
     
     def driveWithJoystick(self, fieldRelativeParam: bool) -> None:

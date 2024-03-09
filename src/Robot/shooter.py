@@ -16,6 +16,7 @@ class ShooterPivotCommands:
 
     shooter_pivot_manual_up = 5
     shooter_pivot_manual_down = 6
+    shooter_pivot_idle = 0
 
 @dataclass(frozen=True)
 class ShooterKickerCommands:
@@ -37,18 +38,18 @@ class Shooter:
         
         SHOOTER_AMP_ANGLE = 120
         SHOOTER_START_ANGLE = 0
-        SHOOTER_FEEDING_ANGLE = -18
+        SHOOTER_FEEDING_ANGLE = -23
 
-        SHOOTER_SUB_ANGLE = -60
+        SHOOTER_SUB_ANGLE = -63 #orginally -60
 
 
         self.SHOOTER_PIVOT_GEAR_RATIO = 100
 
-        ABSOLUTE_ENCODER_OFFSET = 0.0
+        ABSOLUTE_ENCODER_OFFSET = -0.07
 
 
         kP = 0.125
-        kP_2 = 0.01
+        kP_2 = 0.005
         kI = 0.0
         kD = 0.005
         kIz = 0.0
@@ -201,6 +202,7 @@ class Shooter:
                 self.desired_angle = self.shooter_amp
             elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_sub_action: # 4
                 self.desired_angle = self.shooter_sub
+                print("TRUE")
             
 
 
@@ -223,7 +225,7 @@ class Shooter:
             
             # what this does is it checks if we have not set a command to go to automatic and checks if we are not using any of the 2 manual up or
             # down and if it is not zero either to use zero as the else to not have the pivot move when we let go of the button
-            if shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_up and shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_down and shooter_pivot_pos != self.shooter_pivot_idle:   
+            if shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_up and shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_manual_down and shooter_pivot_pos != ShooterPivotCommands.shooter_pivot_idle:   
                 self.automatic = True
            
             
@@ -237,23 +239,24 @@ class Shooter:
         # simple state machine for all the shooter pivot motors actions. 4 and 5 will be to manually move for the chain climb
             
         # wpilib.SmartDashboard.putString('DB/String 6',"") #spe position {:4.3f}".format(self.shooter_pivot_encoder.getPosition()))
-        # wpilib.SmartDashboard.putString('DB/String 8',"cor abs enc pos {:4.3f}".format(self.corrected_encoder_pos))
+        wpilib.SmartDashboard.putString('DB/String 8',"cor abs enc pos {:4.3f}".format(self.corrected_encoder_pos))
         # wpilib.SmartDashboard.putString('DB/String 7', "") #f"drop compensation {drop_compensation_degrees:4.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 1', f"internal enc {self.shooter_pivot_encoder.getPosition():4.4f}")
+        wpilib.SmartDashboard.putString('DB/String 1', f"internal enc {self.shooter_pivot_encoder.getPosition():4.4f}")
         # wpilib.SmartDashboard.putString('DB/String 2', "")#f"X {self.shooter_pivot_encoder.getPosition():4.4f}")
             
 
             
-        if shooter_control != ShooterControlCommands.shooter_wheel_idle: #0
-            shooter_automatic = True
-            if shooter_control == ShooterControlCommands.shooter_wheel_intake: #1
-                self.set_speed = 2500 # intake for shooter speed
-            elif shooter_control == ShooterControlCommands.shooter_wheel_outtake: #2
-                self.set_speed = -5700 # maximum rpm for the neo motor
-            self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
+        if shooter_control == ShooterControlCommands.shooter_wheel_idle: #0
+            self.set_speed = 0.0
+        elif shooter_control == ShooterControlCommands.shooter_wheel_intake: #1
+                self.set_speed = 0.5 # intake for shooter speed
+        elif shooter_control == ShooterControlCommands.shooter_wheel_outtake: #2
+            self.set_speed = -1.0 # maximum rpm for the neo motor
+            # self.PIDController_flywheel.setReference(self.set_speed, CANSparkLowLevel.ControlType.kVelocity)
         else:
-            self.shooter_wheel.set(0.0)
-            self.kicker.set(0.0)
+            self.set_speed = 0.0
+        self.shooter_wheel.set(self.set_speed)
+        
 
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1

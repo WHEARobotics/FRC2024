@@ -95,7 +95,7 @@ class Intake:
 
         self.desired_angle = self.WRIST_STOWED_ANGLE
 
-        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyClosed)
+        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyOpen)
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
@@ -130,7 +130,7 @@ class Intake:
 
 
         if intake_control == IntakeCommands.intake_action:
-            self.set_speed =  -0.3
+            self.set_speed =  -0.5
             self.intake_state = 1
         elif intake_control == IntakeCommands.outtake_action:
             self.set_speed = 0.3
