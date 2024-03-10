@@ -42,7 +42,11 @@ class Myrobot(wpilib.TimedRobot):
         self.xbox_operator = wpilib.XboxController(1)
 
         # Sets a factor for slowing down the overall speed. 1 is no modification. 2 is half-speed, etc.
-        self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 1.5
+        self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 1.0
+
+        self.JOYSTICK_QUICKER_MOVE = 0.7
+
+        self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
 
 
         ally = DriverStation.getAlliance()
@@ -289,16 +293,18 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
             self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
             if self.wiggleTimer.advanceIfElapsed(1.5):
-                self.auto_state = 3
+                self.auto_state = 4
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
-        elif self.auto_state == 3:
+        # elif self.auto_state == 3:
+        #     self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
+        #     self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
+        #     self.x_speed = 0.15
+            # if self.wiggleTimer.advanceIfElapsed(3):
+            #     self.auto_state = 4
+        elif self.auto_state == 4:
             self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
             self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
-            self.x_speed = 0.15
-            if self.wiggleTimer.advanceIfElapsed(3):
-                self.auto_state = 4
-        elif self.auto_state == 4:
             self.x_speed = 0.0
             self.wiggleTimer.reset()
         
@@ -420,6 +426,8 @@ class Myrobot(wpilib.TimedRobot):
         elif self.rightTrigger:
             self.kicker_action = ShooterKickerCommands.kicker_shot
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
+            
+
         else:
             self.intake_control = IntakeCommands.idle
             self.wrist_position = WristAngleCommands.wrist_stow_action
@@ -513,6 +521,14 @@ class Myrobot(wpilib.TimedRobot):
 
         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
             self.swerve.gyro.set_yaw(0)
+        
+        if self.xbox.getRightTriggerAxis() > 0.85:
+            self.joystick_divider = self.JOYSTICK_QUICKER_MOVE
+
+        else:
+            self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+
+
 
         
 
