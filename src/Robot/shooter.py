@@ -36,7 +36,7 @@ class ShooterControlCommands:
 class Shooter:
     def __init__(self) -> None:
         
-        SHOOTER_AMP_ANGLE = 110
+        SHOOTER_AMP_ANGLE = 113
         SHOOTER_START_ANGLE = 0
         SHOOTER_FEEDING_ANGLE = -23
 
@@ -191,6 +191,8 @@ class Shooter:
         # drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
 
         self.corrected_encoder_pos = self.correctedEncoderPosition()
+
+        self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)
 
     # setting the desired angles the shooter pivot needs to go to to reach different positions
         if self.automatic:
