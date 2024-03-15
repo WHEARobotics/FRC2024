@@ -280,6 +280,16 @@ class Myrobot(wpilib.TimedRobot):
         print("NOT IMPLEMENTED")
         pass
 
+    def is_botpose_valid(self, botpose):
+        if botpose == None:
+            return False
+        if len(botpose) < 1:
+            return False
+        if botpose[0] == -1:
+            return False
+        if botpose[0] == 0 and botpose[1] == 0 and botpose[1] == 0:
+            return False
+        return True
 
     def autonomousPeriodic(self):
         self.botpose = self.vision.checkBotpose()
@@ -313,23 +323,23 @@ class Myrobot(wpilib.TimedRobot):
         # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             
-        # if None != self.botpose and len(self.botpose) > 0 :
-        #     if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
-        #         self.autonomous_periodic_aiming(self.botpose)
-        #     elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
-        #         self.autonomous_periodic_shooting(self.botpose)
-        # else:
-        #    wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
+        if self.is_botpose_valid(self.botpose):
+            if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
+                self.autonomous_periodic_aiming(self.botpose)
+            elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
+                self.autonomous_periodic_shooting(self.botpose)
+        else:
+           wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
 
-        # self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
-        # # wrist positions for intake to move towards the requested location remove magic numbers!
-        # self.intake.periodic(self.wrist_position, self.intake_control)
-        # if self.botpose is not None and len(self.botpose) > 1:
-        #     speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
-        # else:
-        #     # No botpose!
-        #     speaker_distance_m = 0
-        # self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+        self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
+        # wrist positions for intake to move towards the requested location remove magic numbers!
+        self.intake.periodic(self.wrist_position, self.intake_control)
+        if self.is_botpose_valid(self.botpose):
+            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
+        else:
+            # No botpose!
+            speaker_distance_m = 0
+        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
     def autonomousExit(self):
         pass
@@ -501,12 +511,11 @@ class Myrobot(wpilib.TimedRobot):
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         
-        # if self.botpose is not None and len(self.botpose) > 1:
-        #     speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
-        speaker_distance_m = 1
-        # else:
-        #     # No botpose!
-        #     speaker_distance_m = 0
+        if self.is_botpose_valid(self.botpose):
+            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+        else:
+            # No botpose!
+            speaker_distance_m = 0
         self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
 
@@ -539,7 +548,7 @@ class Myrobot(wpilib.TimedRobot):
         # wpilib.SmartDashboard.putString('DB/String 4', f"abs_encoder_pos {self.correctedEncoderPosition():.3f}")
         
 
-        if None != self.botpose and len(self.botpose) > 0 :
+        if self.is_botpose_valid(self.botpose):
             x = self.botpose[0]
             y = self.botpose[1]
             wpilib.SmartDashboard.putString("DB/String 0", str(x))    
