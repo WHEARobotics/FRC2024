@@ -1,9 +1,11 @@
 import ntcore
 import wpilib
-from wpilib import SendableChooser
+from wpilib import SendableChooser, Field2d, SmartDashboard
 from wpilib.shuffleboard import Shuffleboard
 from wpilib.shuffleboard import BuiltInWidgets
 from ntcore._ntcore import Value as ntV
+from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.units import meters, degrees
 
 
 class ShuffleTab:
@@ -42,11 +44,14 @@ class ShuffleTab:
         # User-controllable toggle button
         self.activate_climb_solenoid = (self.tab
                                         .add("Activate Climb Lock", True)
-                                        .withWidget(BuiltInWidgets.kToggleButton)
+                                        .withWidget(BuiltInWidgets.kToggleSwitch)
                                         .withSize(2, 1)
-                                        .withProperties({"color When True": ntV.makeString("green"), "color When False": ntV.makeString("red")})
+                                        .withProperties({"color when true": ntV.makeString("#00FF00"), "color when false": ntV.makeString("#FF0000")})
                                         .getEntry()
                                         )
+
+        widget = self.tab.add("Junk", True).withWidget(BuiltInWidgets.kToggleButton)
+        c = wpilib.shuffleboard._shuffleboard.SimpleWidget
 
         # User-edits persist between robot restarts
         self.max_speed = (
@@ -58,10 +63,26 @@ class ShuffleTab:
             .getEntry()
         )
 
+        self.field_data = Field2d()
+        self.field = (
+            self.tab
+            .add("Field", self.field_data)
+            .withWidget(BuiltInWidgets.kField)
+            .withSize(7, 3)
+            .withPosition(7, 2)
+        )
+
+    def setBotPosition(self, x : meters, y : meters, angle : degrees):
+        ### Convert bot position to use Limelight-style coordinates (0,0 is the center of the field)
+        x = x + 8.27
+        y = y + 4.1
+        self.field_data.setRobotPose(Pose2d(x, y, Rotation2d(angle)))
+
 class ShuffleBoardReadWriteBot(wpilib.TimedRobot):
 
     def robotInit(self):
         self.shuffle_tab = ShuffleTab("ShuffleBoardReadWriteBot")
+        self.shuffle_tab.setBotPosition(3, 3, 45)
 
     def teleopInit(self):
         # How to read a value from Shuffleboard
