@@ -2,7 +2,6 @@ import wpilib
 import wpilib.drive
 from wpimath import applyDeadband
 
-from configurable_constants import ConfigurableConstants
 from controllers import Controllers
 from crescendofield import CrescendoField
 from robotstateautonomous import RobotStateAutonomous

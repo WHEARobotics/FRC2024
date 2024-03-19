@@ -3,6 +3,8 @@ from wpilib import XboxController
 
 class Controllers:
     def __init__(self):
+        JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 3
+
         self.xbox = XboxController(0)
         self.xbox_operator = XboxController(1)
 
@@ -34,8 +36,8 @@ class Controllers:
         return self.joystick_x, self.joystick_y, joystick_rot
 
     def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot):
-        x_speed = self.joystickscaling(joystick_y) / ConfigurableConstants.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
-        y_speed = self.joystickscaling(joystick_x) / ConfigurableConstants.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        x_speed = self.joystickscaling(joystick_y) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        y_speed = self.joystickscaling(joystick_x) / self,JOYSTICK_DRIVE_SLOWDOWN_FACTOR
         rot = joystick_rot  # TODO: Could add a joystickscaling here
         return x_speed, y_speed, rot
 
