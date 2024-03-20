@@ -17,12 +17,12 @@ from wpilib import DriverStation
 import logging
 
 
-def initialize_simulated_components():
+def initialize_simulated_components(desired_auto_x, speaker_x):
     # TODO: Replace these with mock objects
-    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers()
+    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers(), Vision(desired_auto_x, speaker_x)
 
-def initialize_real_components():
-    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers()
+def initialize_real_components(desired_auto_x, speaker_x):
+    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers(), Vision(desired_auto_x, speaker_x)
 
 def outputToSmartDashboard(swerve_state: CrescendoSwerveDrivetrainState, shooter_state: ShooterState,
                            intake_state: IntakeState):
@@ -115,25 +115,16 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         initialization here."""
 
         logging.basicConfig(level=logging.DEBUG)
+        self.field = CrescendoField(DriverStation.getAlliance())
+        desired_auto_x = self.field.desired_x_for_autonomous_driving
+        speaker_x = self.field.speaker_x
 
         logging.info(f"Robot is in simulation: {wpilib.RobotBase.isSimulation()}")
-        self.swerve, self.intake, self.shooter, self.controllers = \
-            initialize_simulated_components() if wpilib.RobotBase.isSimulation() \
-            else initialize_real_components()
+        self.swerve, self.intake, self.shooter, self.controllers, self.vision = \
+            initialize_simulated_components(desired_auto_x, speaker_x) if wpilib.RobotBase.isSimulation() \
+            else initialize_real_components(desired_auto_x, speaker_x)
 
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
-
-        self.field = CrescendoField(DriverStation.getAlliance())
-
-        # this checks wether we have set ourselves through the smartdashbard our alliance side and color. for vision we want to check to change
-        # the x value to use the same april tags but use them as if we were on either side of the field.
-        self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
-        # gets the vision class and sets the arguments in init to be used in the file
-
-        # Autonomous state machine
-        self.AUTONOMOUS_STATE_AIMING = 1
-        self.AUTONOMOUS_STATE_SPEAKER_SHOOTING = 2
-        self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
         # Initialize commands sent to the mechanisms.
         self.wrist_position = WristAngleCommands.wrist_stow_action

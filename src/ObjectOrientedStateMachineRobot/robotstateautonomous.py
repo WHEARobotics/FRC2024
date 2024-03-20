@@ -100,56 +100,8 @@ class RobotStateAutonomous(RobotState):
         self.substate = AutonomousStateAiming(robot)
 
     def periodic(self, robot) -> RobotState:
-        self.substate.periodic(robot)
-
-        # robot.swerve.drive(robot.x_speed, robot.y_speed, robot.rot, True)
-        # # wrist positions for intake to move towards the requested location remove magic numbers!
-        # # Not sure about robot.wrist_position here. It needs to be a WristAngleCommands enum value.
-        # commands = robot.intake.get_periodic_commands(robot.wrist_position, robot.intake_control)
-        # if robot.is_botpose_valid(robot.botpose):
-        #     speaker_distance_m = robot.distance_to_speaker(robot.botpose[0], robot.botpose[1], robot.speaker_x,
-        #                                                    FieldPositions.speaker_y)
-        # else:
-        #     # No botpose!
-        #     speaker_distance_m = 0
-        # robot.shooter.get_periodic_commands(speaker_distance_m, robot.shooter_pivot_control, robot.shooter_control, robot.kicker_action)
-        # for command in commands:
-        #     command.execute(robot)
-
-
-    # def autonomous_periodic_aiming(self, botpose):
-    #
-    #     x = botpose[0]
-    #     y = botpose[1]
-    #     current_yaw = botpose[5]  # getting the yaw from the self.botpose table
-    #     desired_yaw = 0  # where we want our yaw to go
-    #
-    #     desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
-    #     wpilib.SmartDashboard.putString("DB/String 0", str(x))
-    #     wpilib.SmartDashboard.putString("DB/String 1", str(y))
-    #     wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
-    #
-    #     current_yaw = botpose[5]  # getting the yaw from the self.botpose table
-    #     desired_yaw = 0  # where we want our yaw to go
-    #
-    #     direction_to_travel = self.calculate_desired_direction(desired_yaw, current_yaw)
-    #     self.vision.get_rotation_autonomous_periodic_for_speaker_shot(self.botpose, current_yaw)
-    #
-    #     if direction_to_travel < -1:
-    #         self.intake.get_periodic_commands(WristAngleCommands.wrist_stow_action_action, 1)
-    #     elif direction_to_travel > 2:
-    #         self.intake.get_periodic_commands(WristAngleCommands.wrist_mid_action, 2)
-    #     else:
-    #         self.rot = 0.0
-    #     # How can we tell that we have completed turning? When we do that
-    #     # self.automous_state = self.AUTONOMOUS_STATE_SPEAKER_SHOOTING
-    #
-    # def autonomous_periodic_shooting(self, botpose):
-    #     """
-    #     this will get the angle needed for the shooter to be able to shoot from different positions by calculating through trig
-    #     """
-    #     print("NOT IMPLEMENTED")
-    #     pass
+        self.substate = self.substate.periodic(robot)
+        return self
 
     def is_botpose_valid(self, botpose):
         if botpose == None:
