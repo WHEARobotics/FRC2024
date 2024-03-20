@@ -1,121 +1,93 @@
+import wpilib
+
+from intake import WristAngleCommands, IntakeCommands
+from shooter import ShooterKickerCommands
+from controllers import ControllersState, DriveSpeeds
 from robotstate import RobotState
+import rev
+
+class KickerState:
+    def __init__(self):
+        pass
+
+    def periodic(self):
+        pass
+
+    def finalize(self):
+        pass
+
+class KickerInitialState(KickerState):
+    def __init__(self):
+        pass
+
+    def periodic(self, controller_state: ControllersState) -> tuple(KickerState, RobotCommand):
+        # we start by checking if we intook with the wristy
+
+        if self.intake_control == IntakeCommands.intake_action:
+            self.kicker_state = 1
+        return self, None
+
+    def finalize(self):
+        pass
 
 
 class RobotStateTeleop(RobotState):
     def __init__(self, robot):
         self.robot = robot
+        for component in [robot.swerve, robot.intake, robot.shooter]:
+            component.set_idle_mode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
-        robot.halfSpeed = True
-
-        robot.intake.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        robot.swerve.front_left.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        robot.swerve.front_right.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        robot.swerve.back_left.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        robot.swerve.back_right.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-
-        robot.intake_action = 1  # this action speeds up the intake motors to intake
-        robot.outtake_action = 2  # this action speeds up the intake motors to outtake
-        robot.wrist_intake_action = 2  # this action raises the wrist up
-        robot.wrist_in_action = 1  # this action puts the wrist down
-        robot.wrist_mid_action = 3  # action to move the intake to a position not in the way with the shooter and note
-
-        robot.shooter_pivot_start = 1  # this pivots the shooter into a 0 degree angle
-        robot.shooter_pivot_max = 2  # this pivots the shooter into a 90 degree angle
-        robot.shooter_pivot_amp = 3  # this pivots the shooter into a 180 degree angle
-        robot.shooter_pivot_sub = 4  # subwoofer angle to move the shooter to the sub angle
-        robot.shooter_pivot_manual_up = 5  # this manually pivots the shooter up
-        robot.shooter_pivot_manual_down = 6  # this manually pivots the shooter down
-
-        robot.shooter_action_intake = 1  # this action moves the shooter motors to intake
-        robot.shooter_action_shot = 2  # this action moves the shooter motors to outtake
-
-        robot.kicker_intake = 1  # this action moves the kicker motors and feed the note into the shooter
-        robot.kicker_amp_shot = 2  # this utilizes the kicker to shoot into the amp.
-        robot.kicker_shooter = 3  # this speeds up the kicker to be able to shoot with it at high speeds into the flywheels
-
-        robot.intake_idle = 0
-        robot.shooter_pivot_idle = 0
-        robot.shooter_flywheel_idle = 0
-        robot.wrist_idle = 0
-        robot.kicker_idle = 0
-
-        robot.wiggleTimer.reset()
-
-        robot.percent_output = 0.1
-
-        robot.kicker_state = 0
-
-        # is used to go to else, stopping the motor
+        self.kicker_state = KickerInitialState()
 
     def periodic(self):
+        current_actions = []
 
-        self.driveWithJoystick()
+        # Debugging
+        self.robot.read_absolute_encoders_and_output_to_smart_dashboard()
 
-        self.Abutton = self.xbox_operator.getAButton()
-        self.Bbutton = self.xbox_operator.getBButton()
-        self.Xbutton = self.xbox_operator.getXButton()
-        self.Ybutton = self.xbox_operator.getYButton()
-        self.RightBumper = self.xbox_operator.getRightBumper()
-        self.LeftBumper = self.xbox_operator.getLeftBumper()
-        self.leftStickButton = self.xbox_operator.getLeftStickButton()
-        self.rightStickButton = self.xbox_operator.getRightStickButton()
-        self.leftTrigger = self.xbox_operator.getLeftTriggerAxis()
-        self.rightTrigger = self.xbox_operator.getRightTriggerAxis()
-        self.startButton = self.xbox_operator.getStartButton()
+        controller_state = self.robot.controllers.get_state()
 
-        self.readAbsoluteEncodersAndOutputToSmartDashboard()
+        drive_command = self.drive_with_joystick_periodic()
+        current_actions.append(drive_command)
 
-        self.botpose = self.vision.checkBotpose()
+        pivot_command = self.pivot_control_periodic(controller_state)
+        current_actions.append(pivot_command)
 
-        # we commented out this for now because we dont want any position control for our first robot tests
-        if self.leftStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_up
-        elif self.rightStickButton:
-            self.shooter_pivot_control = self.shooter_pivot_manual_down
-        else:
-            self.shooter_pivot_control = 0
-
-        if self.Abutton:
-            self.wrist_position = WristAngleCommands.wrist_intake_action
-            self.intake_control = IntakeCommands.intake_action
-        elif self.Bbutton:
-            self.wrist_position = WristAngleCommands.wrist_stow_action
-            self.intake_control = IntakeCommands.outtake_action
-            self.kicker_action = ShooterKickerCommands.kicker_intake
-            self.shooter_pivot_control = 2
+        if controller_state.a_button:
+            intake_command = self.do_intake()
+            current_actions.append(intake_command)
+        elif controller_state.b_button:
+            outtake_command = self.do_outtake()
+            current_actions.append(outtake_command)
         # this is the button to transfer the note from the intake into the shooter kicker
-        elif self.Xbutton:
-            self.kicker_action = ShooterKickerCommands.kicker_amp_shot  # amp shot to shoot into the amp
-        elif self.rightTrigger:
-            self.kicker_action = ShooterKickerCommands.kicker_shooter
+        elif controller_state.x_button:
+            current_actions.append(KickerAmpShotCommand())
+
+        elif controller_state.y_button:
+            current_actions.append(KickerShooterCommand())
+            #kicker_action = ShooterKickerCommands.kicker_shooter
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
         else:
-            self.intake_control = IntakeCommands.idle
-            self.wrist_position = WristAngleCommands.wrist_stow_action
-            self.kicker_action = ShooterKickerCommands.kicker_idle
+            idle_commands = self.idle_actions()
+            current_actions += idle_commands
             # this stops the motor from moving
 
-        if self.Ybutton:
-            self.shooter_control = self.shooter_action_shot
+        if controller_state.y_button:
+            current_actions.append(ShooterActionShotCommand())
         else:
-            self.shooter_control = self.shooter_flywheel_idle
+            current_actions.append(ShooterFlywheelIdleCommand())
         # this button speeds up the shooter flywheels before shooting the note
-
-        # if self.LeftBumper:
-        #     self.intake_control = IntakeCommands.intake_action
-        # elif self.RightBumper:
-        #     self.intake_control = IntakeCommands.outtake_action
-        # # else:
-        #     self.intake_control = IntakeCommands.idle
 
         # we could use manual intake to do without changing the wrist to move the note farther in. i could be wrong and we might just want
         # to hold intake longer to push the note farther.
 
-        if self.startButton:
-            self.shooter_pivot_control = self.shooter_pivot_amp
-        elif self.leftTrigger:
-            self.shooter_pivot_control = self.shooter_pivot_sub
-            self.wrist_position = WristAngleCommands.wrist_mid_action
+        if controller_state.start_button:
+            #shooter_pivot_control = self.shooter_pivot_amp
+            current_actions.append(ShooterPivotAmpCommand())
+        elif controller_state.left_trigger > 0.5:
+            shooter_pivot_control = self.shooter_pivot_sub
+            current_actions.append(ShooterPivotSubCommand())
+            current_actions.append(WristAngleMidCommand())
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
 
         # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
@@ -126,11 +98,10 @@ class RobotStateTeleop(RobotState):
         # the shooter we check to see if the state has memory of both happening and we let go of the kicker intake button, the state completes
         # and the kicker adjusts the note back away from the flywheels.
 
-        if self.kicker_state == 0:
-            # we start by checking if we intook with the wristy
-            if self.intake_control == IntakeCommands.intake_action:
-                self.kicker_state = 1
-        elif self.kicker_state == 1:
+        self.kicker_state, self.kicker_command = self.kicker_state.periodic()
+        current_actions.append(self.kicker_command)
+
+        if self.kicker_state == 1:
             # we check to see if we have the wrist tucked back
             if self.intake.motor_pos_degrees < 5:
                 self.kicker_state = 2
@@ -155,47 +126,26 @@ class RobotStateTeleop(RobotState):
                 self.kicker_action = ShooterKickerCommands.kicker_adjustment  # 4
 
         # wrist positions for intake to move towards the requested location remove magic numbers!
-        self.intake.periodic(self.wrist_position, self.intake_control)
+        # Not sure about robot.wrist_position here. It needs to be a WristAngleCommands enum value.
+        self.intake.get_periodic_commands(self.wrist_position, self.intake_control)
 
-        if self.is_botpose_valid(self.botpose):
+        botpose = self.robot.vision.checkBotpose()
+        if self.is_botpose_valid(botpose):
             speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x,
                                                           self.speaker_y)
-        else:
-            # No botpose!
-            speaker_distance_m = 0
-        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
-
-        # self.botpose = self.vision.checkBotpose()
-
-        # self.current_yaw = self.botpose[5]#getting the yaw from the self.botpose table
-        # self.desired_yaw = 0 #where we want our yaw to go
-
-        self.Abutton = self.xbox.getAButton()
-        self.Bbutton = self.xbox.getBButton()
-
-        if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
-            self.swerve.gyro.set_yaw(0)
-
-        # wpilib.SmartDashboard.putString('DB/String 1',f"Desired angle: {self.desired_angle:.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 2', f"Current angle: {self.current_angle:.1f}")
-        # wpilib.SmartDashboard.putString('DB/String 3', f"Desired Turn Count: {self.desired_turn_count:.1f}")
-
-        # wpilib.SmartDashboard.putString('DB/String 4', f"abs_encoder_pos {self.correctedEncoderPosition():.3f}")
-
-        if self.is_botpose_valid(self.botpose):
-            x = self.botpose[0]
-            y = self.botpose[1]
+            x = botpose[0]
+            y = botpose[1]
             wpilib.SmartDashboard.putString("DB/String 0", str(x))
             wpilib.SmartDashboard.putString("DB/String 1", str(y))
 
-            current_yaw = self.botpose[5]  # getting the yaw from the self.botpose table
+            current_yaw = botpose[5]  # getting the yaw from the self.botpose table
             desired_yaw = 0  # where we want our yaw to go
 
             speaker_x = 6.5273  # the x coordinate of the speaker marked in the field drawings in m.
             speaker_y = 1.98  # height of the speaker in meters.
 
-            bot_x = self.botpose[0]  # the x coordinate from the botpose table
-            bot_y = self.botpose[1]  # the y pos from the botpose table
+            bot_x = botpose[0]  # the x coordinate from the botpose table
+            bot_y = botpose[1]  # the y pos from the botpose table
 
             self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
             # fills the distance to speaker function with its required values for the calculate pitch function
@@ -214,9 +164,54 @@ class RobotStateTeleop(RobotState):
             else:
                 wpilib.SmartDashboard.putString("DB/String 3", "Hold!")
         else:
-            # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
-            pass
+            # No botpose!
+            speaker_distance_m = 0
+        self.shooter.get_periodic_commands(speaker_distance_m, shooter_pivot_control, shooter_control, kicker_action)
+
+        if controller_state.right_bumper and controller_state.left_bumper:
+            current_actions.append(GyroSetYawCommand(0))
+
+        for action in current_actions:
+            action.execute(self.robot)
         return self
+
+    def idle_actions(self):
+        self.intake_control = IntakeCommands.idle
+        self.wrist_position = WristAngleCommands.wrist_stow_action
+        self.kicker_action = ShooterKickerCommands.kicker_idle
+        return [IntakeIdleCommand(), WristStowCommand(), KickerIdleCommand()]
+
+    def do_outtake(self):
+        self.wrist_position = WristAngleCommands.wrist_stow_action
+        self.intake_control = IntakeCommands.outtake_action
+        self.kicker_action = ShooterKickerCommands.kicker_intake
+        self.shooter_pivot_control = 2
+        return OuttakeCommand(self.wrist_position, self.intake_control, self.kicker_action, self.shooter_pivot_control)
+
+    def do_intake(self) -> RobotCommand:
+        self.wrist_position = WristAngleCommands.wrist_intake_action
+        self.intake_control = IntakeCommands.intake_action
+        return IntakeCommand(self.intake_control, self.wrist_position)
 
     def finalize(self):
         pass
+
+
+    def drive_with_joystick_periodic(self) -> SwerveDriveSpeedCommand:
+        joystick_x, joystick_y, joystick_rot = self.robot.controller.getJoystickDriveValues()
+        drive_speeds = self.robot.controller.speeds_for_joystick_values(joystick_x, joystick_y, joystick_rot)
+        return SwerveDriveSpeedCommand(drive_speeds)
+        '''
+        this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
+        '''
+
+    def pivot_control_periodic(self, controller_state : ControllersState):
+        # we commented out this for now because we dont want any position control for our first robot tests
+        if controller_state.left_stick_button:
+            self.shooter_pivot_control = self.shooter_pivot_manual_up
+        elif controller_state.right_stick_button:
+            self.shooter_pivot_control = self.shooter_pivot_manual_down
+        else:
+            self.shooter_pivot_control = 0
+        # TODO Do something with shooter_pivot_control
+        return PivotControlCommand(self.shooter_pivot_control)

@@ -1,7 +1,9 @@
+import rev
 import wpilib
 import wpilib.drive
 from wpimath import applyDeadband
 
+from robotstateteleop import RobotStateTeleop
 from controllers import Controllers
 from crescendofield import CrescendoField
 from robotstateautonomous import RobotStateAutonomous
@@ -17,10 +19,10 @@ import logging
 
 def initialize_simulated_components():
     # TODO: Replace these with mock objects
-    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers
+    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers()
 
 def initialize_real_components():
-    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers
+    return CrescendoSwerveDrivetrain(), Intake(), Shooter(), Controllers()
 
 def outputToSmartDashboard(swerve_state: CrescendoSwerveDrivetrainState, shooter_state: ShooterState,
                            intake_state: IntakeState):
@@ -106,7 +108,7 @@ def outputToSmartDashboard(swerve_state: CrescendoSwerveDrivetrainState, shooter
     # this will be used for just testing and to print anything we want when a smart dashboard button is not pushed
 
 
-class Myrobot(wpilib.TimedRobot):
+class ObjectOrientedRobot(wpilib.TimedRobot):
 
     def robotInit(self):
         """ Robot initialization. Run once on startup. Do all one-time
@@ -120,6 +122,7 @@ class Myrobot(wpilib.TimedRobot):
             else initialize_real_components()
 
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
+
         self.field = CrescendoField(DriverStation.getAlliance())
 
         # this checks wether we have set ourselves through the smartdashbard our alliance side and color. for vision we want to check to change
@@ -150,8 +153,6 @@ class Myrobot(wpilib.TimedRobot):
         # speed values for the swerve to be changed throughout the different states to drive
         # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
-        self.wiggleTimer = wpilib.Timer()
-        
 
     def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeState):
         '''
@@ -164,7 +165,7 @@ class Myrobot(wpilib.TimedRobot):
         return swerve_encoder_state, shooter_state, intake_state
     
 
-    def readAbsoluteEncodersAndOutputToSmartDashboard(self) :
+    def read_absolute_encoders_and_output_to_smart_dashboard(self) :
         """
         This function basically combine the two function above
 
@@ -174,18 +175,11 @@ class Myrobot(wpilib.TimedRobot):
         swerve_state, shooter_state, intake_state = self.read_component_states()
         outputToSmartDashboard (swerve_state, shooter_state, intake_state)
 
-       
-    # def calculateDegreesFromAbsoluteEncoderValue(self, absEncoderValue):
-    #     """
-    #     This returns the absolute encoder value as a 0 to 360, not from 0 to 1
-    #     """
-    #     return absEncoderValue * 360
-            
     def disabledInit(self):
         self.robot_state_machine.set_state(RobotStateDisabled(self))
 
     def disabledPeriodic(self):
-        self.robot_state_machine.periodic()
+        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
     def disabledExit(self):
         self.robot_state_machine.finalize()
 
@@ -193,7 +187,7 @@ class Myrobot(wpilib.TimedRobot):
         self.robot_state_machine.set_state(RobotStateAutonomous(self))
 
     def autonomousPeriodic(self):
-        self.robot_state_machine.periodic()
+        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
 
     def autonomousExit(self):
         self.robot_state_machine.finalize()
@@ -201,39 +195,11 @@ class Myrobot(wpilib.TimedRobot):
     def teleopInit(self):
         self.robot_state_machine.set_state(RobotStateTeleop(self))
 
-
     def teleopPeriodic(self):
-        self.robot_state_machine.periodic()
-
-
-    # def calculate_desired_direction(self, desired_angle, current_angle):
-    #     if current_angle >180:
-    #         current_angle = current_angle - 360
-    #     if desired_angle >180:
-    #         desired_angle = desired_angle - 360
-    #     desired_direction = desired_angle - current_angle
-    #     return desired_direction
-    
-    # def robot_april_tag_orientation(self, rotation, desired_angle, current_angle):
-    #     desired_state = (0.0, Rotation2d(0.0))
-    #     if not current_angle > 0 and not current_angle < 1:
-    #         self.frontLeft.setDesiredState(desired_state, True)
-    #         self.frontRight.setDesiredState(desired_state, True)
-    #         self.backLeft.setDesiredState(desired_state, True)
-    #         self.backRight.setDesiredState(desired_state, True)
-    #     elif current_angle > 0:
-    #         desired_state = 
-    # random stuff will be worked on later
-
-
+        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
 
     def teleopExit(self):
         self.robot_state_machine.finalize()
-    
-
 
 if __name__ == '__main__':
-    wpilib.run(Myrobot)
-    # sys.argv[0] = 'robotpy sim --main D:\src\lobrien\FRC2024\src\ObjectOrientedStateMachineRobot\robot.py'
-    # main()
-	#
+    wpilib.run(ObjectOrientedRobot)

@@ -3,6 +3,9 @@ import wpilib
 from rev import CANSparkMax, CANSparkLowLevel
 from dataclasses import dataclass
 
+from wpimath.units import degrees
+
+
 @dataclass(frozen=True)
 class WristAngleCommands:
     wrist_stow_action = 1
@@ -105,8 +108,8 @@ class Intake:
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
-    def periodic(self, wrist_pos, intake_control):
-        wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_pos}')
+    def periodic(self, wrist_angle_command : WristAngleCommands, intake_control):
+        wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_angle_command}')
 
 
         if self.wrist_limit_switch.get() == True:
@@ -118,11 +121,11 @@ class Intake:
         if self.intake_move_on_init == True:
             self.wrist_motor.set(-0.2)
         else:
-            if wrist_pos == WristAngleCommands.wrist_stow_action:
+            if wrist_angle_command == WristAngleCommands.wrist_stow_action:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
-            elif wrist_pos == WristAngleCommands.wrist_intake_action:
+            elif wrist_angle_command == WristAngleCommands.wrist_intake_action:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
-            elif wrist_pos == WristAngleCommands.wrist_mid_action:
+            elif wrist_angle_command == WristAngleCommands.wrist_mid_action:
                 self.desired_angle = self.WRIST_MID_ANGLE
             else:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
@@ -147,17 +150,20 @@ class Intake:
         self.intake_motor.set(self.set_speed)
 
 
-    def DegToTurnCount(self, deg):
+    def DegToTurnCount(self, deg: degrees) -> float:
         '''Convert intake "wrist" angle in degrees to turns (rotations) of motor shaft.'''
         return deg * (1.0/360.0) * self.WRIST_GEAR_RATIO
 
-    def TurnCountToDeg(self, count):
+    def TurnCountToDeg(self, count: float) -> degrees:
         '''Convert turns (rotations) of motor shaft to angle in degrees of intake "wrist".'''
         return count * 360.0 / self.WRIST_GEAR_RATIO
 
-    def read_state(self):
+    def read_state(self) -> IntakeState:
         wrist_encoder_pos = self.wrist_encoder.getPosition() * 360
         wrist_limit_switch_pos = self.wrist_limit_switch.get()
         wrist_desired_pos = self.desired_angle
         return IntakeState(wrist_encoder_pos, wrist_limit_switch_pos, wrist_desired_pos)
 
+    def set_idle_mode(self, mode : rev._rev.CANSparkMax.IdleMode) -> None:
+        self.wrist_motor.setIdleMode(mode)
+        #? self.intake_motor.setIdleMode(mode)

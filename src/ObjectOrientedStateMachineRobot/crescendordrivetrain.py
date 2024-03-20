@@ -11,6 +11,7 @@ import phoenix6
 from phoenix6 import hardware
 import wpimath.kinematics._kinematics
 import wpimath.geometry._geometry
+import rev
 
 import math
 
@@ -282,6 +283,10 @@ class CrescendoSwerveDrivetrain:
     def toggleDriveMotorsInverted(self):
         for module in self.swerve_modules:
             module.toggleDriveMotorInverted()
+
+    def set_idle_mode(self, mode : rev._rev.hardware.CANSparkMax.IdleMode):
+        for module in self.swerve_modules:
+            module.set_idle_mode(mode)
 
     def read_state(self) -> dict[str, tuple[float, float]]:
         backLeftState = self.swerve.back_left.get_state()

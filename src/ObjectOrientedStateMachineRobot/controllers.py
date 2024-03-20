@@ -1,27 +1,36 @@
+from dataclasses import dataclass
+
 from wpilib import XboxController
 
+@dataclass(frozen=True)
+class ControllersState:
+    joystick_x: float
+    joystick_y: float
+    joystick_rot: float
+    a_button : bool
+    b_button : bool
+    x_button : bool
+    y_button : bool
+    right_bumper : bool
+    left_bumper : bool
+    left_stick_button : bool
+    right_stick_button : bool
+    left_trigger : float
+    right_trigger : float
+    start_button : bool
+
+@dataclass(frozen=True)
+class DriveSpeeds:
+    x_speed: float
+    y_speed: float
+    rot: float
 
 class Controllers:
     def __init__(self):
-        JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 3
+        self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 3
 
         self.xbox = XboxController(0)
         self.xbox_operator = XboxController(1)
-
-    def driveWithJoystick(self):
-        # Step 1: Get the joystick values
-        joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
-
-        # Step 2: Calculate the speeds for the swerve
-        x_speed, y_speed, rot = self.speeds_for_joystick_values(self.joystick_x, self.joystick_y, joystick_rot)
-
-        # Unused : self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
-
-        # Step 3: Drive the swerve with the desired speeds
-        self.swerve.drive(x_speed, y_speed, rot, fieldRelative=True)
-        '''
-        this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
-        '''
 
     def getJoystickDriveValues(self) -> (float, float, float):
         # allow joystick to be off from center without giving input
@@ -35,11 +44,11 @@ class Controllers:
 
         return self.joystick_x, self.joystick_y, joystick_rot
 
-    def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot):
+    def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot) -> DriveSpeeds:
         x_speed = self.joystickscaling(joystick_y) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
-        y_speed = self.joystickscaling(joystick_x) / self,JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        y_speed = self.joystickscaling(joystick_x) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
         rot = joystick_rot  # TODO: Could add a joystickscaling here
-        return x_speed, y_speed, rot
+        return DriveSpeeds(x_speed, y_speed, rot)
 
     def joystickscaling(self,
                         input):  # this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
@@ -47,3 +56,21 @@ class Controllers:
         output = a * input * input * input + (1 - a) * input
         return output
 
+
+    def get_state(self) -> ControllersState:
+        joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
+        a_button = self.xbox_operator.getAButton()
+        Bbutton = self.xbox_operator.getBButton()
+        Xbutton = self.xbox_operator.getXButton()
+        Ybutton = self.xbox_operator.getYButton()
+        RightBumper = self.xbox_operator.getRightBumper()
+        LeftBumper = self.xbox_operator.getLeftBumper()
+        leftStickButton = self.xbox_operator.getLeftStickButton()
+        rightStickButton = self.xbox_operator.getRightStickButton()
+        leftTrigger = self.xbox_operator.getLeftTriggerAxis()
+        rightTrigger = self.xbox_operator.getRightTriggerAxis()
+        startButton = self.xbox_operator.getStartButton()
+        return ControllersState(joystick_x, joystick_y, joystick_rot, \
+                                a_button, Bbutton, Xbutton, Ybutton, \
+                                RightBumper, LeftBumper, leftStickButton, rightStickButton, \
+                                leftTrigger, rightTrigger, startButton)
