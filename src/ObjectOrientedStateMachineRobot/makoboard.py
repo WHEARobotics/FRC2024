@@ -4,7 +4,7 @@ from wpilib.shuffleboard import BuiltInWidgets
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import meters, degrees
 
-from intake import IntakeState
+from intake import IntakeStateEnum
 from shooter import ShooterState
 from vision import VisionState
 from crescendodrivetrain import CrescendoSwerveDrivetrain, CrescendoSwerveDrivetrainState
@@ -51,7 +51,7 @@ class IntakeTab:
         self.wrist_desired_pos = tab.add("Wrist desired position", 0).withWidget(
             BuiltInWidgets.kNumberBar).withPosition(0, 2).getEntry()
 
-    def show(self, intake_state: IntakeState):
+    def show(self, intake_state: IntakeStateEnum):
         self.wrist_encoder.getEntry().setValue(intake_state.wrist_encoder_pos)
         self.wrist_limit_switch.getEntry().setValue(intake_state.wrist_limit_switch_pos)
         self.wrist_desired_pos.getEntry().setValue(intake_state.wrist_desired_pos)

@@ -12,7 +12,7 @@ from robotstatedisabled import RobotStateDisabled
 from robotstatemachine import RobotStateMachine
 from vision import Vision  # Vision file import
 from crescendodrivetrain import CrescendoSwerveDrivetrain, CrescendoSwerveDrivetrainState
-from intake import Intake, IntakeState
+from intake import Intake, IntakeStateEnum
 from shooter import Shooter, ShooterState
 from wpilib import DriverStation
 
@@ -27,7 +27,7 @@ def initialize_real_components(desired_auto_x, speaker_x):
 
 
 def output_to_smart_dashboard(swerve_state: CrescendoSwerveDrivetrainState, shooter_state: ShooterState,
-                              intake_state: IntakeState):
+                              intake_state: IntakeStateEnum):
     """
     This puts the raw values of the encoder
     on the SmartDashboard as DB/String[0-8].
@@ -147,7 +147,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
 
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
 
-    def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeState, VisionState):
+    def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeStateEnum, VisionState):
         """
         Read the states of all the components and return them as a tuple.
         """

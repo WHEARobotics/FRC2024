@@ -38,7 +38,7 @@ class Controllers:
         self.xbox = XboxController(0)
         self.xbox_operator = XboxController(1)
 
-    def getJoystickDriveValues(self) -> (float, float, float):
+    def get_joystick_drive_values(self) -> (float, float, float):
         # allow joystick to be off from center without giving input
 
         self.joystick_x = -self.xbox.getLeftX()
@@ -66,7 +66,7 @@ class Controllers:
 
     def get_state(self) -> ControllersState:
         # Deadband is applied in the function
-        joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
+        joystick_x, joystick_y, joystick_rot = self.get_joystick_drive_values()
         a_button = self.xbox_operator.getAButton()
         Bbutton = self.xbox_operator.getBButton()
         Xbutton = self.xbox_operator.getXButton()

@@ -1,4 +1,4 @@
-from ObjectOrientedStateMachineRobot.intake import IntakeCommands, WristAngleCommands
+from ObjectOrientedStateMachineRobot.intake import IntakeCommandEnum, WristAngleCommandEnum
 from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
 
 
@@ -25,7 +25,7 @@ class OuttakeCommand(RobotCommand):
 
 class IntakeIdleCommand(RobotCommand):
     def __init__(self):
-        self.intake_control = IntakeCommands.idle
+        self.intake_control = IntakeCommandEnum.idle
 
     def execute(self, robot):
         raise NotImplementedError()
@@ -33,7 +33,15 @@ class IntakeIdleCommand(RobotCommand):
 
 class WristStowCommand(RobotCommand):
     def __init__(self):
-        self.wrist_position = WristAngleCommands.wrist_stow_action
+        self.wrist_position = WristAngleCommandEnum.wrist_stow_action
+
+    def execute(self, robot):
+        raise NotImplementedError()
+
+
+class WristAngleMidCommand(RobotCommand):
+    def __init__(self):
+        self.wrist_position = WristAngleCommandEnum.wrist_mid_action
 
     def execute(self, robot):
         raise NotImplementedError()

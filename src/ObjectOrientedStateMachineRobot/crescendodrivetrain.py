@@ -151,7 +151,7 @@ class CrescendoSwerveDrivetrain:
         # ? These values of 0.5 are taken from
         # https://github.com/4201VitruvianBots/2021SwerveSim/blob/main/WPILib_SwerveControllerCommand/src/main/java/frc/robot/Constants.java
         # But they seem odd. What units are they?
-        # They are probably meters, but the thing I don't understand is why they are different than the
+        # They are probably meters, but the thing I don't understand is why they are different from the
         # self.frontLeftLocation, etc. above.
         # I suggest changing them to be the above --Rod
 
