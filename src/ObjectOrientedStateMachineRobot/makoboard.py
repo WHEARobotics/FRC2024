@@ -20,10 +20,10 @@ class SwerveTab:
                                                                                                 position[1])
 
     def __init__(self, tab: ShuffleboardTab, swerve: CrescendoSwerveDrivetrain):
-        self.front_left = self.init_swerve_module(tab, "Front Left", swerve.frontLeft, (0, 0))
-        self.front_right = self.init_swerve_module(tab, "Front Right", swerve.frontRight, (0, 5))
-        self.back_left = self.init_swerve_module(tab, "Back Left", swerve.backLeft, (1, 0))
-        self.back_right = self.init_swerve_module(tab, "Back Right", swerve.backRight, (1, 5))
+        self.front_left = self.init_swerve_module(tab, "Front Left", swerve.front_left, (0, 0))
+        self.front_right = self.init_swerve_module(tab, "Front Right", swerve.front_right, (0, 5))
+        self.back_left = self.init_swerve_module(tab, "Back Left", swerve.back_left, (1, 0))
+        self.back_right = self.init_swerve_module(tab, "Back Right", swerve.back_right, (1, 5))
         self.yaw = tab.add("Yaw", 0).withWidget(BuiltInWidgets.kGyro).withPosition(2, 0)
         self.odometry_rotation = tab.add("Odometry Rotation", 0).withWidget(BuiltInWidgets.Gyro).withPosition(0, 3)
         self.odometry_x = tab.add("Odometry X", 0).withWidget(BuiltInWidgets.kTextView).withPosition(3, 3)
