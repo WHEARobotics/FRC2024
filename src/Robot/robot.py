@@ -392,7 +392,9 @@ class Myrobot(wpilib.TimedRobot):
         # is used to go to else, stopping the motor
 
     def teleopPeriodic(self):
-        self.driveWithJoystick(True)
+
+        self.driveWithJoystick()
+
         self.Abutton = self.xbox_operator.getAButton()
         self.Bbutton = self.xbox_operator.getBButton()
         self.Xbutton = self.xbox_operator.getXButton()
@@ -576,42 +578,48 @@ class Myrobot(wpilib.TimedRobot):
            
 
             
-        #     desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
-        #     wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
-        #     if abs(desired_direction) < 1.0:
-        #         wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
-        #     else:
-        #         wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
-        # else:
-        #     # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
-        #     pass
-    
-    
-    def driveWithJoystick(self, fieldRelativeParam: bool) -> None:
-        
-        # allow joystick to be off from center without giving input
+            desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
+            wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
+            if abs(desired_direction) < 1.0:
+                wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
+            else:
+                wpilib.SmartDashboard.putString("DB/String 3", "Hold!"  )
+        else:
+            # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
+            pass
 
-        self.joystick_x = -self.xbox.getLeftX()
-        self.joystick_y = -self.xbox.getLeftY()
-        self.joystick_x = applyDeadband(self.joystick_x , 0.1)
-        self.joystick_y = applyDeadband(self.joystick_y , 0.1)
+    def driveWithJoystick(self):
+        # Step 1: Get the joystick values
+        joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
 
-        rot = -self.xbox.getRightX()
-        rot = applyDeadband(rot, 0.15)
-
-        x_speed = self.joystickscaling(self.joystick_y) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
-        y_speed = self.joystickscaling(self.joystick_x) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        # Step 2: Calculate the speeds for the swerve
+        x_speed, y_speed, rot = self.speeds_for_joystick_values(self.joystick_x, self.joystick_y, joystick_rot)
 
         #Unused : self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
-    
-        self.swerve.drive(x_speed, y_speed, rot, fieldRelativeParam)
+
+        # Step 3: Drive the swerve with the desired speeds
+        self.swerve.drive(x_speed, y_speed, rot, fieldRelative=True)
         '''
         this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
         '''
-        
-      
 
-         
+    def getJoystickDriveValues(self) -> tuple[float, float, float]:
+        # allow joystick to be off from center without giving input
+
+        self.joystick_x = -self.xbox.getLeftX()
+        self.joystick_x = applyDeadband(self.joystick_x, 0.1)
+        self.joystick_y = -self.xbox.getLeftY()
+        self.joystick_y = applyDeadband(self.joystick_y, 0.1)
+        joystick_rot = -self.xbox.getRightX()
+        joystick_rot = applyDeadband(joystick_rot, 0.15)
+
+        return self.joystick_x, self.joystick_y, joystick_rot
+    def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot):
+        x_speed = self.joystickscaling(joystick_y) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        y_speed = self.joystickscaling(joystick_x) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        rot = joystick_rot # TODO: Could add a joystickscaling here
+        return x_speed, y_speed, rot
+
     def calculate_desired_direction(self, desired_angle, current_angle):
         if current_angle >180:
             current_angle = current_angle - 360
