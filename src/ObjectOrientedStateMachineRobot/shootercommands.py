@@ -128,7 +128,7 @@ class ShooterPitchCommand(RobotCommand):
         desired_turn_count = robot.shooter.DegToTurnCount(self.desired_angle)
         robot.shooter.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
-        shooter_state = robot.shooter.read_state()
+        shooter_state = robot.shooter.get_state()
         if abs(shooter_state.pitch_encoder_pos - self.desired_pitch) < 0.1:
             logging.debug("ShooterPitchCommand: desired pitch reached")
             robot.shooter.set_pitch_motor(0.0)

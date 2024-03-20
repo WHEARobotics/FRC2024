@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, SwerveModulePosition, SwerveModuleState, ChassisSpeeds
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, SwerveModuleState, ChassisSpeeds
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
-from wpimath.controller import PIDController
 from wpilib import Field2d, SmartDashboard
 import wpilib
-import phoenix6
 from phoenix6 import hardware
-import wpimath.kinematics._kinematics
-import wpimath.geometry._geometry
 import rev
 
 import math
@@ -288,7 +284,7 @@ class CrescendoSwerveDrivetrain:
         for module in self.swerve_modules:
             module.set_idle_mode(mode)
 
-    def read_state(self) -> dict[str, tuple[float, float]]:
+    def get_state(self) -> dict[str, tuple[float, float]]:
         backLeftState = self.swerve.back_left.get_state()
         frontRightState = self.swerve.front_right.get_state()
         frontLeftState = self.swerve.front_left.get_state()

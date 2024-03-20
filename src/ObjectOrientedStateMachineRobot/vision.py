@@ -1,8 +1,10 @@
 import math
-import cscore
+from dataclasses import dataclass
+from typing import List
+
 import ntcore
 
-import time # Temporary for diagnostics
+import wpilib
 
 
 @dataclass(frozen=True)
@@ -20,6 +22,8 @@ class VisionState:
     x_distance_to_travel: float
     x_speed: float
     rot: float
+
+
 class Vision:
                                                      
     
@@ -35,7 +39,7 @@ class Vision:
     def checkBotpose(self):
         botpose = self.botpose_subscription.get()
         # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
-        if botpose is not None and len(botpose > 3) and (botpose[0] + botpose[1] + botpose[2] != 0):
+        if botpose is not None and len(botpose) > 3 and (botpose[0] + botpose[1] + botpose[2] != 0):
             self.botpose = botpose
         return self.botpose
 
@@ -112,7 +116,7 @@ class Vision:
 
         return rot, direction_to_travel
 
-    def get_vision_state(self, game_time: float) -> VisionState:
+    def get_state(self, game_time: float) -> VisionState:
         time = wpilib.getTime()
         botpose = self.checkBotpose()
         speaker_x = self.speaker_x

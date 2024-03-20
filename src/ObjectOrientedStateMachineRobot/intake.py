@@ -158,7 +158,7 @@ class Intake:
         '''Convert turns (rotations) of motor shaft to angle in degrees of intake "wrist".'''
         return count * 360.0 / self.WRIST_GEAR_RATIO
 
-    def read_state(self) -> IntakeState:
+    def get_state(self) -> IntakeState:
         wrist_encoder_pos = self.wrist_encoder.getPosition() * 360
         wrist_limit_switch_pos = self.wrist_limit_switch.get()
         wrist_desired_pos = self.desired_angle
