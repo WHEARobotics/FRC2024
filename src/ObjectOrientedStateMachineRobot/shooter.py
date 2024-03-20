@@ -2,14 +2,11 @@ import rev
 from rev import CANSparkLowLevel
 import wpilib
 import time
-from wpilib import DutyCycleEncoder
-from wpimath.units import degrees
+
 
 from shootercommands import ShooterPitchCommand, ShooterWheelSetSpeedCommand
 
 from ObjectOrientedStateMachineRobot.shootercommands import KickerSetSpeedCommand
-from shooterdropcompensation import compensation, compensation_table
-import dataclasses
 from dataclasses import dataclass
 
 
@@ -68,7 +65,7 @@ class Shooter:
         kFF = 0.0
         kMaxOutput = 1.0
         kMinOutput = -1.0
-        maxRPM = 5700
+        # maxRPM = 5700
 
         maxVel = 10
         minVel = 0
@@ -128,7 +125,8 @@ class Shooter:
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
-        # the status code here give the difrent packed from the encoders serten speed to not overload the CANBuss. defult speed is 20ms.
+        # the status code here give the different packed from the encoders certain speed to not overload the CANBuss.
+        # default speed is 20ms.
 
         self.shooter_pivot.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         self.shooter_pivot_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
@@ -169,7 +167,7 @@ class Shooter:
         self.wiggleTimer = wpilib.Timer()
         self.wiggleTimer.start()
         time.sleep(1.5)
-        self.corrected_encoder_pos = self.correctedEncoderPosition()
+        self.corrected_encoder_pos = self.corrected_encoder_position()
         wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
         self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)
         wpilib.SmartDashboard.putString("DB/String 3",
@@ -197,9 +195,10 @@ class Shooter:
         shooter_wheel_encoder_pos = self.shooter_wheel_encoder.getPosition()
         return ShooterState(absolute_encoder_pos, shooter_pivot_encoder_pos, shooter_wheel_encoder_pos)
 
-    def get_periodic_commands(self, distance_to_speaker_m, shooter_pivot_command, shooter_control, kicker_action):
+    def get_teleop_periodic_commands(self, shooter_pivot_command, shooter_control, kicker_action):
+        commands = []
         # setting the desired angles the shooter pivot needs to go to to reach different positions
-        commands = self.pivot_commands(shooter_pivot_command)
+        commands += self.pivot_commands(shooter_pivot_command)
 
         commands += self.shooter_commands(shooter_control)
         self.shooter_commands(shooter_control)
@@ -208,7 +207,8 @@ class Shooter:
 
         return commands
 
-    def shooter_commands(self, shooter_control):
+    @staticmethod
+    def shooter_commands(shooter_control):
         commands = []
         if shooter_control != ShooterControlCommands.shooter_wheel_idle:  # 0
             if shooter_control == ShooterControlCommands.shooter_wheel_intake:  # 1
@@ -234,10 +234,11 @@ class Shooter:
                 # TODO: Add drop compensation to desired_angle!
                 drop_compensation_degrees = 0  # drop_compensation_degrees
 
-                commands.append(ShooterPitchCommand(self.shooter_sub) + drop_compensation_degrees)
+                commands.append(ShooterPitchCommand(self.shooter_sub + drop_compensation_degrees))
 
             # this checks if we are using the manual states in the code to switch from automatic to manual control
-            if shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_up or shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_down:
+            if (shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_up
+                    or shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_down):
                 self.automatic = False
 
             # setting the speeds of the pivot motors to use a manual control for things like adjustment and climbing
@@ -249,13 +250,17 @@ class Shooter:
             else:
                 commands.append(ShooterPitchCommand(self.shooter_pivot_encoder.getPosition()))
 
-            # what this does is it checks if we have not set a command to go to automatic and checks if we are not using any of the 2 manual up or
-            # down and if it is not zero either to use zero as the else to not have the pivot move when we let go of the button
-            if shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_up and shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_down and shooter_pivot_command != self.shooter_pivot_idle:
+            # what this does is it checks if we have not set a command to go to automatic and checks if we are not
+            # using any of the 2 manual up orndown and if it is not zero either to use zero as the else to not have
+            # the pivot move when we let go of the button
+            if (shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_up
+                    and shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_down
+                    and shooter_pivot_command != self.shooter_pivot_idle):
                 self.automatic = True
         return commands
 
-    def kicker_commands(self, kicker_action):
+    @staticmethod
+    def kicker_commands(kicker_action):
         commands = []
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake:  # 1
@@ -269,7 +274,8 @@ class Shooter:
         elif kicker_action == ShooterKickerCommands.kicker_shot:  # 3
             # self.kicker.set(-0.9)
             commands.append(KickerSetSpeedCommand(-0.9))
-        # the 4th state for the kicker is to push the note back and adjust it so it is not hitting the fly wheels too early
+        # the 4th state for the kicker is to push the note back and adjust it so it is not hitting
+        # the fly wheels too early
         elif kicker_action == ShooterKickerCommands.kicker_adjustment:  # 4
             # self.kicker.set(0.3)
             commands.append(KickerSetSpeedCommand(0.3))
@@ -281,21 +287,23 @@ class Shooter:
         wpilib.SmartDashboard.putString('DB/String 6', f"{kicker_action}")
         return commands
 
-    def DegToTurnCount(self, deg):
+    def deg_to_turn_count(self, deg):
 
         return deg * (1.0 / 360.0) * self.SHOOTER_PIVOT_GEAR_RATIO  # 150/7 : 1
 
     # deg to count
 
-    def TurnCountToDeg(self, count):
+    def turn_count_to_deg(self, count):
         return count * 360.0 / self.SHOOTER_PIVOT_GEAR_RATIO
 
     # count to deg
 
-    def correctedEncoderPosition(self):
+    def corrected_encoder_position(self):
         AbsEncValue = self.absolute_encoder.getAbsolutePosition() - self.abs_enc_offset
         if AbsEncValue < -0.5:
-            AbsEncValue += 1.0  # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
+            AbsEncValue += 1.0  # we add 1.0 to the encoder value if it returns negative to be able to
+            # keep it on the 0-1 range.
         elif AbsEncValue > 0.5:
             AbsEncValue -= 1
         return AbsEncValue
+    
