@@ -12,7 +12,6 @@ from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, Swe
 
 from crescendorswervemodule import CrescendoSwerveModule, CrescendoSwerveModuleState
 
-# from vision import Vision
 
 @dataclass(frozen=True)
 class CrescendoSwerveDrivetrainState:
@@ -110,18 +109,18 @@ class CrescendoSwerveDrivetrain:
         # robot is facing
         # at its origin positive x is forward and positive y is left for the 2d translation
 
-        self.backLeft = self._init_swerve_module_for(
+        self.back_left = self._init_swerve_module_for(
             "back_left")  # CrescendoSwerveModule(SWERVE_BACK_LEFT_DRIVE, SWERVE_BACK_LEFT_ANGLE, SWERVE_BACK_LEFT_ENCODER_CHANNEL, self.BACK_LEFT_OFFSET)
-        self.frontRight = self._init_swerve_module_for(
+        self.front_right = self._init_swerve_module_for(
             "front_right")  # CrescendoSwerveModule(SWERVE_FRONT_RIGHT_DRIVE, SWERVE_FRONT_RIGHT_ANGLE, SWERVE_FRONT_RIGHT_ENCODER_CHANNEL, self.FRONT_RIGHT_OFFSET)  #OG offset was 106.424
-        self.frontLeft = self._init_swerve_module_for(
+        self.front_left = self._init_swerve_module_for(
             "front_left")  # CrescendoSwerveModule(SWERVE_FRONT_LEFT_DRIVE, SWERVE_FRONT_LEFT_ANGLE, SWERVE_FRONT_LEFT_ENCODER_CHANNEL, self.FRONT_LEFT_OFFSET)  #OG offset was 296.543
-        self.backRight = self._init_swerve_module_for(
+        self.back_right = self._init_swerve_module_for(
             "back_right")  # CrescendoSwerveModule(SWERVE_BACK_RIGHT_DRIVE, SWERVE_BACK_RIGHT_ANGLE, SWERVE_BACK_RIGHT_ENCODER_CHANNEL, self.BACK_RIGHT_OFFSET)
         wpilib.SmartDashboard.putString("DB/String 9",
-                                        f"back_left.encoderPos : {self.backLeft.correctedEncoderPosition():.2f}")
+                                        f"back_left.encoderPos : {self.back_left.correctedEncoderPosition():.2f}")
 
-        self.swerve_modules = [self.frontLeft, self.frontRight, self.backLeft, self.backRight]
+        self.swerve_modules = [self.front_left, self.front_right, self.back_left, self.back_right]
         # this section above creates 4 swerve modules and sets the id's of each of them in this order:
         # drivemotor channel, turnmotor channel, absolute encoder channel(from analog input with thrifty encoders)
         # and the absolute pos offset then it creates a list for calling all modules at most
@@ -142,8 +141,8 @@ class CrescendoSwerveDrivetrain:
         # states
 
         self.odometry = SwerveDrive4Odometry(self.kinematics, Rotation2d(), (
-            self.frontLeft.getPosition(), self.frontRight.getPosition(), self.backLeft.getPosition(),
-            self.backRight.getPosition()))
+            self.front_left.getPosition(), self.front_right.getPosition(), self.back_left.getPosition(),
+            self.back_right.getPosition()))
 
         # odometry is used to track the robots position on the field only after being enabled. with this you can track
         # things like how far the robot travelled in meters per second
@@ -217,16 +216,16 @@ class CrescendoSwerveDrivetrain:
         # This function takes in the joystick inputs and sets up the field relative to be able to operate
         # the robot with inputs.
 
-        self.frontLeft.setDesiredState(self.swerveModuleStates[0], True)
-        self.frontRight.setDesiredState(self.swerveModuleStates[1], True)
-        self.backLeft.setDesiredState(self.swerveModuleStates[2], True)
-        self.backRight.setDesiredState(self.swerveModuleStates[3], True)
+        self.front_left.setDesiredState(self.swerveModuleStates[0], True)
+        self.front_right.setDesiredState(self.swerveModuleStates[1], True)
+        self.back_left.setDesiredState(self.swerveModuleStates[2], True)
+        self.back_right.setDesiredState(self.swerveModuleStates[3], True)
 
         # set desired state, updates the speed and angle on which each module has to reach periodically.
 
     def _update_odometry(self):
-        self.odometry.update(Rotation2d.fromDegrees(self.gyro.get_yaw().value), self.frontLeft.getPosition(),
-                             self.frontRight.getPosition(), self.backLeft.getPosition(), self.backRight.getPosition())
+        self.odometry.update(Rotation2d.fromDegrees(self.gyro.get_yaw().value), self.front_left.getPosition(),
+                             self.front_right.getPosition(), self.back_left.getPosition(), self.back_right.getPosition())
         '''
         This function updates the robots position and angle periodically every 50 ms
         '''
@@ -243,29 +242,29 @@ class CrescendoSwerveDrivetrain:
 
     def reset_steering(self):
         """Call this to reset turning encoders when ALL wheels are aligned forward."""
-        self.frontRight.resetSteering()
-        self.frontLeft.resetSteering()
-        self.backRight.resetSteering()
-        self.backLeft.resetSteering()
+        self.front_right.resetSteering()
+        self.front_left.resetSteering()
+        self.back_right.resetSteering()
+        self.back_left.resetSteering()
 
     def toggle_drive_motors_inverted(self):
         for module in self.swerve_modules:
             module.toggleDriveMotorInverted()
 
-    def set_idle_mode(self, mode: rev._rev.hardware.CANSparkMax.IdleMode):
+    def set_idle_mode(self, mode: rev.CANSparkMax.IdleMode):
         for module in self.swerve_modules:
             module.set_idle_mode(mode)
 
-    def get_state(self) -> dict[str, tuple[float, float]]:
-        backLeftState = self.swerve.back_left.get_state()
-        frontRightState = self.swerve.front_right.get_state()
-        frontLeftState = self.swerve.front_left.get_state()
-        backRightState = self.swerve.back_right.get_state()
+    def get_state(self) -> CrescendoSwerveDrivetrainState:
+        backLeftState = self.back_left.get_state()
+        frontRightState = self.front_right.get_state()
+        frontLeftState = self.front_left.get_state()
+        backRightState = self.back_right.get_state()
 
         yaw = self.gyro.get_yaw()
 
-        state = CrescendoSwerveDrivetrainState(backleft=backLeftState, frontright=frontRightState,
-                                               frontleft=frontLeftState, backright=backRightState, yaw=yaw,
+        state = CrescendoSwerveDrivetrainState(back_left=backLeftState, front_right=frontRightState,
+                                               front_left=frontLeftState, back_right=backRightState, yaw=yaw,
                                                odometry=self.odometry)
 
         return state

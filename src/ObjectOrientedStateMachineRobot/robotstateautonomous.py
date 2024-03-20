@@ -1,17 +1,24 @@
 import wpilib
 
-from shootercommands import ShooterFlywheelSpinCommand, SwerveDriveSpeedCommand, SwerveDriveStopCommand, \
+from controllers import DriveSpeeds
+from shootercommands import SwerveDriveSpeedCommand, SwerveDriveStopCommand, \
     ShooterPitchCommand, ShooterPitchStopCommand, KickerShooterCommand
 from robotstate import RobotState
-from intake import WristAngleCommands
 import logging
 
-class AutonomousState:
+
+class AutonomousState(RobotState):
+
+    def __init__(self):
+        super().__init__()
+
     def periodic(self, robot):
         raise NotImplementedError()
 
+
 class AutonomousStateAiming(AutonomousState):
     def __init__(self, robot):
+        super().__init__()
         self.AIMING_DEADZONE = 2.0
 
         logging.debug("AutonomousStateAiming.__init__")
@@ -21,8 +28,8 @@ class AutonomousStateAiming(AutonomousState):
         logging.debug("AutonomousStateAiming.periodic")
         commands = []
         if robot.is_botpose_valid(robot.botpose):
-            rot, direction_to_travel = robot.vision.get_rotation_autonomous_periodic_for_speaker_shot(robot.botpose,
-                                                                                                             robot.botpose[5])
+            rot, direction_to_travel = (
+                robot.vision.get_rotation_autonomous_periodic_for_speaker_shot(robot.botpose, robot.botpose[5]))
 
             if abs(rot) < self.AIMING_DEADZONE:
                 logging.debug("Bot is pivoted correctly")
@@ -31,9 +38,8 @@ class AutonomousStateAiming(AutonomousState):
             else:
                 # This seems wrong to me, as I don't know if rot is absolute or relative
                 logging.debug(f"AutonomousStateAiming.periodic: rot={rot}, direction_to_travel={direction_to_travel}")
-                command = SwerveDriveSpeedCommand(0, 0, rot)
+                command = SwerveDriveSpeedCommand(DriveSpeeds(0, 0, rot))
                 commands.append(command)
-                next_state = self
 
             if robot.shooter.is_pitched_correctly(robot.botpose):
                 logging.debug("AutonomousStateAiming.periodic: shooter is pitched correctly")
@@ -41,7 +47,7 @@ class AutonomousStateAiming(AutonomousState):
                 commands.append(stop)
             else:
                 logging.debug("AutonomousStateAiming.periodic: shooter is not pitched correctly")
-                command.append(ShooterPitchCommand(self.robot.shooter.SHOOTER_SUB_ANGLE))
+                commands.append(ShooterPitchCommand(self.robot.shooter.SHOOTER_SUB_ANGLE))
 
             # Good to fire?
             if robot.shooter.flywheel_is_ready(robot.botpose) \
@@ -49,15 +55,17 @@ class AutonomousStateAiming(AutonomousState):
                     and abs(rot) < self.AIMING_DEADZONE:
                 logging.debug("AutonomousStateAiming.periodic: ready to fire")
                 next_state = AutonomousStateShooting(robot)
+            else:
+                next_state = self
 
         for command in commands:
             command.execute(robot)
         return next_state
 
 
-
 class AutonomousStateShooting(AutonomousState):
     def __init__(self, robot):
+        super().__init__()
         logging.debug("AutonomousStateShooting.__init__")
         self.robot = robot
         self.post_shot_timer = wpilib.Timer()

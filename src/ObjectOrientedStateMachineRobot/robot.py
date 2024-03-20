@@ -177,7 +177,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         self.robot_state_machine.set_state(RobotStateDisabled(self))
 
     def disabledPeriodic(self):
-        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
+        self.robot_state_machine.set_state(self.robot_state_machine.periodic(self))
 
     def disabledExit(self):
         pass
@@ -186,7 +186,9 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         self.robot_state_machine.set_state(RobotStateAutonomous(self))
 
     def autonomousPeriodic(self):
-        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
+        next_state = self.robot_state_machine.periodic(self)
+        # Note that `next_state` can be the same as (and often is!) the same as the current state
+        self.robot_state_machine.set_state(next_state)
 
     def autonomousExit(self):
         pass
@@ -195,7 +197,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         self.robot_state_machine.set_state(RobotStateTeleop(self))
 
     def teleopPeriodic(self):
-        self.robot_state_machine.set_state(self.robot_state_machine.periodic())
+        self.robot_state_machine.set_state(self.robot_state_machine.periodic(self))
 
     def teleopExit(self):
         pass

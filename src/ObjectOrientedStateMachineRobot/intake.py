@@ -1,6 +1,6 @@
 import rev
 import wpilib
-from rev import CANSparkMax, CANSparkLowLevel
+from rev import CANSparkLowLevel
 from dataclasses import dataclass
 
 from wpimath.units import degrees
@@ -12,11 +12,13 @@ class WristAngleCommands:
     wrist_intake_action = 2
     wrist_mid_action = 3
 
+
 @dataclass(frozen=True)
 class IntakeCommands:
     idle = 0
     intake_action = 1
     outtake_action = 2
+
 
 @dataclass(frozen=True)
 class IntakeState:
@@ -24,13 +26,14 @@ class IntakeState:
     wrist_limit_switch_pos: bool
     wrist_desired_pos: float
 
+
 class Intake:
 
     def __init__(self) -> None:
 
-        self.WRIST_STOWED_ANGLE = 0   # Starting position inside the robot.
-        self.INTAKE_WRIST_ANGLE = 152 # Intake deployed to grab a note.
-        self.WRIST_MID_ANGLE = 60     # Out of the way so shooter can take a subwoofer shot.
+        self.WRIST_STOWED_ANGLE = 0    # Starting position inside the robot.
+        self.INTAKE_WRIST_ANGLE = 152  # Intake deployed to grab a note.
+        self.WRIST_MID_ANGLE = 60      # Out of the way so shooter can take a subwoofer shot.
         self.WRIST_GEAR_RATIO = 80
 
         kP = 0.075
@@ -41,7 +44,7 @@ class Intake:
         kFF = 0.0
         kMaxOutput = 0.4
         kMinOutput = -0.4
-        maxRPM = 5700
+        # maxRPM = 5700
 
         maxVel = 2000
         minVel = 0
@@ -58,8 +61,9 @@ class Intake:
         self.intake_motor.setInverted(True)
         self.wrist_motor.setInverted(False) 
 
-        # This function slows down CAN state frames to not overload the CANbus by slowing down the amount of things are needed to be checked
-        # in a certain amount of time and we slowed down the amount of time needed for less important things on the canbus
+        # This function slows down CAN state frames to not overload the CANbus by slowing down the amount of things are
+        # needed to be checked in a certain amount of time and we slowed down the amount of time needed for less
+        # important things on the canbus
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus3, 500)
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus4, 500)
         self.wrist_motor.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus5, 500)
@@ -96,11 +100,10 @@ class Intake:
         self.PIDController.setSmartMotionMinOutputVelocity(minVel, smartmotionslot)
         self.PIDController.setSmartMotionAllowedClosedLoopError(allowedErr, smartmotionslot)
 
-        
         self.set_speed = 0.0
+        self.intake_state = 0
 
         self.intake_move_on_init = True
-
 
         self.desired_angle = self.WRIST_STOWED_ANGLE
 
@@ -108,17 +111,19 @@ class Intake:
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
-    def periodic(self, wrist_angle_command : WristAngleCommands, intake_control):
+        self.motor_pos_degrees = 0.0
+        self.motor_pos_to_degrees = 0.0
+
+    def periodic(self, wrist_angle_command: WristAngleCommands, intake_control: IntakeCommands) -> None:
         wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_angle_command}')
 
-
-        if self.wrist_limit_switch.get() == True:
+        if self.wrist_limit_switch.get():
             self.wrist_encoder.setPosition(0.0)
             self.desired_angle = self.WRIST_STOWED_ANGLE
             self.intake_move_on_init = False
             print("true")
 
-        if self.intake_move_on_init == True:
+        if self.intake_move_on_init:
             self.wrist_motor.set(-0.2)
         else:
             if wrist_angle_command == WristAngleCommands.wrist_stow_action:
@@ -130,32 +135,35 @@ class Intake:
             else:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
             
-            desired_turn_count = self.DegToTurnCount(self.desired_angle)
+            desired_turn_count = self.deg_to_turn_count(self.desired_angle)
             self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
-            self.motor_pos_degrees = self.TurnCountToDeg(self.wrist_encoder.getPosition())
+            self.motor_pos_degrees = self.turn_count_to_deg(self.wrist_encoder.getPosition())
 
-            self.motor_pos_to_degrees = self.DegToTurnCount(self.wrist_encoder.getPosition())
-
+            self.motor_pos_to_degrees = self.deg_to_turn_count(self.wrist_encoder.getPosition())
 
         if intake_control == IntakeCommands.intake_action:
-            self.set_speed =  -0.3
+            self.set_speed = -0.3
             self.intake_state = 1
         elif intake_control == IntakeCommands.outtake_action:
             self.set_speed = 0.3
-                #intake action
+            # intake action
         else:
             self.set_speed = 0.0
 
         self.intake_motor.set(self.set_speed)
 
+    def deg_to_turn_count(self, deg: degrees) -> float:
+        """
+        Convert intake "wrist" angle in degrees to turns (rotations) of motor shaft.
+        """
 
-    def DegToTurnCount(self, deg: degrees) -> float:
-        '''Convert intake "wrist" angle in degrees to turns (rotations) of motor shaft.'''
         return deg * (1.0/360.0) * self.WRIST_GEAR_RATIO
 
-    def TurnCountToDeg(self, count: float) -> degrees:
-        '''Convert turns (rotations) of motor shaft to angle in degrees of intake "wrist".'''
+    def turn_count_to_deg(self, count: float) -> degrees:
+        """
+        Convert turns (rotations) of motor shaft to angle in degrees of intake "wrist".
+        """
         return count * 360.0 / self.WRIST_GEAR_RATIO
 
     def get_state(self) -> IntakeState:
@@ -164,6 +172,7 @@ class Intake:
         wrist_desired_pos = self.desired_angle
         return IntakeState(wrist_encoder_pos, wrist_limit_switch_pos, wrist_desired_pos)
 
-    def set_idle_mode(self, mode : rev.CANSparkMax.IdleMode) -> None:
+    def set_idle_mode(self, mode: rev.CANSparkMax.IdleMode) -> None:
         self.wrist_motor.setIdleMode(mode)
-        #? self.intake_motor.setIdleMode(mode)
+        # ? self.intake_motor.setIdleMode(mode)
+

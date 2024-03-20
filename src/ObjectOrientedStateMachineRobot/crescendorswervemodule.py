@@ -270,6 +270,10 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
         are inverted in the start of a match to reinvert them
         '''
 
+    def set_idle_mode(self, mode: rev.CANSparkMax.IdleMode):
+        self.driveMotor.setIdleMode(mode)
+        self.turningMotor.setIdleMode(mode)
+
     def get_state(self):
         corrected_motor_position = self.correctedEncoderPosition()
         turn_motor_position = self.turnMotorEncoder.getPosition()/ (150.0 / 7.0) * 360
