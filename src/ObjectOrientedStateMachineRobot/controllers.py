@@ -63,7 +63,9 @@ class Controllers:
         return output
 
 
+
     def get_state(self) -> ControllersState:
+        # Deadband is applied in the function
         joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
         a_button = self.xbox_operator.getAButton()
         Bbutton = self.xbox_operator.getBButton()

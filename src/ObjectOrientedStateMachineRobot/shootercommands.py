@@ -3,61 +3,8 @@ import logging
 from rev import CANSparkLowLevel
 from wpimath.units import degrees
 
-from controllers import DriveSpeeds
+from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
 from shooter import ShooterKickerCommands
-from intake import IntakeCommands, WristAngleCommands
-
-
-class RobotCommand:
-    def execute(self, robot):
-        raise NotImplementedError("Implement this method in the RobotCommand subclass")
-
-
-class SwerveDriveSpeedCommand(RobotCommand):
-    def __init__(self, speeds: DriveSpeeds):
-        self.speeds = speeds
-
-    def execute(self, robot):
-        robot.swerve.drive(self.speeds.x_speed, self.speeds.y_speed, self.speeds.rot, field_relative=True)
-
-
-class SwerveDriveStopCommand(RobotCommand):
-    def __init__(self):
-        pass
-
-    def execute(self, robot):
-        # ? Something else. Like set brakes?
-        robot.swerve.drive(0, 0, 0, field_relative=True)
-
-
-class PivotControlCommand(RobotCommand):
-    def __init__(self, shooter_pivot_control):
-        self.shooter_pivot_control = shooter_pivot_control
-
-    def execute(self, robot):
-        # TODO Do something with shooter_pivot_control
-        pass
-
-
-class IntakeCommand(RobotCommand):
-    def __init__(self, intake_control, wrist_position):
-        self.intake_control = intake_control
-        self.wrist_position = wrist_position
-
-    def execute(self, robot):
-        # ? robot.intake.periodic(self.wrist_position, self.intake_control)
-        raise NotImplementedError()
-
-
-class OuttakeCommand(RobotCommand):
-    def __init__(self, wrist_position, intake_control, kicker_action, shooter_pivot_control):
-        self.wrist_position = wrist_position
-        self.intake_control = intake_control
-        self.kicker_action = kicker_action
-        self.shooter_pivot_control = shooter_pivot_control
-
-    def execute(self, robot):
-        raise NotImplementedError()
 
 
 class KickerAmpShotCommand(RobotCommand):
@@ -79,22 +26,6 @@ class KickerShooterCommand(RobotCommand):
 class KickerIdleCommand(RobotCommand):
     def __init__(self):
         self.kicker_action = ShooterKickerCommands.kicker_idle
-
-    def execute(self, robot):
-        raise NotImplementedError()
-
-
-class IntakeIdleCommand(RobotCommand):
-    def __init__(self):
-        self.intake_control = IntakeCommands.idle
-
-    def execute(self, robot):
-        raise NotImplementedError()
-
-
-class WristStowCommand(RobotCommand):
-    def __init__(self):
-        self.wrist_position = WristAngleCommands.wrist_stow_action
 
     def execute(self, robot):
         raise NotImplementedError()
@@ -188,17 +119,3 @@ class KickerSetSpeedCommand(RobotCommand):
         robot.shooter.kicker.set(self.speed)
 
 
-class WristAngleMidCommand(RobotCommand):
-    def __init__(self):
-        pass
-
-    def execute(self, robot):
-        raise NotImplementedError()
-
-
-class GyroSetYawCommand(RobotCommand):
-    def __init__(self, yaw):
-        self.desired_yaw = yaw
-
-    def execute(self, robot):
-        raise NotImplementedError()
