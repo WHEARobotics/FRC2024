@@ -123,7 +123,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
     vision: Vision
 
     # Visualization
-    shuffleboard: Makoboard
+    makoboard: Makoboard
 
     # State machine
     robot_state_machine: RobotStateMachine
@@ -142,8 +142,8 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
             initialize_simulated_components(desired_auto_x, speaker_x) if wpilib.RobotBase.isSimulation() \
             else initialize_real_components(desired_auto_x, speaker_x)
 
-        self.shuffleboard = Makoboard(self.swerve)
-        self.shuffleboard.set_bot_position(3, 3, 45)
+        self.makoboard = Makoboard(self.swerve)
+        self.makoboard.set_bot_position(3, 3, 45)
 
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
 
@@ -167,11 +167,11 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         """
         swerve_state, shooter_state, intake_state, vision_state = self.read_component_states()
         output_to_smart_dashboard(swerve_state, shooter_state, intake_state)
-        self.shuffleboard.swerve.show(swerve_state)
-        self.shuffleboard.shooter.show(shooter_state)
-        self.shuffleboard.intake.show(intake_state)
-        self.shuffleboard.vision.show(vision_state)
-        self.shuffleboard.main.show(swerve_state, vision_state)
+        self.makoboard.swerve.show(swerve_state)
+        self.makoboard.shooter.show(shooter_state)
+        self.makoboard.intake.show(intake_state)
+        self.makoboard.vision.show(vision_state)
+        self.makoboard.main.show(swerve_state, vision_state)
 
     def disabledInit(self):
         self.robot_state_machine.set_state(RobotStateDisabled(self))
