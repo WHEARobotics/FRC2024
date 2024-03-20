@@ -189,6 +189,10 @@ class Shooter:
         # TODO: This should return false if the flywheel is not spinning at desired rate
         return True
 
+    def set_pitch_motor_pct(self, pct : float) -> None:
+        raise NotImplementedError()
+        # ? self.shooter_pivot.set(pct)
+
     def get_state(self):
         absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
         shooter_pivot_encoder_pos = self.shooter_pivot_encoder.getPosition()
