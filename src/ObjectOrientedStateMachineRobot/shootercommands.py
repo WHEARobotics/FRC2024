@@ -125,7 +125,7 @@ class ShooterPitchCommand(RobotCommand):
         self.desired_pitch = desired_pitch
 
     def execute(self, robot):
-        desired_turn_count = robot.shooter.DegToTurnCount(self.desired_angle)
+        desired_turn_count = robot.shooter.deg_to_turn_count(self.desired_angle)
         robot.shooter.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
         shooter_state = robot.shooter.get_state()
