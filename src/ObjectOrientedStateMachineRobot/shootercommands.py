@@ -7,8 +7,10 @@ from controllers import DriveSpeeds
 from shooter import ShooterKickerCommands
 from intake import IntakeCommands, WristAngleCommands
 
+
 class RobotCommand:
-    pass
+    def execute(self, robot):
+        raise NotImplementedError("Implement this method in the RobotCommand subclass")
 
 
 class SwerveDriveSpeedCommand(RobotCommand):
@@ -17,6 +19,7 @@ class SwerveDriveSpeedCommand(RobotCommand):
 
     def execute(self, robot):
         robot.swerve.drive(self.speeds.x_speed, self.speeds.y_speed, self.speeds.rot, field_relative=True)
+
 
 class SwerveDriveStopCommand(RobotCommand):
     def __init__(self):
@@ -120,8 +123,9 @@ class ShooterFlywheelSpinCommand(RobotCommand):
     def execute(self, robot):
         raise NotImplementedError()
 
+
 class ShooterPitchCommand(RobotCommand):
-    def __init__(self, desired_pitch : degrees):
+    def __init__(self, desired_pitch: degrees):
         self.desired_pitch = desired_pitch
 
     def execute(self, robot):
@@ -142,13 +146,15 @@ class ShooterPitchCommand(RobotCommand):
             logging.debug("ShooterPitchCommand: pitch is just right")
             robot.shooter.set_pitch_motor(0.0)
 
+
 class ShooterPitchStopCommand(RobotCommand):
     def __init__(self):
         pass
 
     def execute(self, robot):
-        #? Something more? Set brake?
+        # ? Something more? Set brake?
         robot.shooter.set_pitch_motor(0.0)
+
 
 class ShooterPivotAmpCommand(RobotCommand):
     def __init__(self):
@@ -165,6 +171,7 @@ class ShooterPivotSubCommand(RobotCommand):
     def execute(self, robot):
         raise NotImplementedError()
 
+
 class ShooterWheelSetSpeedCommand(RobotCommand):
     def __init__(self, speed):
         self.speed = speed
@@ -179,6 +186,7 @@ class KickerSetSpeedCommand(RobotCommand):
 
     def execute(self, robot):
         robot.shooter.kicker.set(self.speed)
+
 
 class WristAngleMidCommand(RobotCommand):
     def __init__(self):

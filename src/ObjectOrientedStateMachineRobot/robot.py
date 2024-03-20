@@ -155,7 +155,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         swerve_encoder_state = self.swerve.get_state()
         shooter_state = self.shooter.get_state()
         intake_state = self.intake.get_state()
-        vision_state = self.vision.get_state(wpilib.getTime())
+        vision_state = self.vision.get_state()
         return swerve_encoder_state, shooter_state, intake_state, vision_state
 
     def read_absolute_encoders_and_output_to_smart_dashboard(self):

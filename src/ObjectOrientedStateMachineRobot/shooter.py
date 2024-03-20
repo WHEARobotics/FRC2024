@@ -306,4 +306,3 @@ class Shooter:
         elif AbsEncValue > 0.5:
             AbsEncValue -= 1
         return AbsEncValue
-    
