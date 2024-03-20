@@ -2,7 +2,7 @@ import wpilib
 
 from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
 from shootercommands import KickerAmpShotCommand, KickerShooterCommand, ShooterActionShotCommand, \
-    ShooterFlywheelIdleCommand, ShooterPivotAmpCommand, ShooterPivotSubCommand, KickerIdleCommand, KickerIntakeCommand
+    ShooterFlywheelIdleCommand, ShooterPivotAmpCommand, ShooterPivotSubCommand, KickerIdleCommand
 from drivecommands import SwerveDriveSpeedCommand, GyroSetYawCommand, \
     PivotControlCommand
 from intakecommands import IntakeCommand, OuttakeCommand, IntakeIdleCommand, \
@@ -12,40 +12,6 @@ from shooter import ShooterKickerCommands
 from controllers import ControllersState
 from robotstate import RobotState
 import rev
-
-
-class KickerState:
-    def __init__(self):
-        pass
-
-    def periodic(self, robot) -> tuple[any, RobotCommand]:
-        raise NotImplementedError("Subclasses must implement this method")
-
-class KickerIdle(KickerState):
-    def __init__(self):
-        super().__init__()
-
-    def periodic(self, robot) -> tuple[KickerState, RobotCommand]:
-        return self, KickerIdleCommand()
-
-
-class KickerIntaking(KickerState):
-    def __init__(self):
-        super().__init__()
-
-    def periodic(self, robot) -> tuple[KickerState, RobotCommand]:
-        # TODO: How do we know when the kicker is done intaking?
-        done_intaking = lambda robot: False
-        next_state = self if not done_intaking else KickerIntakeComplete()
-        return next_state, KickerIntakeCommand()
-
-class KickerIntakeComplete(KickerState):
-    def __init__(self):
-        super().__init__()
-
-    def periodic(self, robot) -> tuple[KickerState, RobotCommand]:
-        return self, KickerIdleCommand()
-
 
 
 class RobotStateTeleop(RobotState):
