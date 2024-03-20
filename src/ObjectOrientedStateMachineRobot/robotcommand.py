@@ -1,3 +1,6 @@
+from robot import ObjectOrientedRobot
+
+
 class RobotCommand:
     """
     Abstract base class for robot commands. A robot command is a logical action that the robot can perform.
@@ -10,5 +13,5 @@ class RobotCommand:
     def __init__(self):
         pass
 
-    def execute(self, robot):
+    def execute(self, robot : ObjectOrientedRobot) -> None:
         raise NotImplementedError("Implement this method in the RobotCommand subclass")

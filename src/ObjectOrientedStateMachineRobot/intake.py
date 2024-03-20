@@ -7,21 +7,21 @@ from wpimath.units import degrees
 
 
 @dataclass(frozen=True)
-class WristAngleCommands:
+class WristAngleCommandEnum:
     wrist_stow_action = 1
     wrist_intake_action = 2
     wrist_mid_action = 3
 
 
 @dataclass(frozen=True)
-class IntakeCommands:
+class IntakeCommandEnum:
     idle = 0
     intake_action = 1
     outtake_action = 2
 
 
 @dataclass(frozen=True)
-class IntakeState:
+class IntakeStateEnum:
     wrist_encoder_pos: float
     wrist_limit_switch_pos: bool
     wrist_desired_pos: float
@@ -114,7 +114,7 @@ class Intake:
         self.motor_pos_degrees = 0.0
         self.motor_pos_to_degrees = 0.0
 
-    def periodic(self, wrist_angle_command: WristAngleCommands, intake_control: IntakeCommands) -> None:
+    def periodic(self, wrist_angle_command: WristAngleCommandEnum, intake_control: IntakeCommandEnum) -> None:
         wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_angle_command}')
 
         if self.wrist_limit_switch.get():
@@ -126,11 +126,11 @@ class Intake:
         if self.intake_move_on_init:
             self.wrist_motor.set(-0.2)
         else:
-            if wrist_angle_command == WristAngleCommands.wrist_stow_action:
+            if wrist_angle_command == WristAngleCommandEnum.wrist_stow_action:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
-            elif wrist_angle_command == WristAngleCommands.wrist_intake_action:
+            elif wrist_angle_command == WristAngleCommandEnum.wrist_intake_action:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
-            elif wrist_angle_command == WristAngleCommands.wrist_mid_action:
+            elif wrist_angle_command == WristAngleCommandEnum.wrist_mid_action:
                 self.desired_angle = self.WRIST_MID_ANGLE
             else:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
@@ -142,10 +142,10 @@ class Intake:
 
             self.motor_pos_to_degrees = self.deg_to_turn_count(self.wrist_encoder.getPosition())
 
-        if intake_control == IntakeCommands.intake_action:
+        if intake_control == IntakeCommandEnum.intake_action:
             self.set_speed = -0.3
             self.intake_state = 1
-        elif intake_control == IntakeCommands.outtake_action:
+        elif intake_control == IntakeCommandEnum.outtake_action:
             self.set_speed = 0.3
             # intake action
         else:
@@ -166,11 +166,11 @@ class Intake:
         """
         return count * 360.0 / self.WRIST_GEAR_RATIO
 
-    def get_state(self) -> IntakeState:
+    def get_state(self) -> IntakeStateEnum:
         wrist_encoder_pos = self.wrist_encoder.getPosition() * 360
         wrist_limit_switch_pos = self.wrist_limit_switch.get()
         wrist_desired_pos = self.desired_angle
-        return IntakeState(wrist_encoder_pos, wrist_limit_switch_pos, wrist_desired_pos)
+        return IntakeStateEnum(wrist_encoder_pos, wrist_limit_switch_pos, wrist_desired_pos)
 
     def set_idle_mode(self, mode: rev.CANSparkMax.IdleMode) -> None:
         self.wrist_motor.setIdleMode(mode)
