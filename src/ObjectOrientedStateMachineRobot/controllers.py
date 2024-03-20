@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from wpilib import XboxController
 
+
 @dataclass(frozen=True)
 class ControllersState:
     joystick_x: float
@@ -24,6 +25,11 @@ class DriveSpeeds:
     x_speed: float
     y_speed: float
     rot: float
+
+def applyDeadband(val, deadband):
+    if abs(val) < deadband:
+        return 0
+    return val
 
 class Controllers:
     def __init__(self):

@@ -9,8 +9,8 @@ class RobotStateDisabled(RobotState):
         logging.debug("RobotStateDisabled.__init__")
         self.robot = robot
         # Set the motors to brake on disable
-        self.robot.intake.set_brake_mode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.robot.swerve.set_brake_mode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.robot.intake.set_brake_mode(rev.CANSparkMax.IdleMode.kBrake)
+        self.robot.swerve.set_brake_mode(rev.CANSparkMax.IdleMode.kBrake)
 
     def periodic(self):
         logging.debug("RobotStateDisabled.periodic")

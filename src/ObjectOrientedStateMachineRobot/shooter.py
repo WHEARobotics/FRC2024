@@ -76,11 +76,11 @@ class Shooter:
 
         allowedErr = 0
 
-        self.shooter_pivot = rev.CANSparkMax(15, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.shooter_pivot_2 = rev.CANSparkMax(13, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.shooter_wheel = rev.CANSparkMax(12, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.shooter_wheel_2 = rev.CANSparkMax(14, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.kicker = rev.CANSparkMax(16, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooter_pivot = rev.CANSparkMax(15, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooter_pivot_2 = rev.CANSparkMax(13, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooter_wheel = rev.CANSparkMax(12, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooter_wheel_2 = rev.CANSparkMax(14, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.kicker = rev.CANSparkMax(16, rev.CANSparkLowLevel.MotorType.kBrushless)
 
         self.absolute_encoder = wpilib.DutyCycleEncoder(3)
         self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
@@ -130,11 +130,11 @@ class Shooter:
         self.kicker.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus6, 500)
         # the status code here give the difrent packed from the encoders serten speed to not overload the CANBuss. defult speed is 20ms.
 
-        self.shooter_pivot.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.shooter_pivot_2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.shooter_wheel.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.shooter_wheel_2.setIdleMode(rev._rev.CANSparkMax.IdleMode.kCoast)
-        self.kicker.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_pivot.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_pivot_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.shooter_wheel.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.shooter_wheel_2.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.kicker.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
 
         self.shooter_pivot_encoder = self.shooter_pivot.getEncoder()
 

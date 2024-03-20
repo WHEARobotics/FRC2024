@@ -35,7 +35,7 @@ class RobotStateTeleop(RobotState):
     def __init__(self, robot):
         self.robot = robot
         for component in [robot.swerve, robot.intake, robot.shooter]:
-            component.set_idle_mode(rev._rev.CANSparkMax.IdleMode.kBrake)
+            component.set_idle_mode(rev.CANSparkMax.IdleMode.kBrake)
 
         self.kicker_state = KickerInitialState()
 

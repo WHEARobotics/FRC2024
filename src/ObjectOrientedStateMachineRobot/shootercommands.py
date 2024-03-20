@@ -16,7 +16,7 @@ class SwerveDriveSpeedCommand(RobotCommand):
         self.speeds = speeds
 
     def execute(self, robot):
-        robot.swerve.drive(self.speeds.x_speed, self.speeds.y_speed, self.speeds.rot, fieldRelative=True)
+        robot.swerve.drive(self.speeds.x_speed, self.speeds.y_speed, self.speeds.rot, field_relative=True)
 
 class SwerveDriveStopCommand(RobotCommand):
     def __init__(self):
@@ -24,7 +24,7 @@ class SwerveDriveStopCommand(RobotCommand):
 
     def execute(self, robot):
         # ? Something else. Like set brakes?
-        robot.swerve.drive(0, 0, 0, fieldRelative=True)
+        robot.swerve.drive(0, 0, 0, field_relative=True)
 
 
 class PivotControlCommand(RobotCommand):

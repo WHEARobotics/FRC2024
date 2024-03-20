@@ -142,7 +142,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
             initialize_simulated_components(desired_auto_x, speaker_x) if wpilib.RobotBase.isSimulation() \
             else initialize_real_components(desired_auto_x, speaker_x)
 
-        self.shuffleboard = Makoboard(self.swerve, self.shooter, self.intake, self.vision)
+        self.shuffleboard = Makoboard(self.swerve)
         self.shuffleboard.set_bot_position(3, 3, 45)
 
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))

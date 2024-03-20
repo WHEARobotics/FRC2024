@@ -35,8 +35,8 @@ class CrescendoSwerveModule:      #This is the 'constructor' which we refer to i
 
     
     def __init__(self,driveMotorChannel : int, turningMotorChannel : int, absoluteEncoderChannel : int, absEncOffset : float) -> None:        #The first three parameters refer to which motor controller 
-        self.turningMotor = rev.CANSparkMax(turningMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev._rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
+        self.turningMotor = rev.CANSparkMax(turningMotorChannel, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.driveMotor = rev.CANSparkMax(driveMotorChannel, rev.CANSparkLowLevel.MotorType.kBrushless)                 #"Channel" is ID of CANSparkMax Motorcontroller on CAN bus
         
 
         #this PeriodicFrame/ status code slow do the sta frames so the canbuss dose not get over loaded. the encoder sent packed of info of the motor to the canbuss of difrent values and paramerters.

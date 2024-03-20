@@ -25,6 +25,9 @@ class SwerveTab:
         self.back_left = self.init_swerve_module(tab, "Back Left", swerve.backLeft, (1, 0))
         self.back_right = self.init_swerve_module(tab, "Back Right", swerve.backRight, (1, 5))
         self.yaw = tab.add("Yaw", 0).withWidget(BuiltInWidgets.kGyro).withPosition(2, 0)
+        self.odometry_rotation = tab.add("Odometry Rotation", 0).withWidget(BuiltInWidgets.Gyro).withPosition(0, 3)
+        self.odometry_x = tab.add("Odometry X", 0).withWidget(BuiltInWidgets.kTextView).withPosition(3, 3)
+        self.odometry_y = tab.add("Odometry Y", 0).withWidget(BuiltInWidgets.kTextView).withPosition(6, 3)
 
     def show(self, swerve_state: CrescendoSwerveDrivetrainState):
         self.front_left.getEntry().setValue(swerve_state.front_left)
@@ -32,6 +35,10 @@ class SwerveTab:
         self.back_left.getEntry().setValue(swerve_state.back_left)
         self.back_right.getEntry().setValue(swerve_state.back_right)
         self.yaw.getEntry().setValue(swerve_state.yaw)
+        odometry_pose = swerve_state.odometry.getPose()
+        self.odometry_rotation.getEntry().setValue(odometry_pose.rotation())
+        self.odometry_x.getEntry().setValue(f"{odometry_pose.x:1.2f}")
+        self.odometry_x.getEntry().setValue(f"{odometry_pose.y:1.2f}")
 
 
 class IntakeTab:
@@ -66,9 +73,10 @@ class ShooterTab:
             BuiltInWidgets.kEncoder).withPosition(0, 5).getEntry()
 
     def show(self, shooter_state: ShooterState):
-        self.shooter_absolute_encoder_pos.getEntry().setValue(shooter_state.shooter_absolute_encoder_pos)
+        self.shooter_absolute_encoder_pos.getEntry().setValue(shooter_state.absolute_encoder_pos)
         self.shooter_pivot_encoder_pos.getEntry().setValue(shooter_state.shooter_pivot_encoder_pos)
         self.shooter_wheel_encoder_pos.getEntry().setValue(shooter_state.shooter_wheel_encoder_pos)
+
 
 class VisionTab:
     def __init__(self, tab: ShuffleboardTab):
@@ -130,7 +138,7 @@ class MainTab:
 
 
 class Makoboard:
-    def __init__(self, swerve: CrescendoSwerveDrivetrain, intake, shooter, vision) -> None:
+    def __init__(self, swerve: CrescendoSwerveDrivetrain) -> None:
         self.swerve_tab = Shuffleboard.getTab("drive")
         self.swerve = SwerveTab(self.swerve_tab, swerve)
 

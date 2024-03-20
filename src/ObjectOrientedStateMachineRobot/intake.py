@@ -49,11 +49,11 @@ class Intake:
 
         allowedErr = 0
         
-        self.wrist_motor = rev.CANSparkMax(11, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.intake_motor = rev.CANSparkMax(10, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.wrist_motor = rev.CANSparkMax(11, rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.intake_motor = rev.CANSparkMax(10, rev.CANSparkLowLevel.MotorType.kBrushless)
 
-        self.intake_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
-        self.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+        self.intake_motor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.wrist_motor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
 
         self.intake_motor.setInverted(True)
         self.wrist_motor.setInverted(False) 
@@ -164,6 +164,6 @@ class Intake:
         wrist_desired_pos = self.desired_angle
         return IntakeState(wrist_encoder_pos, wrist_limit_switch_pos, wrist_desired_pos)
 
-    def set_idle_mode(self, mode : rev._rev.CANSparkMax.IdleMode) -> None:
+    def set_idle_mode(self, mode : rev.CANSparkMax.IdleMode) -> None:
         self.wrist_motor.setIdleMode(mode)
         #? self.intake_motor.setIdleMode(mode)
