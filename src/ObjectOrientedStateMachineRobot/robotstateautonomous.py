@@ -1,8 +1,8 @@
 import wpilib
 
 from controllers import DriveSpeeds
-from shootercommands import SwerveDriveSpeedCommand, SwerveDriveStopCommand, \
-    ShooterPitchCommand, ShooterPitchStopCommand, KickerShooterCommand
+from shootercommands import ShooterPitchCommand, ShooterPitchStopCommand, KickerShooterCommand
+from drivecommands import SwerveDriveSpeedCommand, SwerveDriveStopCommand
 from robotstate import RobotState
 import logging
 
