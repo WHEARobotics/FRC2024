@@ -4,6 +4,22 @@ import ntcore
 
 import time # Temporary for diagnostics
 
+
+@dataclass(frozen=True)
+class VisionState:
+    game_time: float
+    botpose: List[float]
+    speaker_x: float
+    desired_x_for_autonomous_driving: float
+    desired_angle: float
+    current_angle: float
+    distance_to_speaker_y: float
+    distance_to_wall: float
+    desired_bot_angle: float
+    direction_to_travel: float
+    x_distance_to_travel: float
+    x_speed: float
+    rot: float
 class Vision:
                                                      
     
@@ -96,5 +112,22 @@ class Vision:
 
         return rot, direction_to_travel
 
-    
+    def get_vision_state(self, game_time: float) -> VisionState:
+        time = wpilib.getTime()
+        botpose = self.checkBotpose()
+        speaker_x = self.speaker_x
+        desired_x_for_autonomous_driving = self.desired_x_for_autonomous_driving
+        desired_angle = self.calculate_desired_angle(botpose[4], botpose[5])
+        current_angle = botpose[2]
+        distance_to_speaker_y = botpose[5]
+        distance_to_wall = botpose[0]
+        desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
+        direction_to_travel = self.calculate_desired_direction(desired_bot_angle, current_angle)
+        x_distance_to_travel = (desired_x_for_autonomous_driving - botpose[0])
+        x_speed = 0.007 * x_distance_to_travel
+        rot, direction_to_travel = self.get_rotation_autonomous_periodic_for_speaker_shot(botpose, current_angle)
+        return VisionState(time, botpose, speaker_x, desired_x_for_autonomous_driving, desired_angle, current_angle,
+                           distance_to_speaker_y, distance_to_wall, desired_bot_angle, direction_to_travel,
+                           x_distance_to_travel, x_speed, rot)
+
 

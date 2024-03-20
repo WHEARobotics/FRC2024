@@ -3,6 +3,8 @@ import wpilib
 import wpilib.drive
 from wpimath import applyDeadband
 
+from makoboard import Makoboard
+from vision import VisionState
 from robotstateteleop import RobotStateTeleop
 from controllers import Controllers
 from crescendofield import CrescendoField
@@ -10,7 +12,7 @@ from robotstateautonomous import RobotStateAutonomous
 from robotstatedisabled import RobotStateDisabled
 from robotstatemachine import RobotStateMachine
 from vision import Vision #Vision file import
-from crescendordrivetrain import CrescendoSwerveDrivetrain, CrescendoSwerveDrivetrainState
+from crescendodrivetrain import CrescendoSwerveDrivetrain, CrescendoSwerveDrivetrainState
 from intake import Intake, WristAngleCommands, IntakeCommands, IntakeState
 from shooter import Shooter, ShooterState
 from wpilib import DriverStation
@@ -124,6 +126,9 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
             initialize_simulated_components(desired_auto_x, speaker_x) if wpilib.RobotBase.isSimulation() \
             else initialize_real_components(desired_auto_x, speaker_x)
 
+        self.shuffleboard = Makoboard(self.swerve, self.shooter, self.intake, self.vision)
+        self.shuffleboard.set_bot_position(3, 3, 45)
+
         self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
 
         # Initialize commands sent to the mechanisms.
@@ -145,7 +150,7 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
 
-    def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeState):
+    def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeState, VisionState):
         '''
         getting necessary values to be able to send the values to the smart dashboard to be able to be viewed.
         '''
@@ -153,7 +158,8 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         swerve_encoder_state = self.swerve.read_state()()
         shooter_state = self.shooter.read_state()
         intake_state = self.intake.read_state()
-        return swerve_encoder_state, shooter_state, intake_state
+        vision_state = self.vision.read_state()
+        return swerve_encoder_state, shooter_state, intake_state, vision_state
     
 
     def read_absolute_encoders_and_output_to_smart_dashboard(self) :
@@ -163,8 +169,14 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         It's vital that this function be called periodically, that is, 
         in both `disabledPeriodic` and `teleopPeriodic` and `autoPeriodic`
         """
-        swerve_state, shooter_state, intake_state = self.read_component_states()
+        swerve_state, shooter_state, intake_state, vision_state = self.read_component_states()
         outputToSmartDashboard (swerve_state, shooter_state, intake_state)
+        self.shuffleboard.swerve.show(swerve_state)
+        self.shuffleboard.shooter.show(shooter_state)
+        self.shuffleboard.intake.show(intake_state)
+        self.shuffleboard.vision.show(vision_state)
+        self.shuffleboard.main.show(swerve_state, vision_state)
+
 
     def disabledInit(self):
         self.robot_state_machine.set_state(RobotStateDisabled(self))
