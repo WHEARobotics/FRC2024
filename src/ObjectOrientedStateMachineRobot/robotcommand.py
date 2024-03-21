@@ -1,5 +1,6 @@
-from robot import ObjectOrientedRobot
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from robot import ObjectOrientedRobot
 
 class RobotCommand:
     """
@@ -13,5 +14,5 @@ class RobotCommand:
     def __init__(self):
         pass
 
-    def execute(self, robot : ObjectOrientedRobot) -> None:
+    def execute(self, robot : "ObjectOrientedRobot") -> None:
         raise NotImplementedError("Implement this method in the RobotCommand subclass")

@@ -1,5 +1,5 @@
-from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
-from ObjectOrientedStateMachineRobot.shootercommands import KickerIdleCommand, KickerIntakeCommand
+from robotcommand import RobotCommand
+from shootercommands import KickerIdleCommand, KickerIntakeCommand
 
 
 class KickerState:

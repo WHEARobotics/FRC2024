@@ -3,9 +3,13 @@ import logging
 from rev import CANSparkLowLevel
 from wpimath.units import degrees
 
-from ObjectOrientedStateMachineRobot.robot import ObjectOrientedRobot
-from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
-from shooter import ShooterKickerCommandEnum, Shooter
+from robotcommand import RobotCommand
+from shooterenums import ShooterKickerCommandEnum
+
+# This oddness has to do with using a forward declaration of OOR as a type hint
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from robot import ObjectOrientedRobot
 
 
 class KickerAmpShotCommand(RobotCommand):
@@ -13,7 +17,7 @@ class KickerAmpShotCommand(RobotCommand):
         super().__init__()
         self.kicker_action = ShooterKickerCommandEnum.kicker_amp_shot  # amp shot to shoot into the amp
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 
@@ -21,7 +25,7 @@ class KickerShooterCommand(RobotCommand):
     def __init__(self):
         super().__init__()
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 
@@ -30,7 +34,7 @@ class KickerIdleCommand(RobotCommand):
         super().__init__()
         self.kicker_action = ShooterKickerCommandEnum.kicker_idle
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 class KickerIntakeCommand(RobotCommand):
@@ -38,7 +42,7 @@ class KickerIntakeCommand(RobotCommand):
         super().__init__()
         self.kicker_action = ShooterKickerCommandEnum.kicker_intake
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 class ShooterActionShotCommand(RobotCommand):
@@ -46,7 +50,7 @@ class ShooterActionShotCommand(RobotCommand):
         super().__init__()
         pass
 
-    def execute(self, robot: ObjectOrientedRobot) :
+    def execute(self, robot: "ObjectOrientedRobot") :
         raise NotImplementedError()
 
 
@@ -55,7 +59,7 @@ class ShooterFlywheelIdleCommand(RobotCommand):
         super().__init__()
         pass
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 
@@ -64,7 +68,7 @@ class ShooterFlywheelSpinCommand(RobotCommand):
         super().__init__()
         pass
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         raise NotImplementedError()
 
 
@@ -73,7 +77,7 @@ class ShooterPitchCommand(RobotCommand):
         super().__init__()
         self.desired_pitch = desired_pitch
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         desired_turn_count = robot.shooter.deg_to_turn_count(self.desired_pitch)
         robot.shooter.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
 
@@ -96,7 +100,7 @@ class ShooterPitchStopCommand(RobotCommand):
     def __init__(self):
         super().__init__()
     
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         # ? Something more? Set brake?
         robot.shooter.set_pitch_motor_pct(0.0)
 
@@ -115,7 +119,7 @@ class ShooterWheelSetSpeedCommand(RobotCommand):
         super().__init__()
         self.speed = speed
 
-    def execute(self, robot: ObjectOrientedRobot) -> None:
+    def execute(self, robot: "ObjectOrientedRobot") -> None:
         robot.shooter.PIDController_flywheel.setReference(self.speed, CANSparkLowLevel.ControlType.kVelocity)
 
 

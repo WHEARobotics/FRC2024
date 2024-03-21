@@ -1,4 +1,4 @@
-from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
+from robotcommand import RobotCommand
 
 
 class WristAngleMidCommand(RobotCommand):

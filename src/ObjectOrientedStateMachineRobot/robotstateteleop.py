@@ -9,7 +9,7 @@ from drivecommands import SwerveDriveSpeedCommand, GyroSetYawCommand, \
 from intakecommands import IntakeCommand, IntakeToShooterHandoff, IntakeIdleCommand, \
     WristStowCommand, WristAngleMidCommand
 from intake import WristAngleCommandEnum, IntakeCommandEnum
-from shooter import ShooterKickerCommandEnum
+from shooterenums import ShooterKickerCommandEnum
 from controllers import ControllersState
 from robotstate import RobotState
 import rev

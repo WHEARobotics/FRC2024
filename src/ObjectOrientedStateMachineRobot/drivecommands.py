@@ -1,5 +1,5 @@
-from ObjectOrientedStateMachineRobot.controllers import DriveSpeeds
-from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
+from controllers import DriveSpeeds
+from robotcommand import RobotCommand
 
 
 class SwerveDriveSpeedCommand(RobotCommand):

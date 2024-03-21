@@ -1,5 +1,5 @@
-from ObjectOrientedStateMachineRobot.intake import IntakeCommandEnum, WristAngleCommandEnum
-from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
+from intake import IntakeCommandEnum, WristAngleCommandEnum
+from robotcommand import RobotCommand
 
 
 class IntakeCommand(RobotCommand):
