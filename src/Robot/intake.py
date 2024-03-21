@@ -20,7 +20,7 @@ class Intake:
     def __init__(self) -> None:
 
         self.WRIST_STOWED_ANGLE = 0   # Starting position inside the robot.
-        self.INTAKE_WRIST_ANGLE = 152 # Intake deployed to grab a note.
+        self.INTAKE_WRIST_ANGLE = 155 # Intake deployed to grab a note.
         self.WRIST_MID_ANGLE = 60     # Out of the way so shooter can take a subwoofer shot.
         self.WRIST_GEAR_RATIO = 80
 

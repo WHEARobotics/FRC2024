@@ -25,7 +25,7 @@ class CrescendoSwerveDrivetrain:
 
     # UPDATE NUMBERS
     BACK_LEFT_OFFSET = 0.709  # Back Left
-    FRONT_RIGHT_OFFSET = 0.761  # Front Right
+    FRONT_RIGHT_OFFSET = 0.205  # Front Right
     FRONT_LEFT_OFFSET = 0.562 # Front Left
     BACK_RIGHT_OFFSET = 0.482   # Back Right
     """

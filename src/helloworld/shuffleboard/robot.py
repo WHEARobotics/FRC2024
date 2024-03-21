@@ -52,11 +52,21 @@ class ShuffleTab:
 
         widget = self.tab.add("Junk", True).withWidget(BuiltInWidgets.kToggleButton)
         c = wpilib.shuffleboard._shuffleboard.SimpleWidget
+        widget_1 = self.tab.add("button", True).withWidget(BuiltInWidgets.kToggleButton)
 
         # User-edits persist between robot restarts
         self.max_speed = (
             self.tab
             .addPersistent("Persistent Speed", 3.0)
+            .withWidget(BuiltInWidgets.kNumberSlider)
+            .withSize(4, 1)
+            .withProperties({"min": ntV.makeDouble(0), "max": ntV.makeDouble(5)})
+            .getEntry()
+        )
+
+        self.gyro_test_tab = (
+            self.tab
+            .addPersistent("set gyro angle", 3.0)
             .withWidget(BuiltInWidgets.kNumberSlider)
             .withSize(4, 1)
             .withProperties({"min": ntV.makeDouble(0), "max": ntV.makeDouble(5)})
@@ -71,6 +81,7 @@ class ShuffleTab:
             .withSize(7, 3)
             .withPosition(7, 2)
         )
+        # self.setbutton = widget_1
 
     def setBotPosition(self, x : meters, y : meters, angle : degrees):
         ### Convert bot position to use Limelight-style coordinates (0,0 is the center of the field)
@@ -96,6 +107,7 @@ class ShuffleBoardReadWriteBot(wpilib.TimedRobot):
         # How to read a value from Shuffleboard live
         solenoidEnabled = self.shuffle_tab.activate_climb_solenoid.get().getBoolean()
         print(f"Solenoid enabled {solenoidEnabled}")
+       
 
 from robotpy.main import main
 import sys
