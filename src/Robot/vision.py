@@ -19,11 +19,15 @@ class Vision:
     def checkBotpose(self):
         botpose = self.botpose_subscription.get()
         # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
-        if botpose is not None and len(botpose > 3) and (botpose[0] + botpose[1] + botpose[2] != 0):
+        if botpose is not None: # and len(botpose > 3) and botpose[0] + botpose[1] + int(botpose[2] != 0):  <- the code behind gives an error saying you cannot combine ints and lists
             self.botpose = botpose
         return self.botpose
 
     def calculate_desired_direction(self, desired_angle, current_angle):
+        """
+        this function calculates the direction to travel for the robots yaw by saying if the value is greater than 180 it returns a negative number in degrees needed to travel
+        if it is less it returns a positive amount of degrees to travel to get to the desired position.
+        """
         desired_direction = desired_angle - current_angle
         if desired_direction > 180:
             desired_direction -= 360

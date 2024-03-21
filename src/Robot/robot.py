@@ -1,12 +1,15 @@
 import wpilib
 import wpilib.drive
 import wpimath
+from wpilib import SmartDashboard, Field2d
+from wpilib.shuffleboard import Shuffleboard, BuiltInWidgets
 from wpimath import applyDeadband
 from wpimath.filter import SlewRateLimiter
-from wpimath.geometry import Rotation2d, Translation2d
+from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 import time
 import math
+import ntcore
 import rev
 
 from vision import Vision #Vision file import
@@ -48,7 +51,14 @@ class Myrobot(wpilib.TimedRobot):
 
         self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
 
+        #Temporary:
+        networktables_instance = ntcore.NetworkTableInstance.getDefault()
+        smartdashboard_table = networktables_instance.getTable("SmartDashboard")
+        botposeTopic = smartdashboard_table.getTopic("Field/Robot")
+        self.botposeentry = botposeTopic.getGenericEntry()
+        self.botposeentry.set(ntcore.Value.makeFloatArray([3.0, 5.0, 1.0]))
 
+        
         ally = DriverStation.getAlliance()
         if ally is not None:
             if ally == DriverStation.Alliance.kRed:
@@ -93,6 +103,25 @@ class Myrobot(wpilib.TimedRobot):
         # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
         self.wiggleTimer = wpilib.Timer()
+
+        self.shuffle_tab = Shuffleboard.getTab("status")
+        self.gyro_widget = self.shuffle_tab.add("gyro", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2)
+        self.joystick_rot_widget = self.shuffle_tab.add("joystick rot", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2)
+        self.turn_motor_widgets = []
+        self.turn_motor_widgets.append(self.shuffle_tab.add("turn motor 1", 0).withPosition(5, 1))
+        self.turn_motor_widgets.append(self.shuffle_tab.add("turn motor 2", 0).withPosition(6,1))
+        self.turn_motor_widgets.append(self.shuffle_tab.add("turn motor 3", 0).withPosition(7,1))
+        self.turn_motor_widgets.append(self.shuffle_tab.add("turn motor 4", 0).withPosition(8,1))
+        self.encoder_widgets = []
+        self.encoder_widgets.append(self.shuffle_tab.add("bl encoder 1", 0).withPosition(5,2))
+        self.encoder_widgets.append(self.shuffle_tab.add("fr encoder 2", 0).withPosition(6,2))
+        self.encoder_widgets.append(self.shuffle_tab.add("br encoder 3", 0).withPosition(7,2))
+        self.encoder_widgets.append(self.shuffle_tab.add("br encoder 4", 0).withPosition(8,2))
+        self.current_wrist_position_widget = self.shuffle_tab.add("Current Wrist Pos", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(2,3)
+        self.current_shooter_position_widget = self.shuffle_tab.add("Current Shooter Pos", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(7, 3)
+        self.desired_wrist_position_widget = self.shuffle_tab.add("Desired Wrist Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(0, 3)
+        self.desired_shooter_position_widget = self.shuffle_tab.add("Desired Shooter Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(5,3)
+
         
         
     
@@ -116,7 +145,7 @@ class Myrobot(wpilib.TimedRobot):
         self.turnmotor3 = self.swerve.frontLeft.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
         self.turnmotor4 = self.swerve.backRight.turnMotorEncoder.getPosition() / (150.0/7.0) * to_degrees
 
-        self.pigeon = self.swerve.gyro.get_yaw()
+        self.pigeon_yaw = self.swerve.gyro.get_yaw()
 
 
         self.shooter_encoder = self.shooter.shooter_pivot_encoder.getPosition() * to_degrees
@@ -148,12 +177,33 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 4',"Enc Front Left {:4.3f}".format( self.absEnc3))
         wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
 
+        self.gyro_widget.getEntry().setDouble(self.swerve.gyro.get_yaw().value)
+        joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
+        joystick_deg = 180.0 * joystick_rot
+        self.joystick_rot_widget.getEntry().setDouble(joystick_deg)
+        self.turn_motor_widgets[0].getEntry().setDouble(self.turnmotor1)
+        self.turn_motor_widgets[1].getEntry().setDouble(self.turnmotor2)
+        self.turn_motor_widgets[2].getEntry().setDouble(self.turnmotor3)
+        self.turn_motor_widgets[3].getEntry().setDouble(self.turnmotor4)
+        self.encoder_widgets[0].getEntry().setDouble(self.absEnc1)
+        self.encoder_widgets[1].getEntry().setDouble(self.absEnc2)
+        self.encoder_widgets[2].getEntry().setDouble(self.absEnc3)
+        self.encoder_widgets[3].getEntry().setDouble(self.absEnc4)
+        self.current_wrist_position_widget.getEntry().setDouble(self.wrist_encoder)
+        self.current_shooter_position_widget.getEntry().setDouble(self.shooter_encoder)
+        self.desired_shooter_position_widget.getEntry().setDouble(self.wrist_desired_pos)
+        self.desired_shooter_position_widget.getEntry().setDouble(self.shooter_desired_pos)
+        
+
+        #TEMPORARY!
+        
+
         #     wpilib.SmartDashboard.putString('DB/String 5',f"Turn motor pos BL  {self.turnmotor1:4.1f}")
         #     wpilib.SmartDashboard.putString('DB/String 6',f"Turn motor pos BR  {self.turnmotor4:4.1f}")
         #     wpilib.SmartDashboard.putString('DB/String 7',f"Turn motor pos FL  {self.turnmotor3:4.1f}")
         #     wpilib.SmartDashboard.putString('DB/String 8',f"Turn motor pos FR  {self.turnmotor2:4.1f}")
 
-        #     wpilib.SmartDashboard.putString('DB/String 9',f"Gyro Angle  {self.pigeon:4.1f}") 
+        # wpilib.SmartDashboard.putString('DB/String 7',f"Gyro Angle  {self.pigeon_yaw:4.1f}") 
         # # swerve drive preset with absolute and motor encoder poses with gyro
             
         # elif sd_button_2 == True:
@@ -227,6 +277,8 @@ class Myrobot(wpilib.TimedRobot):
         self.swerve.frontRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backLeft.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
+
+        # print (f"the limit switch says it is{self.intake.wrist_limit_switch.get()}")
 
         # we can set the motors to make sure they are on break when disabled
 
@@ -611,7 +663,8 @@ class Myrobot(wpilib.TimedRobot):
         self.joystick_y = -self.xbox.getLeftY()
         self.joystick_y = applyDeadband(self.joystick_y, 0.1)
         joystick_rot = -self.xbox.getRightX()
-        joystick_rot = applyDeadband(joystick_rot, 0.15)
+        joystick_rot = applyDeadband(joystick_rot, 0.1)
+        #joystick_rot = 180 * joystick_rot
 
         return self.joystick_x, self.joystick_y, joystick_rot
     def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot):

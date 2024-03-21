@@ -38,17 +38,17 @@ class Shooter:
         
         SHOOTER_AMP_ANGLE = 113
         SHOOTER_START_ANGLE = 0
-        SHOOTER_FEEDING_ANGLE = -23
+        SHOOTER_FEEDING_ANGLE = -60
 
         SHOOTER_SUB_ANGLE = -63 #orginally -60
 
 
         self.SHOOTER_PIVOT_GEAR_RATIO = 100
 
-        ABSOLUTE_ENCODER_OFFSET = -0.07
+        ABSOLUTE_ENCODER_OFFSET = 0.080
 
 
-        kP = 0.125
+        kP = 0.11
         kP_2 = 0.005
         kI = 0.0
         kD = 0.005
@@ -159,7 +159,7 @@ class Shooter:
 
         self.wiggleTimer = wpilib.Timer()
         self.wiggleTimer.start()
-        time.sleep(1.75)
+        time.sleep(1.5)
         self.corrected_encoder_pos = self.correctedEncoderPosition()
         wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
         self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)
@@ -179,6 +179,9 @@ class Shooter:
         self.set_speed = 0
         self.desired_angle = self.shooter_feeder
         # we might want to change this ti the sub angle to make sure its ready to shoot in autonomous
+
+        self.optical_sensor = wpilib.DigitalInput(0)
+        self.optical_sensor_is_detected = self.optical_sensor.get()
         
 
 
@@ -279,6 +282,8 @@ class Shooter:
         
         wpilib.SmartDashboard.putString('DB/String 6',f"{kicker_action}")
 
+        # if self.optical_sensor_is_detected:
+        #     self.kicker_action = ShooterKickerCommands.kicker_idle
         
 
 

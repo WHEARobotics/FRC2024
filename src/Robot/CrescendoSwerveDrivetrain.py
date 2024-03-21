@@ -24,10 +24,10 @@ class CrescendoSwerveDrivetrain:
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    BACK_LEFT_OFFSET = 0.708    # Back Left
-    FRONT_RIGHT_OFFSET = 0.768  # Front Right
-    FRONT_LEFT_OFFSET = 0.568   # Front Left
-    BACK_RIGHT_OFFSET = 0.516   # Back Right
+    BACK_LEFT_OFFSET = 0.709  # Back Left
+    FRONT_RIGHT_OFFSET = 0.761  # Front Right
+    FRONT_LEFT_OFFSET = 0.562 # Front Left
+    BACK_RIGHT_OFFSET = 0.482   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.
@@ -51,8 +51,8 @@ class CrescendoSwerveDrivetrain:
         SWERVE_FRONT_LEFT_ANGLE = 7
         SWERVE_FRONT_LEFT_ENCODER_CHANNEL = 2
         
-        SWERVE_BACK_RIGHT_DRIVE = 9
-        SWERVE_BACK_RIGHT_ANGLE = 8
+        SWERVE_BACK_RIGHT_DRIVE = 8
+        SWERVE_BACK_RIGHT_ANGLE = 9
         SWERVE_BACK_RIGHT_ENCODER_CHANNEL = 1
 
         # Gather the related constants together and associate them with a logical name
@@ -85,6 +85,7 @@ class CrescendoSwerveDrivetrain:
 
         wheel_base = 26.875 * 0.0254
         track_width = 22.75 * 0.0254
+        # this needs to be changed based on the new robot size 3/18/2024
         half_wheel_base = wheel_base / 2
         half_track_width = track_width / 2#2_#TRACK_WIDTH MIGHT NEED TO BE SWICHED ARROUND, BUT THE POSITIVE/NEGATIVE SIGNS ARE IN THE RIGHT LOCATION.
 
