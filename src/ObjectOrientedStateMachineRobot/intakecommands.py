@@ -12,7 +12,7 @@ class IntakeCommand(RobotCommand):
         raise NotImplementedError()
 
 
-class OuttakeCommand(RobotCommand):
+class IntakeToShooterHandoff(RobotCommand):
     def __init__(self, wrist_position, intake_control, kicker_action, shooter_pivot_control):
         self.wrist_position = wrist_position
         self.intake_control = intake_control

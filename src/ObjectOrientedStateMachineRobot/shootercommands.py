@@ -5,13 +5,13 @@ from wpimath.units import degrees
 
 from ObjectOrientedStateMachineRobot.robot import ObjectOrientedRobot
 from ObjectOrientedStateMachineRobot.robotcommand import RobotCommand
-from shooter import ShooterKickerCommands
+from shooter import ShooterKickerCommandEnum, Shooter
 
 
 class KickerAmpShotCommand(RobotCommand):
     def __init__(self):
         super().__init__()
-        self.kicker_action = ShooterKickerCommands.kicker_amp_shot  # amp shot to shoot into the amp
+        self.kicker_action = ShooterKickerCommandEnum.kicker_amp_shot  # amp shot to shoot into the amp
 
     def execute(self, robot: ObjectOrientedRobot) -> None:
         raise NotImplementedError()
@@ -28,7 +28,7 @@ class KickerShooterCommand(RobotCommand):
 class KickerIdleCommand(RobotCommand):
     def __init__(self):
         super().__init__()
-        self.kicker_action = ShooterKickerCommands.kicker_idle
+        self.kicker_action = ShooterKickerCommandEnum.kicker_idle
 
     def execute(self, robot: ObjectOrientedRobot) -> None:
         raise NotImplementedError()
@@ -36,7 +36,7 @@ class KickerIdleCommand(RobotCommand):
 class KickerIntakeCommand(RobotCommand):
     def __init__(self):
         super().__init__()
-        self.kicker_action = ShooterKickerCommands.kicker_intake
+        self.kicker_action = ShooterKickerCommandEnum.kicker_intake
 
     def execute(self, robot: ObjectOrientedRobot) -> None:
         raise NotImplementedError()
@@ -101,21 +101,14 @@ class ShooterPitchStopCommand(RobotCommand):
         robot.shooter.set_pitch_motor_pct(0.0)
 
 
-class ShooterPivotAmpCommand(RobotCommand):
+class ShooterPitchAmplifierCommand(ShooterPitchCommand):
     def __init__(self):
-        super.__init__()
-
-    def execute(self, robot: ObjectOrientedRobot) -> None:
-        raise NotImplementedError()
+        super.__init__(desired_pitch=degrees(Shooter.SHOOTER_AMP_ANGLE))
 
 
-class ShooterPivotSubCommand(RobotCommand):
+class ShooterPitchSubwooferCommand(RobotCommand):
     def __init__(self):
-        super().__init__()
-
-    def execute(self, robot: ObjectOrientedRobot) -> None:
-        raise NotImplementedError()
-
+        super().__init__(desired_pitch=degrees(Shooter.SHOOTER_SUB_ANGLE))
 
 class ShooterWheelSetSpeedCommand(RobotCommand):
     def __init__(self, speed):
@@ -134,4 +127,20 @@ class KickerSetSpeedCommand(RobotCommand):
     def execute(self, robot):
         robot.shooter.kicker.set(self.speed)
 
+
+class VisionPitchCommand(RobotCommand):
+    def __init__(self, pitch):
+        self.pitch = pitch
+
+    def execute(self, robot):
+        # TODO Do something with pitch
+        raise NotImplementedError()
+
+class VisionYawCommand(RobotCommand):
+    def __init__(self, yaw):
+        self.yaw = yaw
+
+    def execute(self, robot):
+        # TODO Do something with yaw
+        raise NotImplementedError()
 

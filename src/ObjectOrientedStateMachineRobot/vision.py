@@ -6,6 +6,7 @@ import ntcore
 
 import wpilib
 
+from shootercommands import VisionYawCommand, VisionPitchCommand
 
 @dataclass(frozen=True)
 class VisionState:
@@ -35,21 +36,12 @@ class Vision:
         self.botpose_subscription = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
         self.botpose = [-1, -1, -1, -1, -1, -1]
 
-    def check_botpose(self):
+    def get_latest_botpose(self):
         botpose = self.botpose_subscription.get()
         # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
         if botpose is not None and len(botpose) > 3 and (botpose[0] + botpose[1] + botpose[2] != 0):
             self.botpose = botpose
         return self.botpose
-
-    @staticmethod
-    def calculate_desired_direction(desired_angle, current_angle):
-        desired_direction = desired_angle - current_angle
-        if desired_direction > 180:
-            desired_direction -= 360
-        if desired_direction < -180:
-            desired_direction += 360
-        return desired_direction
 
     @staticmethod
     def distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y):
@@ -96,7 +88,7 @@ class Vision:
 
         desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
 
-        direction_to_travel = self.calculate_desired_direction(desired_bot_angle, current_yaw)
+        direction_to_travel = self.calculate_desired_yaw(x, y, botpose)
         # direction_to_travel = self.radians_to_degrees(direction_to_travel_rad)
         x_distance_to_travel = (desired_x - x)
         x_kp = 0.007
@@ -121,9 +113,44 @@ class Vision:
 
         return rot, direction_to_travel
 
+    def get_teleop_periodic_commands(self):
+        commands = []
+        botpose = self.robot.vision.get_latest_botpose()
+        bot_x = botpose[0]
+        bot_y = botpose[1]
+        speaker_x = self.speaker_x
+        speaker_y = 1.44  # meters from the ground to the speaker
+        speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
+        desired_pitch = self.calculate_desired_pitch(speaker_distance, speaker_y)
+        # fills the calculate pitch function with necessary values to be properly called
+        desired_pitch_in_degrees = self.radians_to_degrees(desired_pitch)
+        # converts the pitch shooter angle to degrees from radians
+        pitch_command = VisionPitchCommand(desired_pitch_in_degrees)
+        commands.append(pitch_command)
+
+        desired_yaw = self.calculate_desired_yaw(bot_x, bot_y, botpose)
+        yaw_command = VisionYawCommand(desired_yaw)
+        commands.append(yaw_command)
+        return commands
+
+    def calculate_desired_yaw(self, bot_x, bot_y, botpose):
+        current_yaw = botpose[5]  # getting the yaw from the self.botpose table
+        speaker_y = 1.44  # meters from the ground to the speaker
+        distance_to_wall = (self.speaker_x - bot_x)  # Adjacent
+        distance_to_speaker_y = (speaker_y - bot_y)  # Opposite
+        desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
+
+        desired_yaw = desired_bot_angle - current_yaw
+        if desired_yaw > 180:
+            desired_yaw -= 360
+        if desired_yaw < -180:
+            desired_yaw += 360
+        return desired_yaw
+
+
     def get_state(self) -> VisionState:
         game_time = wpilib.getTime()
-        botpose = self.check_botpose()
+        botpose = self.get_latest_botpose()
         speaker_x = self.speaker_x
         desired_x_for_autonomous_driving = self.desired_x_for_autonomous_driving
         desired_angle = self.calculate_desired_angle(botpose[4], botpose[5])

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ShooterPivotCommands:
+class ShooterPivotCommandEnum:
     shooter_pivot_in_action = 1
     shooter_pivot_feeder_action = 2
     shooter_pivot_amp_action = 3
@@ -22,7 +22,7 @@ class ShooterPivotCommands:
 
 
 @dataclass(frozen=True)
-class ShooterKickerCommands:
+class ShooterKickerCommandEnum:
     kicker_intake = 1
     kicker_amp_shot = 2
     kicker_shot = 3
@@ -31,7 +31,7 @@ class ShooterKickerCommands:
 
 
 @dataclass(frozen=True)
-class ShooterControlCommands:
+class ShooterControlCommandsEnum:
     shooter_wheel_idle = 1
     shooter_wheel_intake = 2
     shooter_wheel_outtake = 3
@@ -208,16 +208,53 @@ class Shooter:
         self.shooter_commands(shooter_control)
 
         commands += self.kicker_commands(kicker_action)
+        #
+        #
+        # # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
+        # # once we let go we want the state machine to set the state to 3 to kick it back for a bit away from the flywheels so they
+        # # could speed up
+        #
+        # # the goal of this state machine is when the state has memory of intaking with the wrist and then after when the kicker intakes to
+        # # the shooter we check to see if the state has memory of both happening and we let go of the kicker intake button, the state completes
+        # # and the kicker adjusts the note back away from the flywheels.
+        #
+        # self.kicker_state, self.kicker_command = self.kicker_state.periodic()
+        # current_actions.append(self.kicker_command)
+        #
+        # if self.kicker_state == 1:
+        #     # we check to see if we have the wrist tucked back
+        #     if self.intake.motor_pos_degrees < 5:
+        #         self.kicker_state = 2
+        # elif self.kicker_state == 2:
+        #     # we check to see if we started doing the kicker intake action
+        #     if self.kicker_action == ShooterKickerCommands.kicker_intake:
+        #         self.kicker_state = 3
+        #     elif self.intake_control == IntakeCommandEnum.intake_action:
+        #         self.kicker_state = 0
+        # elif self.kicker_state == 3:
+        #     # check to see if we finished intaking with the kicker and stopped
+        #     if self.kicker_action != ShooterKickerCommands.kicker_intake:
+        #         self.wiggleTimer.reset()
+        #         self.wiggleTimer.start()
+        #         self.kicker_state = 4
+        # elif self.kicker_state == 4:
+        #     # adjusts the kicker to move the note back until the timer passes the 0.3 seconds
+        #     if self.wiggleTimer.advanceIfElapsed(0.3):  # 0.3 seconds are change-able
+        #         self.kicker_action = ShooterKickerCommands.kicker_idle
+        #         self.kicker_state = 0
+        #     else:
+        #         self.kicker_action = ShooterKickerCommands.kicker_adjustment  # 4
+
 
         return commands
 
     @staticmethod
     def shooter_commands(shooter_control):
         commands = []
-        if shooter_control != ShooterControlCommands.shooter_wheel_idle:  # 0
-            if shooter_control == ShooterControlCommands.shooter_wheel_intake:  # 1
+        if shooter_control != ShooterControlCommandsEnum.shooter_wheel_idle:  # 0
+            if shooter_control == ShooterControlCommandsEnum.shooter_wheel_intake:  # 1
                 commands.append(ShooterWheelSetSpeedCommand(2500))  # intake for shooter speed
-            elif shooter_control == ShooterControlCommands.shooter_wheel_outtake:  # 2
+            elif shooter_control == ShooterControlCommandsEnum.shooter_wheel_outtake:  # 2
                 commands.append(ShooterWheelSetSpeedCommand(-5700))  # Maximum RPM for the neo motor
 
         else:
@@ -228,28 +265,28 @@ class Shooter:
     def pivot_commands(self, shooter_pivot_command):
         commands = []
         if self.automatic:
-            if shooter_pivot_command == ShooterPivotCommands.shooter_pivot_in_action:  # 1
+            if shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_in_action:  # 1
                 commands.append(ShooterPitchCommand(self.shooter_in))
-            elif shooter_pivot_command == ShooterPivotCommands.shooter_pivot_feeder_action:  # 2
+            elif shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_feeder_action:  # 2
                 commands.append(ShooterPitchCommand(self.shooter_feeder))
-            elif shooter_pivot_command == ShooterPivotCommands.shooter_pivot_amp_action:  # 3
+            elif shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_amp_action:  # 3
                 commands.append(ShooterPitchCommand(self.shooter_amp))
-            elif shooter_pivot_command == ShooterPivotCommands.shooter_pivot_sub_action:  # 4
+            elif shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_sub_action:  # 4
                 # TODO: Add drop compensation to desired_angle!
                 drop_compensation_degrees = 0  # drop_compensation_degrees
 
                 commands.append(ShooterPitchCommand(self.shooter_sub + drop_compensation_degrees))
 
             # this checks if we are using the manual states in the code to switch from automatic to manual control
-            if (shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_up
-                    or shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_down):
+            if (shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_manual_up
+                    or shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_manual_down):
                 self.automatic = False
 
             # setting the speeds of the pivot motors to use a manual control for things like adjustment and climbing
         else:
-            if shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_up:  # 5
+            if shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_manual_up:  # 5
                 commands.append(ShooterPitchCommand(self.shooter_pivot_encoder.getPosition() + 0.3))
-            elif shooter_pivot_command == ShooterPivotCommands.shooter_pivot_manual_down:  # 6
+            elif shooter_pivot_command == ShooterPivotCommandEnum.shooter_pivot_manual_down:  # 6
                 commands.append(ShooterPitchCommand(self.shooter_pivot_encoder.getPosition() - 0.3))
             else:
                 commands.append(ShooterPitchCommand(self.shooter_pivot_encoder.getPosition()))
@@ -257,8 +294,8 @@ class Shooter:
             # what this does is it checks if we have not set a command to go to automatic and checks if we are not
             # using any of the 2 manual up orndown and if it is not zero either to use zero as the else to not have
             # the pivot move when we let go of the button
-            if (shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_up
-                    and shooter_pivot_command != ShooterPivotCommands.shooter_pivot_manual_down
+            if (shooter_pivot_command != ShooterPivotCommandEnum.shooter_pivot_manual_up
+                    and shooter_pivot_command != ShooterPivotCommandEnum.shooter_pivot_manual_down
                     and shooter_pivot_command != self.shooter_pivot_idle):
                 self.automatic = True
         return commands
@@ -267,20 +304,20 @@ class Shooter:
     def kicker_commands(kicker_action):
         commands = []
         # intake with kicker wheels when handoff
-        if kicker_action == ShooterKickerCommands.kicker_intake:  # 1
+        if kicker_action == ShooterKickerCommandEnum.kicker_intake:  # 1
             commands.append(KickerSetSpeedCommand(0.3))
             # self.kicker.set(-0.3)
         # the amp scoring
-        elif kicker_action == ShooterKickerCommands.kicker_amp_shot:  # 2:
+        elif kicker_action == ShooterKickerCommandEnum.kicker_amp_shot:  # 2:
             # self.kicker.set(0.5)
             commands.append(KickerSetSpeedCommand(0.5))
         # kicker shoot
-        elif kicker_action == ShooterKickerCommands.kicker_shot:  # 3
+        elif kicker_action == ShooterKickerCommandEnum.kicker_shot:  # 3
             # self.kicker.set(-0.9)
             commands.append(KickerSetSpeedCommand(-0.9))
         # the 4th state for the kicker is to push the note back and adjust it so it is not hitting
         # the fly wheels too early
-        elif kicker_action == ShooterKickerCommands.kicker_adjustment:  # 4
+        elif kicker_action == ShooterKickerCommandEnum.kicker_adjustment:  # 4
             # self.kicker.set(0.3)
             commands.append(KickerSetSpeedCommand(0.3))
         else:
