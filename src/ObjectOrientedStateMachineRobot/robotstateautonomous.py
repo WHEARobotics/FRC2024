@@ -9,8 +9,8 @@ import logging
 
 class AutonomousState(RobotState):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, robot):
+        super().__init__(robot)
 
     def periodic(self, robot):
         raise NotImplementedError()
@@ -104,6 +104,7 @@ class AutonomousStateIdle(AutonomousState):
 
 class RobotStateAutonomous(RobotState):
     def __init__(self, robot):
+        super().__init__(robot)
         self.robot = robot
         self.substate = AutonomousStateAiming(robot)
 

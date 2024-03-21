@@ -7,8 +7,8 @@ class RobotStateMachine:
 
     def periodic(self, robot):
         robot.read_absolute_encoders_and_output_to_smart_dashboard()
-        robot_state  = robot.get_state()
-        robot.mako_board.show(robot_state)
+        swerve_state, shooter_state, intake_state, vision_state  = robot.read_component_states()
+        robot.makoboard.show(swerve_state, shooter_state, intake_state, vision_state)
         return self.state.periodic(robot)
 
     def set_state(self, new_state: RobotState):

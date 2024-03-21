@@ -145,7 +145,8 @@ class ObjectOrientedRobot(wpilib.TimedRobot):
         self.makoboard = Makoboard(self.swerve)
         self.makoboard.set_bot_position(3, 3, 45)
 
-        self.robot_state_machine = RobotStateMachine(RobotStateDisabled(self))
+        robot_state_disabled = RobotStateDisabled(self)
+        self.robot_state_machine = RobotStateMachine(robot_state_disabled)
 
     def read_component_states(self) -> (CrescendoSwerveDrivetrainState, ShooterState, IntakeStateEnum, VisionState):
         """

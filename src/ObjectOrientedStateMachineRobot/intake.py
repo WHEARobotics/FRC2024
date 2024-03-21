@@ -175,4 +175,3 @@ class Intake:
     def set_idle_mode(self, mode: rev.CANSparkMax.IdleMode) -> None:
         self.wrist_motor.setIdleMode(mode)
         # ? self.intake_motor.setIdleMode(mode)
-
