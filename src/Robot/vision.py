@@ -19,7 +19,7 @@ class Vision:
     def checkBotpose(self):
         botpose = self.botpose_subscription.get()
         # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
-        if botpose is not None: # and len(botpose > 3) and botpose[0] + botpose[1] + int(botpose[2] != 0):  <- the code behind gives an error saying you cannot combine ints and lists
+        if botpose is not None and len(botpose) > 3 and (abs(botpose[0]) + abs(botpose[1])) > 0:  #<- the code behind gives an error saying you cannot combine ints and lists
             self.botpose = botpose
         return self.botpose
 
@@ -98,7 +98,7 @@ class Vision:
             rot = -max_rot_value
             # this sets makes sure that the rot value does not pass the maximum we give
 
-        return rot, direction_to_travel
+        return rot
 
     
 

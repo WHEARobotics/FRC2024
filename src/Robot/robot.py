@@ -11,7 +11,9 @@ import time
 import math
 import ntcore
 import rev
+from wpimath.units import degrees
 
+from autonomousaimingstate import Idle, AutonomousAimingState, Starting
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
@@ -79,6 +81,10 @@ class Myrobot(wpilib.TimedRobot):
         self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
         # gets the vision class and sets the arguments in init to be used in the file
 
+
+
+        self.autonomous_aiming_state : AutonomousAimingState = Idle(self, self.vision)
+
         # Autonomous state machine
         self.AUTONOMOUS_STATE_AIMING = 1
         self.AUTONOMOUS_STATE_SPEAKER_SHOOTING = 2
@@ -129,7 +135,13 @@ class Myrobot(wpilib.TimedRobot):
         # self.auto_state_widget = self.fsm_tab.add("robot.auto_state", self.auto_state)
         
 
-        
+        self.auto_aim_tab = Shuffleboard.getTab("AutoAim")
+        self.auto_aim_state_widget = self.auto_aim_tab.add("AutoAim", self.autonomous_aiming_state.get_name())
+        self.auto_aim_botpose_x_widget = self.auto_aim_tab.add("botpose x", -1)
+        self.auto_aim_botpose_y_widget = self.auto_aim_tab.add("botpose y", -1)
+        self.auto_aim_botpose_yaw_widget = self.auto_aim_tab.add("botpose yaw", -1)
+        self.auto_aim_botpose_desired_yaw_widget = self.auto_aim_tab.add("desired yaw", -1)
+        self.auto_aim_botpose_distance_to_speaker_widget = self.auto_aim_tab.add("distance to speaker", -1)
         
     
     def readAbsoluteEncoders(self) :
@@ -203,8 +215,14 @@ class Myrobot(wpilib.TimedRobot):
         self.current_shooter_position_widget.getEntry().setDouble(self.shooter_encoder)
         self.desired_shooter_position_widget.getEntry().setDouble(self.wrist_desired_pos)
         self.desired_shooter_position_widget.getEntry().setDouble(self.shooter_desired_pos)
-        self.optical_sensor_widget.getEntry().setBoolean(self.shooter.optical_sensor.get())
-        
+
+        self.auto_aim_state_widget.getEntry().setString(self.autonomous_aiming_state.get_name())
+        bp = self.vision.checkBotpose()
+        if len(bp) >= 6:
+            self.auto_aim_botpose_x_widget.getEntry().setDouble(bp[0])
+            self.auto_aim_botpose_y_widget.getEntry().setDouble(bp[1])
+            self.auto_aim_botpose_yaw_widget.getEntry().setDouble(bp[5])
+
 
         #TEMPORARY!
         
@@ -451,6 +469,8 @@ class Myrobot(wpilib.TimedRobot):
 
         self.kicker_state = 0
 
+        wpilib.CameraServer.launch()
+
 
         # is used to go to else, stopping the motor
 
@@ -577,11 +597,28 @@ class Myrobot(wpilib.TimedRobot):
         self.intake.periodic(self.wrist_position, self.intake_control)
         
         if self.is_botpose_valid(self.botpose):
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+            speaker_distance_m = self.vision.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, 1.44)# speaker y coordinate
         else:
             # No botpose!
             speaker_distance_m = 0
         self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+
+
+        # Autonomous alignment object-oriented state machine
+        if self.xbox.getLeftTriggerAxis() < 0.5:
+            if not isinstance(self.autonomous_aiming_state, Idle):
+                self.autonomous_aiming_state = Idle(self, self.vision)
+            self.autonomous_aiming_engaged = False
+        else:
+            if not self.autonomous_aiming_engaged:
+                self.autonomous_aiming_engaged = True
+                self.autonomous_aiming_state = Starting(self, self.vision)
+            else:
+                # Auto align/pitch state machine running, don't modify it
+                pass
+
+        self.autonomous_aiming_state = self.autonomous_aiming_state.periodic()
+        self.outputToSmartDashboard()
 
 
          # self.botpose = self.vision.checkBotpose()
@@ -641,7 +678,7 @@ class Myrobot(wpilib.TimedRobot):
            
 
             
-            desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
+            desired_direction = self.desired_delta_yaw(desired_yaw, current_yaw)
             wpilib.SmartDashboard.putString("DB/String 2", f"{desired_direction:3.1f}")
             if abs(desired_direction) < 1.0:
                 wpilib.SmartDashboard.putString("DB/String 3", "Shoot, you fools!")
@@ -650,6 +687,14 @@ class Myrobot(wpilib.TimedRobot):
         else:
             # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
             pass
+
+    def set_pitch(self, pitch : degrees) -> degrees:
+        current_pitch = self.shooter.correctedEncoderPosition()
+        if abs(pitch - current_pitch) < 1:
+            return current_pitch
+        else:
+            self.shooter.set_pitch(pitch)
+            return pitch
 
     def driveWithJoystick(self):
         # Step 1: Get the joystick values
@@ -684,7 +729,7 @@ class Myrobot(wpilib.TimedRobot):
         rot = joystick_rot # TODO: Could add a joystickscaling here
         return x_speed, y_speed, rot
 
-    def calculate_desired_direction(self, desired_angle, current_angle):
+    def desired_delta_yaw(self, desired_angle, current_angle) -> degrees:
         if current_angle >180:
             current_angle = current_angle - 360
         if desired_angle >180:

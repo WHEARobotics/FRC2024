@@ -3,6 +3,8 @@ from rev import CANSparkLowLevel
 import wpilib
 import time
 from wpilib import DutyCycleEncoder
+from wpimath.units import degrees
+
 from shooterdropcompensation import compensation, compensation_table
 import dataclasses
 from dataclasses import dataclass
@@ -164,7 +166,8 @@ class Shooter:
         wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
         self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)
         wpilib.SmartDashboard.putString("DB/String 3", f"init spe pos {self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO:.3f}")
-        
+
+        self.current_pitch = self.correctedEncoderPosition()
 
 
 
@@ -312,3 +315,16 @@ class Shooter:
         elif AbsEncValue > 0.5:
             AbsEncValue -= 1
         return AbsEncValue
+
+    def set_pitch(self, pitch : degrees) -> degrees:
+        """
+        Sets the variable self.desired_angle to the desired pitch and returns the current pitch.
+        If automatic is enabled, the PID controller will be set to the desired pitch.
+        """
+        self.desired_angle = pitch
+        if self.automatic:
+            self.desired_angle = pitch
+            desired_turn_count = self.DegToTurnCount(self.desired_angle)
+            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
+        return self.current_pitch
+
