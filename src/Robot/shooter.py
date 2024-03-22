@@ -36,7 +36,7 @@ class ShooterControlCommands:
 class Shooter:
     def __init__(self) -> None:
         
-        SHOOTER_AMP_ANGLE = 113
+        SHOOTER_AMP_ANGLE = 114
         SHOOTER_START_ANGLE = 0
         SHOOTER_FEEDING_ANGLE = -60
 
@@ -181,7 +181,6 @@ class Shooter:
         # we might want to change this ti the sub angle to make sure its ready to shoot in autonomous
 
         self.optical_sensor = wpilib.DigitalInput(0)
-        self.optical_sensor_is_detected = self.optical_sensor.get()
         
 
 
@@ -190,6 +189,8 @@ class Shooter:
     def periodic(self, distance_to_speaker_m, shooter_pivot_pos, shooter_control, kicker_action):
 
         self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
+
+        self.optical_sensor_is_detected = self.optical_sensor.get()
 
         # drop_compensation_degrees = compensation(compensation_table, distance_to_speaker_m)
 
@@ -207,7 +208,6 @@ class Shooter:
                 self.desired_angle = self.shooter_amp
             elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_sub_action: # 4
                 self.desired_angle = self.shooter_sub
-                print("TRUE")
             
 
 
@@ -265,16 +265,25 @@ class Shooter:
 
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1
-            self.kicker.set(-0.3)
+            if self.optical_sensor_is_detected == 0:
+                self.kicker.set(-0.4)
+            else:
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+                self.kicker.set(0.4)
+                if self.wiggleTimer.advanceIfElapsed(0.5):
+                    self.kicker.set(0.0)
+                
+
         # the amp scoring
         elif kicker_action == ShooterKickerCommands.kicker_amp_shot: # 2:
-            self.kicker.set(0.5)
+            self.kicker.set(0.2)
         # kicker shoot 
         elif kicker_action == ShooterKickerCommands.kicker_shot: # 3
             self.kicker.set(-0.9)
         # the 4th state for the kicker is to push the note back and adjust it so it is not hitting the fly wheels too early
         elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
-            self.kicker.set(0.3)
+            self.kicker.set(0.4)
         else:
             self.kicker.set(0.0)
 
@@ -282,9 +291,7 @@ class Shooter:
         
         wpilib.SmartDashboard.putString('DB/String 6',f"{kicker_action}")
 
-        # if self.optical_sensor_is_detected:
-        #     self.kicker_action = ShooterKickerCommands.kicker_idle
-        
+       
 
 
     

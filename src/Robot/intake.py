@@ -47,7 +47,7 @@ class Intake:
         self.wrist_motor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
         self.intake_motor.setInverted(True)
-        self.wrist_motor.setInverted(True) 
+        self.wrist_motor.setInverted(False) 
 
         # This function slows down CAN state frames to not overload the CANbus by slowing down the amount of things are needed to be checked
         # in a certain amount of time and we slowed down the amount of time needed for less important things on the canbus
@@ -95,7 +95,7 @@ class Intake:
 
         self.desired_angle = self.WRIST_STOWED_ANGLE
 
-        self.wrist_limit_switch = self.wrist_motor.getForwardLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyOpen)
+        self.wrist_limit_switch = self.wrist_motor.getReverseLimitSwitch(rev.SparkMaxLimitSwitch.Type.kNormallyOpen)
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
@@ -107,10 +107,11 @@ class Intake:
             self.wrist_encoder.setPosition(0.0)
             self.desired_angle = self.WRIST_STOWED_ANGLE
             self.intake_move_on_init = False
-            print("true")
+            print("TRUE")
+
 
         if self.intake_move_on_init == True:
-            self.wrist_motor.set(0.2)
+            self.wrist_motor.set(-0.2)
         else:
             if wrist_pos == WristAngleCommands.wrist_stow_action:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
@@ -122,7 +123,7 @@ class Intake:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
             
             desired_turn_count = self.DegToTurnCount(self.desired_angle)
-            self.PIDController.setReference(-desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
+            self.PIDController.setReference(desired_turn_count, CANSparkLowLevel.ControlType.kPosition)
             
             wpilib.SmartDashboard.putString('DB/String 2',f"wrist_go_pos{desired_turn_count - self.wrist_encoder.getPosition():1.3f}")
 

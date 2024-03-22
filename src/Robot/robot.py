@@ -47,7 +47,7 @@ class Myrobot(wpilib.TimedRobot):
         # Sets a factor for slowing down the overall speed. 1 is no modification. 2 is half-speed, etc.
         self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR = 1.0
 
-        self.JOYSTICK_QUICKER_MOVE = 0.7
+        self.JOYSTICK_QUICKER_MOVE = 0.5
 
         self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
 
@@ -121,6 +121,13 @@ class Myrobot(wpilib.TimedRobot):
         self.current_shooter_position_widget = self.shuffle_tab.add("Current Shooter Pos", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(7, 3)
         self.desired_wrist_position_widget = self.shuffle_tab.add("Desired Wrist Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(0, 3)
         self.desired_shooter_position_widget = self.shuffle_tab.add("Desired Shooter Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(5,3)
+        self.optical_sensor_widget = self.shuffle_tab.add("Optical sensor", False).withWidget(BuiltInWidgets.kBooleanBox).withPosition(7,0)
+
+        # Track state machines
+        self.fsm_tab = Shuffleboard.getTab("State Machines")
+        # self.autonomous_state_widget = self.fsm_tab.add("robot.autonomous_state", self.autonomous_state)
+        # self.auto_state_widget = self.fsm_tab.add("robot.auto_state", self.auto_state)
+        
 
         
         
@@ -153,7 +160,7 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_desired_pos = self.shooter.desired_angle
         self.shooter_flywheel_speed = self.shooter.shooter_wheel_encoder.getCountsPerRevolution()
 
-        self.wrist_encoder = self.intake.wrist_encoder.getPosition() * to_degrees
+        self.wrist_encoder_degrees = self.intake.wrist_encoder.getPosition() * to_degrees
         self.wrist_limit_switch = self.intake.wrist_limit_switch.get()
         self.wrist_desired_pos = self.intake.desired_angle
     
@@ -177,6 +184,9 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 4',"Enc Front Left {:4.3f}".format( self.absEnc3))
         wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
 
+        wpilib.SmartDashboard.putString('DB/String 7',"Optical sensor {:4.3f}".format(self.shooter.optical_sensor.get()))
+
+
         self.gyro_widget.getEntry().setDouble(self.swerve.gyro.get_yaw().value)
         joystick_x, joystick_y, joystick_rot = self.getJoystickDriveValues()
         joystick_deg = 180.0 * joystick_rot
@@ -189,10 +199,11 @@ class Myrobot(wpilib.TimedRobot):
         self.encoder_widgets[1].getEntry().setDouble(self.absEnc2)
         self.encoder_widgets[2].getEntry().setDouble(self.absEnc3)
         self.encoder_widgets[3].getEntry().setDouble(self.absEnc4)
-        self.current_wrist_position_widget.getEntry().setDouble(self.wrist_encoder)
+        self.current_wrist_position_widget.getEntry().setDouble(self.wrist_encoder_degrees)
         self.current_shooter_position_widget.getEntry().setDouble(self.shooter_encoder)
         self.desired_shooter_position_widget.getEntry().setDouble(self.wrist_desired_pos)
         self.desired_shooter_position_widget.getEntry().setDouble(self.shooter_desired_pos)
+        self.optical_sensor_widget.getEntry().setBoolean(self.shooter.optical_sensor.get())
         
 
         #TEMPORARY!
@@ -355,15 +366,15 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
             self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
             if self.wiggleTimer.advanceIfElapsed(1.5):
-                self.auto_state = 4
+                self.auto_state = 3
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
-        # elif self.auto_state == 3:
-        #     self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
-        #     self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
-        #     self.x_speed = 0.15
-            # if self.wiggleTimer.advanceIfElapsed(3):
-            #     self.auto_state = 4
+        elif self.auto_state == 3:
+            self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
+            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
+            self.x_speed = 0.15
+            if self.wiggleTimer.advanceIfElapsed(3):
+                self.auto_state = 4
         elif self.auto_state == 4:
             self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
             self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
@@ -375,23 +386,23 @@ class Myrobot(wpilib.TimedRobot):
         # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             
-        if self.is_botpose_valid(self.botpose):
-            if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
-                self.autonomous_periodic_aiming(self.botpose)
-            elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
-                self.autonomous_periodic_shooting(self.botpose)
-        else:
-           wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
+        # if self.is_botpose_valid(self.botpose):
+        #     if self.autonomous_state == self.AUTONOMOUS_STATE_AIMING:
+        #         self.autonomous_periodic_aiming(self.botpose)
+        #     elif self.autonomous_state == self.AUTONOMOUS_STATE_SPEAKER_SHOOTING:
+        #         self.autonomous_periodic_shooting(self.botpose)
+        # else:
+        #    wpilib.SmartDashboard.putString("DB/String 0", str("noBotpose")) 
 
-        self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
-        # wrist positions for intake to move towards the requested location remove magic numbers!
-        self.intake.periodic(self.wrist_position, self.intake_control)
-        if self.is_botpose_valid(self.botpose):
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
-        else:
-            # No botpose!
-            speaker_distance_m = 0
-        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+        # self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)   
+        # # wrist positions for intake to move towards the requested location remove magic numbers!
+        # self.intake.periodic(self.wrist_position, self.intake_control)
+        # if self.is_botpose_valid(self.botpose):
+        #     speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, FieldPositions.speaker_y)
+        # else:
+        #     # No botpose!
+        #     speaker_distance_m = 0
+        # self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
 
     def autonomousExit(self):
         pass
@@ -585,7 +596,7 @@ class Myrobot(wpilib.TimedRobot):
         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
             self.swerve.gyro.set_yaw(0)
         
-        if self.xbox.getRightTriggerAxis() > 0.85:
+        if self.xbox.getRightTriggerAxis() > 0.5:
             self.joystick_divider = self.JOYSTICK_QUICKER_MOVE
 
         else:
@@ -659,7 +670,7 @@ class Myrobot(wpilib.TimedRobot):
         # allow joystick to be off from center without giving input
 
         self.joystick_x = -self.xbox.getLeftX()
-        self.joystick_x = applyDeadband(self.joystick_x, 0.1)
+        self.joystick_x = applyDeadband(self.joystick_x, 0.05)
         self.joystick_y = -self.xbox.getLeftY()
         self.joystick_y = applyDeadband(self.joystick_y, 0.1)
         joystick_rot = -self.xbox.getRightX()
@@ -668,8 +679,8 @@ class Myrobot(wpilib.TimedRobot):
 
         return self.joystick_x, self.joystick_y, joystick_rot
     def speeds_for_joystick_values(self, joystick_x, joystick_y, joystick_rot):
-        x_speed = self.joystickscaling(joystick_y) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
-        y_speed = self.joystickscaling(joystick_x) / self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        x_speed = self.joystickscaling(joystick_y) / self.joystick_divider
+        y_speed = self.joystickscaling(joystick_x) / self.joystick_divider
         rot = joystick_rot # TODO: Could add a joystickscaling here
         return x_speed, y_speed, rot
 
