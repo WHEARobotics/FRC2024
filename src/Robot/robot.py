@@ -53,6 +53,9 @@ class Myrobot(wpilib.TimedRobot):
 
         self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
 
+        # variable to hold amount in range -1 to 1 for adding to rotation from, e.g., automation or the right stick
+        self.rotation_add = 0.0
+
         #Temporary:
         networktables_instance = ntcore.NetworkTableInstance.getDefault()
         smartdashboard_table = networktables_instance.getTable("SmartDashboard")
@@ -133,7 +136,7 @@ class Myrobot(wpilib.TimedRobot):
         self.fsm_tab = Shuffleboard.getTab("State Machines")
         # self.autonomous_state_widget = self.fsm_tab.add("robot.autonomous_state", self.autonomous_state)
         # self.auto_state_widget = self.fsm_tab.add("robot.auto_state", self.auto_state)
-        
+
 
         self.auto_aim_tab = Shuffleboard.getTab("AutoAim")
         self.auto_aim_state_widget = self.auto_aim_tab.add("AutoAim", self.autonomous_aiming_state.get_name())
@@ -142,8 +145,8 @@ class Myrobot(wpilib.TimedRobot):
         self.auto_aim_botpose_yaw_widget = self.auto_aim_tab.add("botpose yaw", -1)
         self.auto_aim_botpose_desired_yaw_widget = self.auto_aim_tab.add("desired yaw", -1)
         self.auto_aim_botpose_distance_to_speaker_widget = self.auto_aim_tab.add("distance to speaker", -1)
-        
-    
+        self.auto_aim_current_pitch_widget = self.auto_aim_tab.add("Current Shooter Pos", 0).withWidget(BuiltInWidgets.kGyro).withSize(2, 2).withPosition(7, 3)
+        self.auto_aim_desired_pitch_widget = self.auto_aim_tab.add("Desired Shooter Pos", 0).withWidget(BuiltInWidgets.kGyro).withSize(2, 2).withPosition(5, 3)
     def readAbsoluteEncoders(self) :
         '''
         getting necessary values to be able to send the values to the smart dashboard to be able to be viewed.
@@ -688,13 +691,27 @@ class Myrobot(wpilib.TimedRobot):
             # wpilib.SmartDashboard.putString("DB/String 0", "No botpose")
             pass
 
+    def get_pitch(self) -> degrees:
+        return self.shooter.correctedEncoderPosition()
+
     def set_pitch(self, pitch : degrees) -> degrees:
         current_pitch = self.shooter.correctedEncoderPosition()
         if abs(pitch - current_pitch) < 1:
             return current_pitch
         else:
+            self.auto_aim_desired_pitch_widget.getEntry().setDouble(pitch)
+            self.auto_aim_current_pitch_widget.getEntry().setDouble(current_pitch)
+            self.current_shooter_position_widget.getEntry().setDouble(current_pitch)
+            self.desired_shooter_position_widget.getEntry().setDouble(pitch)
             self.shooter.set_pitch(pitch)
             return pitch
+
+    def add_rotation_level(self, rotation_range : float) -> float:
+        """
+        Adds a rotation level to the robot and returns the new rotation level
+        """
+        self.rotation_add += rotation_range
+        return self.rotation_add
 
     def driveWithJoystick(self):
         # Step 1: Get the joystick values
@@ -706,7 +723,9 @@ class Myrobot(wpilib.TimedRobot):
         #Unused : self.magnitude = math.sqrt(self.joystick_x*self.joystick_x + self.joystick_y*self.joystick_y)/3
 
         # Step 3: Drive the swerve with the desired speeds
-        self.swerve.drive(x_speed, y_speed, rot, fieldRelative=True)
+        self.swerve.drive(x_speed, y_speed, rot + self.rotation_add, fieldRelative=True)
+        # Zero out rotation_add after using it
+        self.rotation_add = 0
         '''
         this uses our joystick inputs and accesses a swerve drivetrain function to use field relative and the swerve module to drive the robot.
         '''
