@@ -50,7 +50,7 @@ class Vision:
         '''
         distance = math.sqrt(pow(2, speaker_x - bot_x)) + (pow(2, speaker_y - bot_y))
         return distance
-    def calculate_desired_angle(self, distance_to_speaker_y, distance_to_wall):
+    def calculate_desired_yaw(self, distance_to_speaker_y, distance_to_wall):
         """
         This function calculates the desired angle for the robot's orientation at different positions. It's measured by getting the distance to speaker on the y axis and the distance to the wall using the x axis
         and dividing them and uses the arctan function to calculate the angle needed to for the robot to rotate to into the speaker angle. This function returns the robots needed orientation in degrees.
@@ -83,7 +83,7 @@ class Vision:
         distance_to_speaker_y = (speaker_y - y) #Opp
         # speaker_distance = self.distance_to_speaker(x, y, speaker_x, speaker_y) #Hy
 
-        desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
+        desired_bot_angle = self.calculate_desired_yaw(distance_to_speaker_y, distance_to_wall)
 
 
         direction_to_travel = self.calculate_desired_direction(desired_bot_angle, current_yaw)
