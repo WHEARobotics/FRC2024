@@ -4,6 +4,9 @@ import ntcore
 
 import time # Temporary for diagnostics
 
+from wpimath.units import meters, degrees
+
+
 class Vision:
                                                      
     
@@ -35,13 +38,14 @@ class Vision:
             desired_direction += 360
         return desired_direction
     
-    def calculate_desired_pitch(self, speaker_distance, target_height):
+    def calculate_desired_pitch(self, speaker_distance : meters, target_height : meters) -> degrees:
         """
         this function calculates the desired angle for the shooter at different positions. its measured by getting the distance to speaker and the height of the target
         and dividing them and uses the arctan function to calculate the angle needed to shoot into the speaker.
         """
-        desired_angle = math.atan2(speaker_distance, target_height) 
-        return desired_angle
+        desired_angle = math.atan2(speaker_distance, target_height)
+        desired_angle_degrees = self.radians_to_degrees(desired_angle)
+        return desired_angle_degrees
     
     def distance_to_speaker(self, bot_x, bot_y, speaker_x, speaker_y):
         '''

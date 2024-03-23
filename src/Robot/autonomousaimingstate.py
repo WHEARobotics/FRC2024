@@ -115,7 +115,7 @@ class Aligning(AutonomousAimingState):
         """
         speaker_y = 1.44
         speaker_distance = self.vision.distance_to_speaker(botpose[0], botpose[1], self.vision.speaker_x, speaker_y)
-        pitch = self.vision.calculate_desired_pitch(speaker_distance, speaker_y) #TODO: Move calc_desired_pitch into Vision
+        pitch = self.vision.calculate_desired_pitch(speaker_distance, speaker_y)
         return degrees(pitch)
 
     def periodic_not_aligned(self, botpose) -> None:
