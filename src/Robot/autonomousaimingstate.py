@@ -90,10 +90,10 @@ class Aligning(AutonomousAimingState):
         else:
             return False
 
-    def get_rotation(self, botpose) -> degrees:
+    def get_bang_bang_control_amount(self, botpose) -> float:
         current_yaw = botpose[5]
         rotation = self.vision.get_rotation_autonomous_periodic_for_speaker_shot(botpose, current_yaw)
-        return degrees(-rotation)
+        return rotation
 
     def get_pitch(self, botpose) -> degrees:
         speaker_y = 1.44
@@ -102,9 +102,9 @@ class Aligning(AutonomousAimingState):
         return degrees(pitch)
 
     def periodic_not_aligned(self, botpose):
-        rotation = self.get_rotation(botpose)
+        rotation_control_level = self.get_bang_bang_control_amount(botpose)
         pitch = self.get_pitch(botpose)
-        self.robot.add_rotation_level(rotation)
+        self.robot.add_rotation_level(rotation_control_level)
         self.robot.set_pitch(pitch)
 
     def botpose_is_valid(self, botpose):

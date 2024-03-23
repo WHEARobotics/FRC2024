@@ -69,7 +69,10 @@ class Vision:
         '''
         return radians * (180/math.pi)
     
-    def get_rotation_autonomous_periodic_for_speaker_shot(self, botpose, current_yaw):
+    def get_rotation_autonomous_periodic_for_speaker_shot(self, botpose, current_yaw) -> float:
+        """
+        Returns a value between -1.0 and 1.0 that is the desired"bang bang" control amount
+        """
         x = botpose[0]
         desired_x = self.desired_x_for_autonomous_driving
         y = botpose[1]
@@ -106,7 +109,7 @@ class Vision:
             rot = -max_rot_value
             # this sets makes sure that the rot value does not pass the maximum we give
 
-        return rot
+        return -rot
 
     
 
