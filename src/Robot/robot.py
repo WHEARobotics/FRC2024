@@ -302,7 +302,7 @@ class Myrobot(wpilib.TimedRobot):
         """ Initialize for autonomous here."""
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
-        self.auto_state = 5
+        self.auto_state = 1
         self.shooter_pivot_auto = 0
         self.shooter_control_auto = 0
         self.shooter_kicker_auto = 0
@@ -403,7 +403,7 @@ class Myrobot(wpilib.TimedRobot):
                     self.auto_state = 2
             if self.auto_state == 2:
                 kicker_auto_action(1)
-                if self.wiggleTimer.advanceIfElapsed(1.5):
+                if self.wiggleTimer.advanceIfElapsed(2.5):
                     self.auto_state = 3
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
@@ -417,6 +417,7 @@ class Myrobot(wpilib.TimedRobot):
                     self.auto_state = 4
             elif self.auto_state == 4:
                 self.x_speed = 0.0
+                self.auto_state = 5
 
                 self.wiggleTimer.reset()
             elif self.auto_state == 5:
@@ -432,6 +433,7 @@ class Myrobot(wpilib.TimedRobot):
                     self.auto_state = 7
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
+
             elif self.auto_state == 7:
                 kicker_auto_action(2)
                 if self.wiggleTimer.advanceIfElapsed(0.4):
