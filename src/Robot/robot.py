@@ -104,6 +104,8 @@ class Myrobot(wpilib.TimedRobot):
 
         self.wiggleTimer = wpilib.Timer()
 
+        wpilib.CameraServer.launch()
+
         self.shuffle_tab = Shuffleboard.getTab("status")
         self.gyro_widget = self.shuffle_tab.add("gyro", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2)
         self.joystick_rot_widget = self.shuffle_tab.add("joystick rot", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2)
@@ -300,10 +302,18 @@ class Myrobot(wpilib.TimedRobot):
         """ Initialize for autonomous here."""
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
-        self.auto_state = 1
+        self.auto_state = 5
         self.shooter_pivot_auto = 0
         self.shooter_control_auto = 0
         self.shooter_kicker_auto = 0
+
+        self.wrist_control_auto = 0
+        self.intake_control_auto = 0
+
+        self.shuffle_button_1 = True
+        self.shuffle_button_2 = False
+        self.shuffle_button_3 = False
+        self.shuffle_button_4 = False
         
         self.wiggleTimer.reset()
         self.wiggleTimer.start()
@@ -357,32 +367,86 @@ class Myrobot(wpilib.TimedRobot):
     def autonomousPeriodic(self):
         self.botpose = self.vision.checkBotpose()
 
-        if self.auto_state == 1:
-            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
-            self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_sub_action
-            if self.wiggleTimer.advanceIfElapsed(2):
-                self.auto_state = 2
-        if self.auto_state == 2:
-            self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
-            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
-            if self.wiggleTimer.advanceIfElapsed(1.5):
-                self.auto_state = 3
+        def intake_auto_action(intake_action):
+            if intake_action:
+                self.intake_control_auto = IntakeCommands.intake_action
+                self.wrist_control_auto = WristAngleCommands.wrist_intake_action
+            else:
+                self.intake_control_auto = IntakeCommands.idle
+                self.wrist_control_auto = WristAngleCommands.wrist_stow_action
+
+        def shooter_auto_action(shooter_action):
+            if shooter_action:
+                self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
+                self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_sub_action
+                self.wrist_control_auto = WristAngleCommands.wrist_mid_action
+            else:
+                self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_feeder_action
+                self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
+
+        def kicker_auto_action(kicker_action = 0): # use 1 for shooting, 2 for intaking, 0 for idle
+            if kicker_action == 1:
+                self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
+            elif kicker_action == 2:
+                self.shooter_kicker_auto = ShooterKickerCommands.kicker_intake_slower
+                self.intake_control_auto = IntakeCommands.outtake_action
+            else:
+                self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
+                self.intake_control_auto = IntakeCommands.idle
+            
+            
+            
+        if self.shuffle_button_1:
+            if self.auto_state == 1:
+                shooter_auto_action(True)
+                if self.wiggleTimer.advanceIfElapsed(2):
+                    self.auto_state = 2
+            if self.auto_state == 2:
+                kicker_auto_action(1)
+                if self.wiggleTimer.advanceIfElapsed(1.5):
+                    self.auto_state = 3
+                    self.wiggleTimer.reset()
+                    self.wiggleTimer.start()
+            elif self.auto_state == 3:
+                kicker_auto_action(0)
+                shooter_auto_action(False)
+                self.x_speed = 0.15
+                if self.wiggleTimer.advanceIfElapsed(3):
+                    self.wiggleTimer.reset()
+                    self.wiggleTimer.start()
+                    self.auto_state = 4
+            elif self.auto_state == 4:
+                self.x_speed = 0.0
+
                 self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-        elif self.auto_state == 3:
-            self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
-            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
-            self.x_speed = 0.15
-            if self.wiggleTimer.advanceIfElapsed(3):
-                self.auto_state = 4
-        elif self.auto_state == 4:
-            self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
-            self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
-            self.x_speed = 0.0
-            self.wiggleTimer.reset()
-        
-        self.swerve.drive(self.x_speed, 0, 0, True)
-        self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
+            elif self.auto_state == 5:
+                self.x_speed = 0.0
+                intake_auto_action(True)
+                if self.wiggleTimer.advanceIfElapsed(1.5):
+                    self.wiggleTimer.reset()
+                    self.wiggleTimer.start()
+                    self.auto_state = 6
+            elif self.auto_state == 6:
+                intake_auto_action(False)
+                if self.wiggleTimer.advanceIfElapsed(0.75):
+                    self.auto_state = 7
+                    self.wiggleTimer.reset()
+                    self.wiggleTimer.start()
+            elif self.auto_state == 7:
+                kicker_auto_action(2)
+                if self.wiggleTimer.advanceIfElapsed(0.4):
+                    self.auto_state = 8
+            elif self.auto_state == 8:
+                kicker_auto_action(0)
+                self.auto_state = 1
+
+
+
+
+            
+            self.swerve.drive(self.x_speed, 0, 0, True)
+            self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
+            self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
         # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
         # during the whole autonomous gamemode.
             
@@ -416,7 +480,7 @@ class Myrobot(wpilib.TimedRobot):
         self.swerve.backLeft.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
         self.swerve.backRight.driveMotor.setIdleMode(rev._rev.CANSparkMax.IdleMode.kBrake)
 
-        self.intake_action = 1 # this action speeds up the intake motors to intake
+       
         self.outtake_action = 2 # this action speeds up the intake motors to outtake
         self.wrist_intake_action = 2 # this action raises the wrist up
         self.wrist_in_action = 1 # this action puts the wrist down
@@ -500,6 +564,11 @@ class Myrobot(wpilib.TimedRobot):
             self.kicker_action = ShooterKickerCommands.kicker_amp_shot # amp shot to shoot into the amp
         elif self.rightTrigger:
             self.kicker_action = ShooterKickerCommands.kicker_shot
+        elif self.LeftBumper:
+            self.intake_control = IntakeCommands.outtake_shot_action
+        elif self.RightBumper:
+            self.wrist_position = WristAngleCommands.wrist_amp_angle
+
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
             
 
@@ -514,13 +583,10 @@ class Myrobot(wpilib.TimedRobot):
         else:
             self.shooter_control = self.shooter_flywheel_idle
         # this button speeds up the shooter flywheels before shooting the note
+            
         
-        # if self.LeftBumper:
-        #     self.intake_control = IntakeCommands.intake_action
-        # elif self.RightBumper:
-        #     self.intake_control = IntakeCommands.outtake_action
-        # # else:
-        #     self.intake_control = IntakeCommands.idle
+        
+        
         
         # we could use manual intake to do without changing the wrist to move the note farther in. i could be wrong and we might just want
         # to hold intake longer to push the note farther.
@@ -577,7 +643,7 @@ class Myrobot(wpilib.TimedRobot):
         self.intake.periodic(self.wrist_position, self.intake_control)
         
         if self.is_botpose_valid(self.botpose):
-            speaker_distance_m = self.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, self.speaker_y)
+            speaker_distance_m = self.vision.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, 1.44)
         else:
             # No botpose!
             speaker_distance_m = 0

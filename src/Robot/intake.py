@@ -8,20 +8,23 @@ class WristAngleCommands:
     wrist_stow_action = 1
     wrist_intake_action = 2
     wrist_mid_action = 3
+    wrist_amp_angle = 4
 
 @dataclass(frozen=True)
 class IntakeCommands:
     idle = 0
     intake_action = 1
     outtake_action = 2
+    outtake_shot_action = 3
 
 class Intake:
 
     def __init__(self) -> None:
 
         self.WRIST_STOWED_ANGLE = 0   # Starting position inside the robot.
-        self.INTAKE_WRIST_ANGLE = 155 # Intake deployed to grab a note.
+        self.INTAKE_WRIST_ANGLE = 158 # Intake deployed to grab a note.
         self.WRIST_MID_ANGLE = 60     # Out of the way so shooter can take a subwoofer shot.
+        self.WRIST_AMP = 46
         self.WRIST_GEAR_RATIO = 80
 
         kP = 0.075
@@ -30,8 +33,8 @@ class Intake:
         kD = 0.0
         kIz = 0.0
         kFF = 0.0
-        kMaxOutput = 0.3
-        kMinOutput = -0.3
+        kMaxOutput = 0.6
+        kMinOutput = -0.6
         maxRPM = 5700
 
         maxVel = 2000
@@ -107,7 +110,7 @@ class Intake:
             self.wrist_encoder.setPosition(0.0)
             self.desired_angle = self.WRIST_STOWED_ANGLE
             self.intake_move_on_init = False
-            print("TRUE")
+            # print("TRUE")
 
 
         if self.intake_move_on_init == True:
@@ -119,6 +122,8 @@ class Intake:
                 self.desired_angle = self.INTAKE_WRIST_ANGLE
             elif wrist_pos == WristAngleCommands.wrist_mid_action:
                 self.desired_angle = self.WRIST_MID_ANGLE
+            elif wrist_pos == WristAngleCommands.wrist_amp_angle:
+                self.desired_angle = self.WRIST_AMP
             else:
                 self.desired_angle = self.WRIST_STOWED_ANGLE
             
@@ -138,6 +143,8 @@ class Intake:
         elif intake_control == IntakeCommands.outtake_action:
             self.set_speed = 0.3
                 #intake action
+        elif intake_control == IntakeCommands.outtake_shot_action:
+            self.set_speed = 0.7
         else:
             self.set_speed = 0.0
 
