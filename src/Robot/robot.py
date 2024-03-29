@@ -411,7 +411,8 @@ class Myrobot(wpilib.TimedRobot):
                 kicker_auto_action(0)
                 shooter_auto_action(False)
                 self.x_speed = 0.15
-                if self.wiggleTimer.advanceIfElapsed(3):
+                intake_auto_action(True)
+                if self.wiggleTimer.advanceIfElapsed(2):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
                     self.auto_state = 4
@@ -422,8 +423,7 @@ class Myrobot(wpilib.TimedRobot):
                 self.wiggleTimer.reset()
             elif self.auto_state == 5:
                 self.x_speed = 0.0
-                intake_auto_action(True)
-                if self.wiggleTimer.advanceIfElapsed(1.5):
+                if self.wiggleTimer.advanceIfElapsed(0.2):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
                     self.auto_state = 6
@@ -569,7 +569,7 @@ class Myrobot(wpilib.TimedRobot):
         elif self.LeftBumper:
             self.intake_control = IntakeCommands.outtake_shot_action
         elif self.RightBumper:
-            self.wrist_position = WristAngleCommands.wrist_amp_angle
+            self.intake_control = IntakeCommands.intake_action
 
         # this is used after holding y(the flywheel speeds) to allow the kicker move the note into the flywheels to shoot
             

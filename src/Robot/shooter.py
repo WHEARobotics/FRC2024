@@ -37,7 +37,7 @@ class ShooterControlCommands:
 class Shooter:
     def __init__(self) -> None:
         
-        SHOOTER_AMP_ANGLE = 118
+        SHOOTER_AMP_ANGLE = 135
         SHOOTER_START_ANGLE = 0
         SHOOTER_FEEDING_ANGLE = -50
 
@@ -183,6 +183,7 @@ class Shooter:
 
         self.optical_sensor = wpilib.DigitalInput(0)
         
+        
 
 
 
@@ -266,11 +267,10 @@ class Shooter:
 
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1
-            if self.optical_sensor_is_detected == 1:
+            print(self.optical_sensor.get())
+            if self.optical_sensor.get() == False:
                 self.kicker.set(-0.4)
-                print("1")
             else:
-                print("2")
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
                 self.kicker.set(0.4)
