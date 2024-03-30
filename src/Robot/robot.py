@@ -8,6 +8,7 @@ from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 import time
+import logging
 import math
 import ntcore
 import rev
@@ -38,6 +39,7 @@ class AutonomousStates:
     state_5 = 5
     state_6 = 6
     state_7 = 7
+    state_8 = 8
 
 class Myrobot(wpilib.TimedRobot):
 
@@ -60,6 +62,7 @@ class Myrobot(wpilib.TimedRobot):
         self.JOYSTICK_QUICKER_MOVE = 0.5
 
         self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        self.auto_state = AutonomousStates.initial
 
         #Temporary:
         networktables_instance = ntcore.NetworkTableInstance.getDefault()
@@ -133,6 +136,8 @@ class Myrobot(wpilib.TimedRobot):
         self.desired_wrist_position_widget = self.shuffle_tab.add("Desired Wrist Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(0, 3)
         self.desired_shooter_position_widget = self.shuffle_tab.add("Desired Shooter Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(5,3)
         self.optical_sensor_widget = self.shuffle_tab.add("Optical sensor", False).withWidget(BuiltInWidgets.kBooleanBox).withPosition(7,0)
+        self.autonomous_state_widget = self.shuffle_tab.add("Autonomous State", self.auto_state).withWidget(BuiltInWidgets.kTextView).withPosition(3,0)
+
 
         # Track state machines
         self.fsm_tab = Shuffleboard.getTab("State Machines")
@@ -214,6 +219,7 @@ class Myrobot(wpilib.TimedRobot):
         self.desired_shooter_position_widget.getEntry().setDouble(self.wrist_desired_pos)
         self.desired_shooter_position_widget.getEntry().setDouble(self.shooter_desired_pos)
         self.optical_sensor_widget.getEntry().setBoolean(self.shooter.optical_sensor.get())
+        self.autonomous_state_widget.getEntry().setString(str(self.auto_state))
         
 
         #TEMPORARY!
@@ -402,7 +408,12 @@ class Myrobot(wpilib.TimedRobot):
                 self.intake_control_auto = IntakeCommands.idle
             
             
-            
+        # Drive values are 0 initially
+        x_speed = 0.0
+        y_speed = 0.0
+        rot_speed = 0.0
+
+
         if self.shuffle_button_1:
             if self.auto_state == AutonomousStates.initial:
                 shooter_auto_action(True)
@@ -417,7 +428,17 @@ class Myrobot(wpilib.TimedRobot):
             elif self.auto_state == AutonomousStates.state_3:
                 kicker_auto_action(0)
                 shooter_auto_action(False)
-                self.x_speed = 0.15
+
+                if self.is_botpose_valid(self.botpose):
+                    x_speed, y_speed, rot_speed, has_arrived = Myrobot.drive_values_for_field_position(self.botpose, self.desired_x_for_autonomous_driving, 1.14, 0.1)
+
+                    # TODO: Stay in this state until we have arrived at the desired x position
+                    if has_arrived:
+                        self.wiggleTimer.reset()
+                        self.wiggleTimer.start()
+                        self.auto_state = AutonomousStates.state_4
+                else:
+                    logging.warning("No botpose found")
                 if self.wiggleTimer.advanceIfElapsed(3):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
@@ -453,7 +474,7 @@ class Myrobot(wpilib.TimedRobot):
 
 
             
-            self.swerve.drive(self.x_speed, 0, 0, True)
+            self.swerve.drive(x_speed, y_speed, rot_speed, True)
             self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
             self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
         # self.shooter_control = 2 # this sets the shooter to always spin at shooting speed
@@ -787,8 +808,68 @@ class Myrobot(wpilib.TimedRobot):
 
     def teleopExit(self):
         pass
-    
 
+
+
+    @staticmethod
+    def drive_values_for_field_position(currentPose: list[float], field_x_meters, field_y_meters, epsilon = 0.1) -> tuple[list[float], bool]:
+        """
+        Drive the robot to a target position on the field.
+        Returns [x_pct, y_pct, rotation_error, done] where:
+        x_pct: The percent power for the x-axis [-1.0, 1.0]
+        y_pct: The percent power for the y-axis [-1.0, 1.0]
+        rotation_error: The percent power for the rotation_error [-1.0, 1.0]
+        done: True if the robot has reached the target position
+        """
+
+        kP_rotation = 20.0
+        kP_movement = 0.25
+
+        current_x = currentPose[0]
+        current_y = currentPose[1]
+        current_yaw = currentPose[5]
+
+        # Calculate the distance between the current position and the target position
+        distanceToTarget = math.sqrt((field_x_meters - current_x) ** 2 + (field_y_meters - current_y) ** 2)
+
+        # Check if the robot is within the epsilon distance of the target position
+        if distanceToTarget <= epsilon:
+            # If within epsilon, stop the robot
+            return 0, 0, 0, True
+        else:
+            # Calculate the angle to the target position
+            angleToTarget = math.atan2(field_y_meters - current_y, field_x_meters - current_x)
+
+            # Calculate the rotation_error needed to face the target position
+            rotation_error = angleToTarget - current_yaw
+
+            # Normalize the rotation_error to be within -PI to PI
+            rotation_error = math.atan2(math.sin(rotation_error), math.cos(rotation_error))
+            # Calculate the rotation_error percentage given angle to target
+            if abs(rotation_error) < epsilon:
+                rotation_pct = 0.0
+            else:
+                rotation_pct = -math.degrees(rotation_error) / kP_rotation
+
+            # Calculate the speed based on the distance to the target
+            if abs(distanceToTarget) < epsilon:
+                x_pct = 0.0
+                y_pct = 0.0
+            else:
+                x_sign = 1.0 if current_x < field_x_meters else -1.0
+                y_sign = 1.0 if current_y < field_y_meters else -1.0
+                x_pct = x_sign * distanceToTarget * kP_movement
+                y_pct = y_sign * distanceToTarget * kP_movement
+
+            x_pct = -1.0 if x_pct < -1.0 else 1.0 if x_pct > 1.0 else x_pct
+            y_pct = -1.0 if y_pct < -1.0 else 1.0 if y_pct > 1.0 else y_pct
+            rotation_pct = -1.0 if rotation_pct < -1.0 else 1.0 if rotation_pct > 1.0 else rotation_pct
+
+            assert -1.0 <= x_pct <= 1.0
+            assert -1.0 <= y_pct <= 1.0
+            assert -1.0 <= rotation_pct <= 1.0
+            # Return the drive values
+            return x_pct, y_pct, rotation_pct, False
 
 if __name__ == '__main__':
     wpilib.run(Myrobot)
