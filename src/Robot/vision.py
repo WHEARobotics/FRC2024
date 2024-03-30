@@ -18,11 +18,13 @@ class Vision:
         self.limelight_table = self.networktables.getTable("limelight")
         self.botpose_subscription = self.limelight_table.getDoubleArrayTopic("botpose").subscribe([])
         self.botpose = [-1, -1, -1, -1, -1, -1]
+        self.bot_x = self.botpose[0] 
+        self.bot_y = self.botpose[1]
 
     def checkBotpose(self):
         botpose = self.botpose_subscription.get()
         # Only modify botpose if: it exists, it's the correct datastructure, and it's not all zeros
-        if botpose is not None and len(botpose) > 3 and (abs(botpose[0]) + abs(botpose[1])) > 0:  #<- the code behind gives an error saying you cannot combine ints and lists
+        if botpose is not None: # and len(botpose) > 3 and (abs(botpose[0]) + abs(botpose[1])) > 0:  #<- the code behind gives an error saying you cannot combine ints and lists
             self.botpose = botpose
         return self.botpose
 
@@ -43,8 +45,9 @@ class Vision:
         this function calculates the desired angle for the shooter at different positions. its measured by getting the distance to speaker and the height of the target
         and dividing them and uses the arctan function to calculate the angle needed to shoot into the speaker.
         """
-        desired_angle = math.atan2(speaker_distance, target_height)
+        desired_angle = math.atan2(target_height, speaker_distance)
         desired_angle_degrees = self.radians_to_degrees(desired_angle)
+        print(desired_angle_degrees)
         return desired_angle_degrees
     
     def distance_to_speaker(self, bot_x, bot_y, speaker_x, speaker_y):
@@ -97,8 +100,8 @@ class Vision:
         x_max_speed = 0.2
         x_speed = x_kp * x_distance_to_travel
 
-        yaw_kp = 0.007
-        max_rot_value = 0.3
+        yaw_kp = 0.02
+        max_rot_value = 0.1
         rot = yaw_kp * direction_to_travel
         # this acts like the p value in a pid loop for the rotation action
 
@@ -114,6 +117,13 @@ class Vision:
             # this sets makes sure that the rot value does not pass the maximum we give
 
         return -rot
+
+    def auto_pitch(self, speaker_x, speaker_y, bot_x, bot_y):
+    
+        self.speaker_distance = self.distance_to_speaker(bot_x, bot_y, speaker_x, speaker_y)
+        print(self.speaker_distance)
+        return self.calculate_desired_pitch(self.speaker_distance, 2)
+        
 
     
 

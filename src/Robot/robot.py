@@ -63,6 +63,8 @@ class Myrobot(wpilib.TimedRobot):
         self.botposeentry = botposeTopic.getGenericEntry()
         self.botposeentry.set(ntcore.Value.makeFloatArray([3.0, 5.0, 1.0]))
 
+        self.pitch_angle = -1
+
         
         ally = DriverStation.getAlliance()
         if ally is not None:
@@ -497,6 +499,17 @@ class Myrobot(wpilib.TimedRobot):
 
         self.botpose = self.vision.checkBotpose()
 
+        if self.is_botpose_valid(self.botpose):
+            speaker_distance_m = self.vision.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, 1.44)# speaker y coordinate
+            self.bot_x = self.botpose[0]
+            self.bot_y = self.botpose[1]
+            self.pitch_angle = -self.vision.auto_pitch( self.speaker_x, FieldPositions.speaker_y, self.bot_x, self.bot_y)
+        else:
+            # No botpose!
+            speaker_distance_m = 0
+        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+        
+
 
 
         # we commented out this for now because we dont want any position control for our first robot tests
@@ -506,6 +519,7 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_manual_down
         else:
             self.shooter_pivot_control = ShooterPivotCommands.shooter_pivot_idle
+
 
         
 
@@ -556,6 +570,8 @@ class Myrobot(wpilib.TimedRobot):
         elif self.leftTrigger:
             self.shooter_pivot_control = self.shooter_pivot_sub
             self.wrist_position = WristAngleCommands.wrist_mid_action
+        elif self.xbox.getLeftTriggerAxis() < 0.5:
+            self.shooter.desired_angle = self.pitch_angle
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
             
         # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
@@ -599,29 +615,24 @@ class Myrobot(wpilib.TimedRobot):
         # wrist positions for intake to move towards the requested location remove magic numbers!
         self.intake.periodic(self.wrist_position, self.intake_control)
         
-        if self.is_botpose_valid(self.botpose):
-            speaker_distance_m = self.vision.distance_to_speaker(self.botpose[0], self.botpose[1], self.speaker_x, 1.44)# speaker y coordinate
-        else:
-            # No botpose!
-            speaker_distance_m = 0
-        self.shooter.periodic(speaker_distance_m, self.shooter_pivot_control, self.shooter_control, self.kicker_action)
+       
 
 
         # Autonomous alignment object-oriented state machine
-        if self.xbox.getLeftTriggerAxis() < 0.5:
-            if not isinstance(self.autonomous_aiming_state, Idle):
-                self.autonomous_aiming_state = Idle(self, self.vision)
-            self.autonomous_aiming_engaged = False
-        else:
-            if not self.autonomous_aiming_engaged:
-                self.autonomous_aiming_engaged = True
-                self.autonomous_aiming_state = Starting(self, self.vision)
-            else:
-                # Auto align/pitch state machine running, don't modify it
-                pass
 
-        self.autonomous_aiming_state = self.autonomous_aiming_state.periodic()
-        self.outputToSmartDashboard()
+        #     if not isinstance(self.autonomous_aiming_state, Idle):
+        #         self.autonomous_aiming_state = Idle(self, self.vision)
+        #     self.autonomous_aiming_engaged = False
+        # else:
+        #     if not self.autonomous_aiming_engaged:
+        #         self.autonomous_aiming_engaged = True
+        #         self.autonomous_aiming_state = Starting(self, self.vision)
+        #     else:
+        #         # Auto align/pitch state machine running, don't modify it
+        #         pass
+
+        # self.autonomous_aiming_state = self.autonomous_aiming_state.periodic()
+        # self.outputToSmartDashboard()
 
 
          # self.botpose = self.vision.checkBotpose()
