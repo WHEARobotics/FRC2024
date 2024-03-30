@@ -12,6 +12,7 @@ import logging
 import math
 import ntcore
 import rev
+from wpimath.units import meters, degrees
 
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
@@ -430,7 +431,7 @@ class Myrobot(wpilib.TimedRobot):
                 shooter_auto_action(False)
 
                 if self.is_botpose_valid(self.botpose):
-                    x_speed, y_speed, rot_speed, has_arrived = Myrobot.drive_values_for_field_position(self.botpose, self.desired_x_for_autonomous_driving, 1.14, 0.1)
+                    x_speed, y_speed, rot_speed, has_arrived = Myrobot.drive_values_for_field_position(self.botpose, self.desired_x_for_autonomous_driving, 1.14,  0, 0.1, 0.5)
 
                     # TODO: Stay in this state until we have arrived at the desired x position
                     if has_arrived:
@@ -438,7 +439,7 @@ class Myrobot(wpilib.TimedRobot):
                         self.wiggleTimer.start()
                         self.auto_state = AutonomousStates.state_4
                 else:
-                    logging.warning("No botpose found")
+                    logging.debug("No botpose found")
                 if self.wiggleTimer.advanceIfElapsed(3):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
@@ -812,13 +813,13 @@ class Myrobot(wpilib.TimedRobot):
 
 
     @staticmethod
-    def drive_values_for_field_position(currentPose: list[float], field_x_meters, field_y_meters, epsilon = 0.1) -> tuple[list[float], bool]:
+    def drive_values_for_field_position(currentPose: list[float], field_x_meters : meters, field_y_meters : meters, field_yaw : degrees, close_enough_meters: meters = 0.1, close_enough_degrees: degrees = 5) -> tuple[list[float], bool]:
         """
         Drive the robot to a target position on the field.
         Returns [x_pct, y_pct, rotation_error, done] where:
         x_pct: The percent power for the x-axis [-1.0, 1.0]
         y_pct: The percent power for the y-axis [-1.0, 1.0]
-        rotation_error: The percent power for the rotation_error [-1.0, 1.0]
+        rotation_ct : The percent power for the rotation [-1.0, 1.0]
         done: True if the robot has reached the target position
         """
 
@@ -833,26 +834,24 @@ class Myrobot(wpilib.TimedRobot):
         distanceToTarget = math.sqrt((field_x_meters - current_x) ** 2 + (field_y_meters - current_y) ** 2)
 
         # Check if the robot is within the epsilon distance of the target position
-        if distanceToTarget <= epsilon:
+        if distanceToTarget <= close_enough_meters and abs(current_yaw - field_yaw) <= close_enough_degrees:
             # If within epsilon, stop the robot
             return 0, 0, 0, True
         else:
             # Calculate the angle to the target position
             angleToTarget = math.atan2(field_y_meters - current_y, field_x_meters - current_x)
 
-            # Calculate the rotation_error needed to face the target position
-            rotation_error = angleToTarget - current_yaw
+            # Calculate the rotation_error
+            rotation_error : degrees = field_yaw - current_yaw
 
-            # Normalize the rotation_error to be within -PI to PI
-            rotation_error = math.atan2(math.sin(rotation_error), math.cos(rotation_error))
             # Calculate the rotation_error percentage given angle to target
-            if abs(rotation_error) < epsilon:
+            if abs(rotation_error) < close_enough_degrees:
                 rotation_pct = 0.0
             else:
                 rotation_pct = -math.degrees(rotation_error) / kP_rotation
 
             # Calculate the speed based on the distance to the target
-            if abs(distanceToTarget) < epsilon:
+            if abs(distanceToTarget) < close_enough_meters:
                 x_pct = 0.0
                 y_pct = 0.0
             else:
