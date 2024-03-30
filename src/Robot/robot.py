@@ -29,6 +29,16 @@ class FieldPositions:
     desired_x_for_autonomous_driving_red = 5.5
     desired_x_for_autonomous_driving_blue = -5.5
 
+@dataclass(frozen=True)
+class AutonomousStates:
+    initial = 1
+    state_2 = 2
+    state_3 = 3
+    state_4 = 4
+    state_5 = 5
+    state_6 = 6
+    state_7 = 7
+
 class Myrobot(wpilib.TimedRobot):
 
  
@@ -82,7 +92,6 @@ class Myrobot(wpilib.TimedRobot):
         # Autonomous state machine
         self.AUTONOMOUS_STATE_AIMING = 1
         self.AUTONOMOUS_STATE_SPEAKER_SHOOTING = 2
-        self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
         # Initialize commands sent to the mechanisms.
         self.wrist_position = WristAngleCommands.wrist_stow_action
@@ -127,7 +136,6 @@ class Myrobot(wpilib.TimedRobot):
 
         # Track state machines
         self.fsm_tab = Shuffleboard.getTab("State Machines")
-        # self.autonomous_state_widget = self.fsm_tab.add("robot.autonomous_state", self.autonomous_state)
         # self.auto_state_widget = self.fsm_tab.add("robot.auto_state", self.auto_state)
         
 
@@ -300,9 +308,8 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousInit(self):
         """ Initialize for autonomous here."""
-        self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
-        self.auto_state = 1
+        self.auto_state = AutonomousStates.initial
         self.shooter_pivot_auto = 0
         self.shooter_control_auto = 0
         self.shooter_kicker_auto = 0
@@ -397,48 +404,48 @@ class Myrobot(wpilib.TimedRobot):
             
             
         if self.shuffle_button_1:
-            if self.auto_state == 1:
+            if self.auto_state == AutonomousStates.initial:
                 shooter_auto_action(True)
                 if self.wiggleTimer.advanceIfElapsed(2):
-                    self.auto_state = 2
-            if self.auto_state == 2:
+                    self.auto_state = AutonomousStates.state_2
+            if self.auto_state == AutonomousStates.state_2:
                 kicker_auto_action(1)
                 if self.wiggleTimer.advanceIfElapsed(2.5):
-                    self.auto_state = 3
+                    self.auto_state = AutonomousStates.state_3
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-            elif self.auto_state == 3:
+            elif self.auto_state == AutonomousStates.state_3:
                 kicker_auto_action(0)
                 shooter_auto_action(False)
                 self.x_speed = 0.15
                 if self.wiggleTimer.advanceIfElapsed(3):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-                    self.auto_state = 4
-            elif self.auto_state == 4:
+                    self.auto_state = AutonomousStates.state_4
+            elif self.auto_state == AutonomousStates.state_4:
                 self.x_speed = 0.0
-                self.auto_state = 5
+                self.auto_state = AutonomousStates.state_5
 
                 self.wiggleTimer.reset()
-            elif self.auto_state == 5:
+            elif self.auto_state == AutonomousStates.state_5:
                 self.x_speed = 0.0
                 intake_auto_action(True)
                 if self.wiggleTimer.advanceIfElapsed(1.5):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-                    self.auto_state = 6
-            elif self.auto_state == 6:
+                    self.auto_state = AutonomousStates.state_6
+            elif self.auto_state == AutonomousStates.state_6:
                 intake_auto_action(False)
                 if self.wiggleTimer.advanceIfElapsed(0.75):
-                    self.auto_state = 7
+                    self.auto_state = AutonomousStates.state_7
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
 
-            elif self.auto_state == 7:
+            elif self.auto_state == AutonomousStates.state_7:
                 kicker_auto_action(2)
                 if self.wiggleTimer.advanceIfElapsed(0.4):
-                    self.auto_state = 8
-            elif self.auto_state == 8:
+                    self.auto_state = AutonomousStates.state_8
+            elif self.auto_state == AutonomousStates.state_8:
                 kicker_auto_action(0)
                 self.auto_state = 1
 
