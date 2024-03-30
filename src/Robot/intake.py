@@ -138,7 +138,7 @@ class Intake:
 
 
         if intake_control == IntakeCommands.intake_action:
-            self.set_speed =  -0.8
+            self.set_speed =  -0.9
             self.intake_state = 1
         elif intake_control == IntakeCommands.outtake_action:
             self.set_speed = 0.3

@@ -368,9 +368,12 @@ class Myrobot(wpilib.TimedRobot):
         self.botpose = self.vision.checkBotpose()
 
         def intake_auto_action(intake_action):
-            if intake_action:
+            if intake_action == 1:
                 self.intake_control_auto = IntakeCommands.intake_action
                 self.wrist_control_auto = WristAngleCommands.wrist_intake_action
+            elif intake_auto_action == 2:
+                self.wrist_control_auto = WristAngleCommands.wrist_stow_action
+                self.intake_control_auto = IntakeCommands.intake_action
             else:
                 self.intake_control_auto = IntakeCommands.idle
                 self.wrist_control_auto = WristAngleCommands.wrist_stow_action
@@ -399,7 +402,7 @@ class Myrobot(wpilib.TimedRobot):
         if self.shuffle_button_1:
             if self.auto_state == 1:
                 shooter_auto_action(True)
-                if self.wiggleTimer.advanceIfElapsed(0.5):
+                if self.wiggleTimer.advanceIfElapsed(0.75):
                     self.auto_state = 2
         # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
             if self.auto_state == 2:
@@ -433,19 +436,26 @@ class Myrobot(wpilib.TimedRobot):
                     self.auto_state = 6
         # idle state for 0.2 seconds
             elif self.auto_state == 6:
-                intake_auto_action(False)
-                self.x_speed = -0.18
+                intake_auto_action(2)
+                self.x_speed = -0.14
                 if self.wiggleTimer.advanceIfElapsed(1.8):
                     self.auto_state = 7
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-        # intake stops and goes back
+        # intake stops and goes back in
             elif self.auto_state == 7:
+                intake_auto_action(3)
+                self.intake_control_auto = IntakeCommands.intake_action
+                if self.wiggleTimer.advanceIfElapsed(1.0):
+                    self.auto_state = 8
+        # intake again to make sure its in
+            elif self.auto_state == 8:
+                self.x_speed = 0.0
                 kicker_auto_action(2)
                 if self.wiggleTimer.advanceIfElapsed(0.4):
-                    self.auto_state = 8
+                    self.auto_state = 9
         # kicker intake handoff
-            elif self.auto_state == 8:
+            elif self.auto_state == 9:
                 kicker_auto_action(0)
                 self.auto_state = 1
 
