@@ -401,43 +401,50 @@ class Myrobot(wpilib.TimedRobot):
                 shooter_auto_action(True)
                 if self.wiggleTimer.advanceIfElapsed(0.5):
                     self.auto_state = 2
+        # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
             if self.auto_state == 2:
                 kicker_auto_action(1)
                 if self.wiggleTimer.advanceIfElapsed(0.5):
                     self.auto_state = 3
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
+        # state 2 sets the kicker to outtake the note
             elif self.auto_state == 3:
                 kicker_auto_action(0)
                 shooter_auto_action(False)
                 self.x_speed = 0.18
                 intake_auto_action(True)
+    
                 if self.wiggleTimer.advanceIfElapsed(2):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
                     self.auto_state = 4
+        # state 3 stop kicker and start moving back and intake
             elif self.auto_state == 4:
                 self.x_speed = 0.0
                 self.auto_state = 5
-
                 self.wiggleTimer.reset()
+        # stop robot moving
             elif self.auto_state == 5:
                 self.x_speed = 0.0
                 if self.wiggleTimer.advanceIfElapsed(0.2):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
                     self.auto_state = 6
+        # idle state for 0.2 seconds
             elif self.auto_state == 6:
                 intake_auto_action(False)
-                if self.wiggleTimer.advanceIfElapsed(0.75):
+                self.x_speed = -0.18
+                if self.wiggleTimer.advanceIfElapsed(1.8):
                     self.auto_state = 7
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-
+        # intake stops and goes back
             elif self.auto_state == 7:
                 kicker_auto_action(2)
                 if self.wiggleTimer.advanceIfElapsed(0.4):
                     self.auto_state = 8
+        # kicker intake handoff
             elif self.auto_state == 8:
                 kicker_auto_action(0)
                 self.auto_state = 1
