@@ -29,6 +29,7 @@ class FieldPositions:
     desired_x_for_autonomous_driving_red = 5.5
     desired_x_for_autonomous_driving_blue = -5.5
 
+
 class Myrobot(wpilib.TimedRobot):
 
  
@@ -124,6 +125,7 @@ class Myrobot(wpilib.TimedRobot):
         self.desired_wrist_position_widget = self.shuffle_tab.add("Desired Wrist Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(0, 3)
         self.desired_shooter_position_widget = self.shuffle_tab.add("Desired Shooter Position", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2).withPosition(5,3)
         self.optical_sensor_widget = self.shuffle_tab.add("Optical sensor", False).withWidget(BuiltInWidgets.kBooleanBox).withPosition(7,0)
+        self.debug_string_widget = self.shuffle_tab.add("Debug", "").withPosition(6 , 6).withSize(7,1)
 
         # Track state machines
         self.fsm_tab = Shuffleboard.getTab("State Machines")
@@ -206,6 +208,8 @@ class Myrobot(wpilib.TimedRobot):
         self.desired_shooter_position_widget.getEntry().setDouble(self.wrist_desired_pos)
         self.desired_shooter_position_widget.getEntry().setDouble(self.shooter_desired_pos)
         self.optical_sensor_widget.getEntry().setBoolean(self.shooter.optical_sensor.get())
+
+        #self.intake_encoder_widget.getEntry().setDouble(self.intake.intake_motor.getEncoder().getVelocity())
         
 
         #TEMPORARY!
@@ -377,6 +381,8 @@ class Myrobot(wpilib.TimedRobot):
             else:
                 self.intake_control_auto = IntakeCommands.idle
                 self.wrist_control_auto = WristAngleCommands.wrist_stow_action
+
+            self.debug_string_widget.getEntry().setString(f"iac({intake_action}) : {self.wrist_control_auto}, {self.intake_control_auto}")
 
         def shooter_auto_action(shooter_action):
             if shooter_action:
