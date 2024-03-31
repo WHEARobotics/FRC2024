@@ -13,9 +13,11 @@ class ShooterPivotCommands:
     shooter_pivot_feeder_action = 2
     shooter_pivot_amp_action = 3
     shooter_pivot_sub_action = 4
+    shooter_under_chain_action = 5
 
-    shooter_pivot_manual_up = 5
-    shooter_pivot_manual_down = 6
+    shooter_pivot_manual_up = 6
+    shooter_pivot_manual_down = 7
+
     shooter_pivot_idle = 0
 
 @dataclass(frozen=True)
@@ -40,6 +42,7 @@ class Shooter:
         SHOOTER_AMP_ANGLE = 135
         SHOOTER_START_ANGLE = 0
         SHOOTER_FEEDING_ANGLE = -50
+        SHOOTER_UNDER_CHAIN_ANGLE = 174
 
         SHOOTER_SUB_ANGLE = -63 #orginally -60
 
@@ -173,6 +176,7 @@ class Shooter:
         self.shooter_feeder = SHOOTER_FEEDING_ANGLE
         self.shooter_amp = SHOOTER_AMP_ANGLE
         self.shooter_sub = SHOOTER_SUB_ANGLE
+        self.shooter_under_chain = SHOOTER_UNDER_CHAIN_ANGLE
         # these are the different shooter angles 
 
         self.automatic = True
@@ -212,6 +216,8 @@ class Shooter:
                 self.desired_angle = self.shooter_amp
             elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_sub_action: # 4
                 self.desired_angle = self.shooter_sub
+            elif shooter_pivot_pos == ShooterPivotCommands.shooter_under_chain_action:
+                self.desired_angle = self.shooter_under_chain
             
 
 

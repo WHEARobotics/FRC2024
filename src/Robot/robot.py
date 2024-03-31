@@ -568,6 +568,7 @@ class Myrobot(wpilib.TimedRobot):
         self.leftTrigger = self.xbox_operator.getLeftTriggerAxis()
         self.rightTrigger = self.xbox_operator.getRightTriggerAxis()
         self.startButton = self.xbox_operator.getStartButton()
+        self.backButton = self.xbox_operator.getBackButton()
 
         self.readAbsoluteEncodersAndOutputToSmartDashboard()
 
@@ -634,6 +635,8 @@ class Myrobot(wpilib.TimedRobot):
         elif self.leftTrigger:
             self.shooter_pivot_control = self.shooter_pivot_sub
             self.wrist_position = WristAngleCommands.wrist_mid_action
+        elif self.backButton:
+            self.shooter_pivot_control = ShooterPivotCommands.shooter_under_chain_action
         # changes the shooter pitch angle to pitch into the amp or subwoofer speaker angle
             
         # this state machine is used to check if we have the note in our kicker and we have let go of the intake to the kicker button
