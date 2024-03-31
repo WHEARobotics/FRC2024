@@ -407,7 +407,7 @@ class Myrobot(wpilib.TimedRobot):
             
         if self.shuffle_button_1:
             if self.auto_state == 1:
-                shooter_auto_action(True)
+                shooter_auto_action(1)
                 if self.wiggleTimer.advanceIfElapsed(0.75):
                     self.auto_state = 2
         # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
@@ -443,7 +443,7 @@ class Myrobot(wpilib.TimedRobot):
         # idle state for 0.2 seconds
             elif self.auto_state == 6:
                 intake_auto_action(2)
-                self.x_speed = -0.14
+                self.x_speed = -0.17
                 if self.wiggleTimer.advanceIfElapsed(1.8):
                     self.auto_state = 7
                     self.wiggleTimer.reset()
@@ -458,8 +458,9 @@ class Myrobot(wpilib.TimedRobot):
             elif self.auto_state == 8:
                 self.x_speed = 0.0
                 kicker_auto_action(2)
-                if self.wiggleTimer.advanceIfElapsed(0.4):
+                if self.wiggleTimer.advanceIfElapsed(0.8):
                     self.auto_state = 9
+        
         # kicker intake handoff
             elif self.auto_state == 9:
                 kicker_auto_action(0)

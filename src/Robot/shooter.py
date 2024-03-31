@@ -182,7 +182,9 @@ class Shooter:
         # we might want to change this ti the sub angle to make sure its ready to shoot in autonomous
 
         self.optical_sensor = wpilib.DigitalInput(0)
-        
+
+    
+        self.moved_back = False        
         
 
 
@@ -268,7 +270,7 @@ class Shooter:
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1
             print(self.optical_sensor.get())
-            if self.optical_sensor.get() == False:
+            if self.optical_sensor.get() == False and not self.moved_back:
                 self.kicker.set(-0.4)
             else:
                 self.wiggleTimer.reset()
@@ -276,6 +278,7 @@ class Shooter:
                 self.kicker.set(0.4)
                 if self.wiggleTimer.advanceIfElapsed(0.5):
                     self.kicker.set(0.0)
+                    self.moved_back = True
         
         # the amp scoring
         elif kicker_action == ShooterKickerCommands.kicker_amp_shot: # 2:
@@ -287,9 +290,18 @@ class Shooter:
         elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
             self.kicker.set(0.08)
         elif kicker_action == ShooterKickerCommands.kicker_intake_slower:
-            self.kicker.set(-0.1)
+            if self.optical_sensor.get() == False and not self.moved_back:
+                self.kicker.set(-0.1)
+            else:
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+                self.kicker.set(0.1)
+                if self.wiggleTimer.advanceIfElapsed(0.5):
+                    self.kicker.set(0.0)
+                    self.moved_back = True
         else:
             self.kicker.set(0.0)
+            self.moved_back = False
 
         # kicker state machine
         
