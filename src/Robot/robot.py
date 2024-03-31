@@ -416,7 +416,7 @@ class Myrobot(wpilib.TimedRobot):
                 kicker_auto_action(0)
                 shooter_auto_action(False)
                 self.x_speed = 0.18
-                intake_auto_action(True)
+                intake_auto_action(1)
     
                 if self.wiggleTimer.advanceIfElapsed(2):
                     self.wiggleTimer.reset()
@@ -445,8 +445,8 @@ class Myrobot(wpilib.TimedRobot):
         # intake stops and goes back in
             elif self.auto_state == 7:
                 intake_auto_action(3)
-                self.intake_control_auto = IntakeCommands.intake_action
-                if self.wiggleTimer.advanceIfElapsed(1.0):
+                # self.intake_control_auto = IntakeCommands.intake_action
+                if self.wiggleTimer.advanceIfElapsed(0.0):
                     self.auto_state = 8
         # intake again to make sure its in
             elif self.auto_state == 8:
