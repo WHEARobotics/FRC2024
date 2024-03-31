@@ -273,10 +273,8 @@ class Shooter:
             if self.optical_sensor.get() == False and not self.moved_back:
                 self.kicker.set(-0.4)
             else:
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
                 self.kicker.set(0.4)
-                if self.wiggleTimer.advanceIfElapsed(0.5):
+                if self.wiggleTimer.advanceIfElapsed(0.2):
                     self.kicker.set(0.0)
                     self.moved_back = True
         
@@ -291,12 +289,11 @@ class Shooter:
             self.kicker.set(0.08)
         elif kicker_action == ShooterKickerCommands.kicker_intake_slower:
             if self.optical_sensor.get() == False and not self.moved_back:
+                print(self.moved_back)
                 self.kicker.set(-0.1)
             else:
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
                 self.kicker.set(0.1)
-                if self.wiggleTimer.advanceIfElapsed(0.5):
+                if self.wiggleTimer.advanceIfElapsed(0.2):
                     self.kicker.set(0.0)
                     self.moved_back = True
         else:
