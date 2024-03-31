@@ -322,6 +322,8 @@ class Myrobot(wpilib.TimedRobot):
         self.wiggleTimer.reset()
         self.wiggleTimer.start()
 
+        self.double_shot_finished = False
+
     def autonomous_periodic_aiming(self, botpose):
             
             x = botpose[0]
@@ -411,7 +413,7 @@ class Myrobot(wpilib.TimedRobot):
                 if self.wiggleTimer.advanceIfElapsed(0.75):
                     self.auto_state = 2
         # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
-            if self.auto_state == 2:
+            elif self.auto_state == 2:
                 kicker_auto_action(1)
                 if self.wiggleTimer.advanceIfElapsed(0.5):
                     self.auto_state = 3
@@ -423,11 +425,13 @@ class Myrobot(wpilib.TimedRobot):
                 shooter_auto_action(False)
                 self.x_speed = 0.18
                 intake_auto_action(1)
-    
                 if self.wiggleTimer.advanceIfElapsed(1.6):
                     self.wiggleTimer.reset()
                     self.wiggleTimer.start()
-                    self.auto_state = 4
+                    if self.double_shot_finished:
+                        self.auto_state = 10
+                    else:
+                        self.auto_state = 4
         # state 3 stop kicker and start moving back and intake
             elif self.auto_state == 4:
                 self.x_speed = 0.0
@@ -460,11 +464,16 @@ class Myrobot(wpilib.TimedRobot):
                 kicker_auto_action(2)
                 if self.wiggleTimer.advanceIfElapsed(0.8):
                     self.auto_state = 9
-        
         # kicker intake handoff
             elif self.auto_state == 9:
                 kicker_auto_action(0)
+                self.double_shot_finished = True
                 self.auto_state = 1
+            else:
+                self.x_speed = 0.0
+                shooter_auto_action(False)
+                intake_auto_action(0)
+
 
 
 
