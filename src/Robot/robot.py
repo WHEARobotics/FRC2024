@@ -33,9 +33,9 @@ class FieldPositions:
 
 @dataclass(frozen=True)
 class AutoPlan:
+    ONE_NOTE_PORT = 2
+    ONE_NOTE_STARBOARD = 1
     TWO_NOTE_CENTER = 0
-    ONE_NOTE_AUTO = 1
-    ORIGINAL_AUTO = 2
 
 @dataclass(frozen=True)
 class AutonomousControls:
@@ -159,9 +159,9 @@ class Myrobot(wpilib.TimedRobot):
         self.optical_sensor_widget = self.shuffle_tab.add("Optical sensor", False).withWidget(BuiltInWidgets.kBooleanBox).withPosition(7,0)
         self.debug_string_widget = self.shuffle_tab.add("Debug", "").withPosition(6 , 6).withSize(7,1)
         self.auto_chooser_widget = SendableChooser()
-        self.auto_chooser_widget.setDefaultOption("2-Note Center", AutoPlan.TWO_NOTE_CENTER)
-        self.auto_chooser_widget.addOption("Single note side", AutoPlan.ONE_NOTE_AUTO)
-        self.auto_chooser_widget.addOption("Third", AutoPlan.ORIGINAL_AUTO)
+        self.auto_chooser_widget.setDefaultOption("One-note STARBOARD", AutoPlan.ONE_NOTE_STARBOARD)
+        self.auto_chooser_widget.addOption("One-note PORT", AutoPlan.ONE_NOTE_PORT)
+        self.auto_chooser_widget.addOption("Two note middle", AutoPlan.TWO_NOTE_CENTER)
         self.shuffle_tab.add("Auto Selector", self.auto_chooser_widget).withSize(2, 1).withPosition(1, 2)
         self.auto_plan = self.auto_chooser_widget.getSelected()
 
@@ -376,19 +376,46 @@ class Myrobot(wpilib.TimedRobot):
                 self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
                 self.intake_control_auto = IntakeCommands.idle
             
-        if self.shuffle_button_1:
-            if self.auto_plan == AutoPlan.TWO_NOTE_CENTER:
-                self.autonomous_state_machine_two_note_center(intake_auto_action, kicker_auto_action, shooter_auto_action)
-            elif self.auto_plan == AutoPlan.ONE_NOTE_AUTO:
-                raise NotImplementedError("One note auto not implemented")
-            elif self.auto_plan == AutoPlan.ORIGINAL_AUTO:
-                raise NotImplementedError("Original auto not implemented")
-            else:
-                raise ValueError("Unknown auto plan")
+        if self.auto_plan == AutoPlan.TWO_NOTE_CENTER:
+            self.autonomous_state_machine_two_note_center(intake_auto_action, kicker_auto_action, shooter_auto_action)
+        elif self.auto_plan == AutoPlan.ONE_NOTE_STARBOARD:
+            self.autonomous_state_machine_one_note_starboard(intake_auto_action, kicker_auto_action, shooter_auto_action)
+        elif self.auto_plan == AutoPlan.ONE_NOTE_PORT:
+            self.autonomous_state_machine_one_note_port(intake_auto_action, kicker_auto_action, shooter_auto_action)
+        else:
+            raise ValueError("Unknown auto plan")
 
-            self.swerve.drive(self.x_speed, 0, 0, True)
-            self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
-            self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
+        self.swerve.drive(self.x_speed, 0, 0, True)
+        self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
+        self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
+
+    def autonomous_state_machine_one_note_starboard(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
+        """
+        This state machine is for autonomous shooting from the starboard side of the speaker.
+
+        Face the speaker.
+        If the robot is on the RIGHT side of the speaker, it is on the STARBOARD side. Otherwise, it's on the PORT side.
+        """
+        pass
+
+    def autonomous_state_machine_one_note_port(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
+        """
+        This state machine is for autonomous shooting from the port side of the speaker.
+
+        Face the speaker.
+        If the robot is on the LEFT side of the speaker, it is on the PORT side. Otherwise, it's on the STARBOARD side.
+        """
+
+        # The simplest thing that could possibly work is copying the code from `one_npte_starboard` and changing the
+        # values for y drive and rotation to be negative. This will make the robot drive in the opposite direction.
+
+        # Better would be to write a single autonomous_state_machine that took an additional Boolean argument: is_starboard.
+        # This would allow you to write a single state machine that could be used for both sides of the speaker.
+
+        # Essentially you should be able to write the code so that it works on one side and then add a single if-else
+        # block that changes the sign of the y_drive and rotation values based on the side of the speaker.
+
+        pass
 
     def autonomous_state_machine_two_note_center(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
         if self.auto_state == AutoState_TwoNote.ShooterWheelOuttake:
