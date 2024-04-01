@@ -64,6 +64,15 @@ class AutoState_TwoNote:
     KickerIntakeIdle = 9
     End = 10
 
+@dataclass(frozen=True)
+class AutoState_OneNote:
+    ShooterWheelOuttake = 1
+    KickerShot = 2
+    RollbackAndPivot = 3
+    RollbackOutOfZone = 5
+    RollbackComplete = 6
+    End = 7
+
 
 class Myrobot(wpilib.TimedRobot):
     def robotInit(self):
@@ -389,6 +398,42 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
         self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
 
+    def autonomous_state_machine_one_note_combined(self, intake_auto_action, kicker_auto_action, shooter_auto_action, is_starboard: bool):
+        """
+        This state machine is for autonomous shooting from the starboard side of the speaker.
+
+        Face the speaker.
+        If the robot is on the RIGHT side of the speaker, it is on the STARBOARD side. Otherwise, it's on the PORT side.
+        """
+        if self.auto_state == AutoState_OneNote.ShooterWheelOuttake:
+            shooter_auto_action(1)
+            if self.wiggleTimer.advanceIfElapsed(0.75):
+                self.auto_state = AutoState_OneNote.KickerShot
+        # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
+        elif self.auto_state == AutoState_OneNote.KickerShot:
+            kicker_auto_action(1)
+            if self.wiggleTimer.advanceIfElapsed(0.5):
+                self.auto_state = AutoState_OneNote.RollbackAndPivot
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+        # state 2 sets the kicker to outtake the note
+        elif self.auto_state == AutoState_OneNote.RollbackAndPivot:
+            kicker_auto_action(0)
+            shooter_auto_action(False)
+            intake_auto_action(0)
+
+            self.x_speed = 0.18
+            self.rot = 0.05 if is_starboard else -0.05
+            if self.wiggleTimer.advanceIfElapsed(1.6):
+                self.wiggleTimer.reset()
+                self.wiggleTimer.start()
+                self.auto_state = AutoState_OneNote.End
+        # state 3 stop kicker and start moving back and intake
+        elif self.auto_state == AutoState_OneNote.End:
+            self.x_speed = 0.0
+            self.wiggleTimer.reset()
+        # stop robot moving
+
     def autonomous_state_machine_one_note_starboard(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
         """
         This state machine is for autonomous shooting from the starboard side of the speaker.
@@ -396,7 +441,7 @@ class Myrobot(wpilib.TimedRobot):
         Face the speaker.
         If the robot is on the RIGHT side of the speaker, it is on the STARBOARD side. Otherwise, it's on the PORT side.
         """
-        pass
+        self.autonomous_state_machine_one_note_combined(intake_auto_action, kicker_auto_action, shooter_auto_action, is_starboard=True)
 
     def autonomous_state_machine_one_note_port(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
         """
@@ -405,17 +450,7 @@ class Myrobot(wpilib.TimedRobot):
         Face the speaker.
         If the robot is on the LEFT side of the speaker, it is on the PORT side. Otherwise, it's on the STARBOARD side.
         """
-
-        # The simplest thing that could possibly work is copying the code from `one_npte_starboard` and changing the
-        # values for y drive and rotation to be negative. This will make the robot drive in the opposite direction.
-
-        # Better would be to write a single autonomous_state_machine that took an additional Boolean argument: is_starboard.
-        # This would allow you to write a single state machine that could be used for both sides of the speaker.
-
-        # Essentially you should be able to write the code so that it works on one side and then add a single if-else
-        # block that changes the sign of the y_drive and rotation values based on the side of the speaker.
-
-        pass
+        self.autonomous_state_machine_one_note_combined(intake_auto_action, kicker_auto_action, shooter_auto_action, is_starboard=False)
 
     def autonomous_state_machine_two_note_center(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
         if self.auto_state == AutoState_TwoNote.ShooterWheelOuttake:
