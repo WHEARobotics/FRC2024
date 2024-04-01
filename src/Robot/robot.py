@@ -51,6 +51,18 @@ class AutonomousControls:
     wrist_command: WristAngleCommands
     intake_command: IntakeCommands
 
+@dataclass(frozen=True)
+class AutoState_TwoNote:
+    ShooterWheelOuttake = 1
+    KickerShot = 2
+    Rollback = 3
+    RollbackComplete = 4
+    Idle = 5
+    IntakeNoteFromFloor = 6
+    IntakeNoteInAir = 7
+    Handoff = 8
+    KickerIntakeIdle = 9
+    End = 10
 
 
 class Myrobot(wpilib.TimedRobot):
@@ -345,7 +357,7 @@ class Myrobot(wpilib.TimedRobot):
 
             self.debug_string_widget.getEntry().setString(f"iac({intake_action}) : {self.wrist_control_auto}, {self.intake_control_auto}")
 
-        def shooter_auto_action(shooter_action):
+        def shooter_auto_action(shooter_action : bool):
             if shooter_action:
                 self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
                 self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_sub_action
@@ -379,19 +391,19 @@ class Myrobot(wpilib.TimedRobot):
             self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
 
     def autonomous_state_machine_two_note_center(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
-        if self.auto_state == 1:
+        if self.auto_state == AutoState_TwoNote.ShooterWheelOuttake:
             shooter_auto_action(1)
             if self.wiggleTimer.advanceIfElapsed(0.75):
-                self.auto_state = 2
+                self.auto_state = AutoState_TwoNote.KickerShot
         # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
-        elif self.auto_state == 2:
+        elif self.auto_state == AutoState_TwoNote.KickerShot:
             kicker_auto_action(1)
             if self.wiggleTimer.advanceIfElapsed(0.5):
-                self.auto_state = 3
+                self.auto_state = AutoState_TwoNote.Rollback
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
         # state 2 sets the kicker to outtake the note
-        elif self.auto_state == 3:
+        elif self.auto_state == AutoState_TwoNote.Rollback:
             kicker_auto_action(0)
             shooter_auto_action(False)
             self.x_speed = 0.18
@@ -400,46 +412,46 @@ class Myrobot(wpilib.TimedRobot):
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
                 if self.double_shot_finished:
-                    self.auto_state = 10
+                    self.auto_state = AutoState_TwoNote.End
                 else:
-                    self.auto_state = 4
+                    self.auto_state = AutoState_TwoNote.RollbackComplete
         # state 3 stop kicker and start moving back and intake
-        elif self.auto_state == 4:
+        elif self.auto_state == AutoState_TwoNote.RollbackComplete:
             self.x_speed = 0.0
-            self.auto_state = 5
+            self.auto_state = AutoState_TwoNote.Idle
             self.wiggleTimer.reset()
         # stop robot moving
-        elif self.auto_state == 5:
+        elif self.auto_state == AutoState_TwoNote.Idle:
             self.x_speed = 0.0
             if self.wiggleTimer.advanceIfElapsed(0.2):
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
-                self.auto_state = 6
+                self.auto_state = AutoState_TwoNote.IntakeNoteFromFloor
         # idle state for 0.2 seconds
-        elif self.auto_state == 6:
+        elif self.auto_state == AutoState_TwoNote.IntakeNoteFromFloor:
             intake_auto_action(2)
             self.x_speed = -0.17
             if self.wiggleTimer.advanceIfElapsed(1.3):
-                self.auto_state = 7
+                self.auto_state = AutoState_TwoNote.IntakeNoteInAir
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
         # intake stops and goes back in
-        elif self.auto_state == 7:
+        elif self.auto_state == AutoState_TwoNote.IntakeNoteInAir:
             intake_auto_action(3)
             self.intake_control_auto = IntakeCommands.intake_action
             if self.wiggleTimer.advanceIfElapsed(0.3):
-                self.auto_state = 8
+                self.auto_state = AutoState_TwoNote.Handoff
         # intake again to make sure its in
-        elif self.auto_state == 8:
+        elif self.auto_state == AutoState_TwoNote.Handoff:
             self.x_speed = 0.0
             kicker_auto_action(2)
             if self.wiggleTimer.advanceIfElapsed(0.8):
-                self.auto_state = 9
+                self.auto_state = AutoState_TwoNote.KickerIntakeIdle
         # kicker intake handoff
-        elif self.auto_state == 9:
+        elif self.auto_state == AutoState_TwoNote.KickerIntakeIdle:
             kicker_auto_action(0)
             self.double_shot_finished = True
-            self.auto_state = 1
+            self.auto_state = AutoState_TwoNote.ShooterWheelOuttake
         else:
             self.x_speed = 0.0
             shooter_auto_action(False)
