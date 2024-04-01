@@ -246,6 +246,8 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousInit(self):
         """ Initialize for autonomous here."""
+        self.auto_plan = self.auto_chooser_widget.getSelected()
+
         self.autonomous_state = self.AUTONOMOUS_STATE_AIMING
 
         self.auto_state = 1
@@ -267,7 +269,6 @@ class Myrobot(wpilib.TimedRobot):
         self.double_shot_finished = False
 
     def autonomous_periodic_aiming(self, botpose):
-            
             x = botpose[0]
             y = botpose[1]
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
