@@ -3,6 +3,8 @@ from rev import CANSparkLowLevel
 import wpilib
 import time
 from wpilib import DutyCycleEncoder
+from wpimath.units import meters
+
 from shooterdropcompensation import compensation, compensation_table
 import dataclasses
 from dataclasses import dataclass
@@ -194,7 +196,7 @@ class Shooter:
 
 
 
-    def periodic(self, distance_to_speaker_m, shooter_pivot_pos, shooter_control, kicker_action):
+    def periodic(self, distance_to_speaker_m : meters, shooter_pivot_pos : ShooterPivotCommands, shooter_control: ShooterControlCommands, kicker_action: ShooterKickerCommands):
 
         self.absolute_encoder_pos = self.absolute_encoder.getAbsolutePosition()
 

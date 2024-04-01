@@ -102,7 +102,7 @@ class Intake:
       
         self.wrist_encoder = self.wrist_motor.getEncoder()
 
-    def periodic(self, wrist_pos, intake_control):
+    def periodic(self, wrist_pos: WristAngleCommands, intake_control: IntakeCommands):
         wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_pos}')
 
 

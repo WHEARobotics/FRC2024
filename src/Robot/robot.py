@@ -12,6 +12,7 @@ import math
 from dataclasses import dataclass
 import ntcore
 import rev
+from wpimath.units import meters
 
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
@@ -35,6 +36,22 @@ class AutoPlan:
     TWO_NOTE_CENTER = 0
     ONE_NOTE_AUTO = 1
     ORIGINAL_AUTO = 2
+
+@dataclass(frozen=True)
+class AutonomousControls:
+    x_drive_pct: float # -1 to 1
+    y_drive_pct: float # -1 to 1
+    rot_drive_pct: float # -1 to 1
+
+    distance_to_speaker_m: meters
+    shooter_pivot_command: ShooterPivotCommands
+    shooter_control_command: ShooterControlCommands
+    kicker_command: ShooterKickerCommands
+
+    wrist_command: WristAngleCommands
+    intake_command: IntakeCommands
+
+
 
 class Myrobot(wpilib.TimedRobot):
     def robotInit(self):
@@ -428,7 +445,14 @@ class Myrobot(wpilib.TimedRobot):
             shooter_auto_action(False)
             intake_auto_action(0)
 
-        return self.x_speed, 0, 0
+        # This isn't used yet, but notice that it contains all the values that will be passed to the drive, shooter, and intake
+        return AutonomousControls(
+            x_drive_pct=self.x_speed, y_drive_pct=0, rot_drive_pct=0,
+            distance_to_speaker_m=0,
+            shooter_pivot_command=self.shooter_pivot_auto, shooter_control_command=self.shooter_control_auto,
+            kicker_command=self.shooter_kicker_auto,
+            wrist_command=self.wrist_control_auto,
+            intake_command=self.intake_control_auto)
 
     def autonomousExit(self):
         pass
