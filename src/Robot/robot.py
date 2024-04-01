@@ -14,6 +14,7 @@ import ntcore
 import rev
 from wpimath.units import meters
 
+from Robot.twonoteautonomous import TwoNoteAutonomous
 from vision import Vision #Vision file import
 from CrescendoSwerveDrivetrain import CrescendoSwerveDrivetrain
 from CrescendoSwerveModule import CrescendoSwerveModule
@@ -36,33 +37,6 @@ class AutoPlan:
     TWO_NOTE_CENTER = 0
     ONE_NOTE_AUTO = 1
     ORIGINAL_AUTO = 2
-
-@dataclass(frozen=True)
-class AutonomousControls:
-    x_drive_pct: float # -1 to 1
-    y_drive_pct: float # -1 to 1
-    rot_drive_pct: float # -1 to 1
-
-    distance_to_speaker_m: meters
-    shooter_pivot_command: ShooterPivotCommands
-    shooter_control_command: ShooterControlCommands
-    kicker_command: ShooterKickerCommands
-
-    wrist_command: WristAngleCommands
-    intake_command: IntakeCommands
-
-@dataclass(frozen=True)
-class AutoState_TwoNote:
-    ShooterWheelOuttake = 1
-    KickerShot = 2
-    Rollback = 3
-    RollbackComplete = 4
-    Idle = 5
-    IntakeNoteFromFloor = 6
-    IntakeNoteInAir = 7
-    Handoff = 8
-    KickerIntakeIdle = 9
-    End = 10
 
 
 class Myrobot(wpilib.TimedRobot):
@@ -343,131 +317,20 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousPeriodic(self):
         self.botpose = self.vision.checkBotpose()
-
-        def intake_auto_action(intake_action):
-            if intake_action == 1:
-                self.intake_control_auto = IntakeCommands.intake_action
-                self.wrist_control_auto = WristAngleCommands.wrist_intake_action
-            elif intake_auto_action == 2:
-                self.wrist_control_auto = WristAngleCommands.wrist_stow_action
-                self.intake_control_auto = IntakeCommands.intake_action
-            else:
-                self.intake_control_auto = IntakeCommands.idle
-                self.wrist_control_auto = WristAngleCommands.wrist_stow_action
-
-            self.debug_string_widget.getEntry().setString(f"iac({intake_action}) : {self.wrist_control_auto}, {self.intake_control_auto}")
-
-        def shooter_auto_action(shooter_action : bool):
-            if shooter_action:
-                self.shooter_control_auto = ShooterControlCommands.shooter_wheel_outtake
-                self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_sub_action
-                self.wrist_control_auto = WristAngleCommands.wrist_mid_action
-            else:
-                self.shooter_pivot_auto = ShooterPivotCommands.shooter_pivot_feeder_action
-                self.shooter_control_auto = ShooterControlCommands.shooter_wheel_idle
-
-        def kicker_auto_action(kicker_action = 0): # use 1 for shooting, 2 for intaking, 0 for idle
-            if kicker_action == 1:
-                self.shooter_kicker_auto = ShooterKickerCommands.kicker_shot
-            elif kicker_action == 2:
-                self.shooter_kicker_auto = ShooterKickerCommands.kicker_intake_slower
-                self.intake_control_auto = IntakeCommands.outtake_action
-            else:
-                self.shooter_kicker_auto = ShooterKickerCommands.kicker_idle
-                self.intake_control_auto = IntakeCommands.idle
-            
         if self.shuffle_button_1:
             if self.auto_plan == AutoPlan.TWO_NOTE_CENTER:
-                self.autonomous_state_machine_two_note_center(intake_auto_action, kicker_auto_action, shooter_auto_action)
+                chosen_state_machine = TwoNoteAutonomous()
             elif self.auto_plan == AutoPlan.ONE_NOTE_AUTO:
                 raise NotImplementedError("One note auto not implemented")
             elif self.auto_plan == AutoPlan.ORIGINAL_AUTO:
                 raise NotImplementedError("Original auto not implemented")
             else:
                 raise ValueError("Unknown auto plan")
+        controls = chosen_state_machine.periodic()
+        self.swerve.drive(controls.x_drive_pct, controls.y_drive_pct, controls.rot_drive_pct)
+        self.shooter.periodic(controls.distance_to_speaker_m, controls.shooter_pivot_command, controls.shooter_control_command, controls.kicker_command)
+        self.intake.periodic(controls.wrist_command, controls.intake_command)
 
-            self.swerve.drive(self.x_speed, 0, 0, True)
-            self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
-            self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
-
-    def autonomous_state_machine_two_note_center(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
-        if self.auto_state == AutoState_TwoNote.ShooterWheelOuttake:
-            shooter_auto_action(1)
-            if self.wiggleTimer.advanceIfElapsed(0.75):
-                self.auto_state = AutoState_TwoNote.KickerShot
-        # state 1 sets the shooter flywheels up and the shooter_pivot moves to sub angle
-        elif self.auto_state == AutoState_TwoNote.KickerShot:
-            kicker_auto_action(1)
-            if self.wiggleTimer.advanceIfElapsed(0.5):
-                self.auto_state = AutoState_TwoNote.Rollback
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-        # state 2 sets the kicker to outtake the note
-        elif self.auto_state == AutoState_TwoNote.Rollback:
-            kicker_auto_action(0)
-            shooter_auto_action(False)
-            self.x_speed = 0.18
-            intake_auto_action(1)
-            if self.wiggleTimer.advanceIfElapsed(1.6):
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-                if self.double_shot_finished:
-                    self.auto_state = AutoState_TwoNote.End
-                else:
-                    self.auto_state = AutoState_TwoNote.RollbackComplete
-        # state 3 stop kicker and start moving back and intake
-        elif self.auto_state == AutoState_TwoNote.RollbackComplete:
-            self.x_speed = 0.0
-            self.auto_state = AutoState_TwoNote.Idle
-            self.wiggleTimer.reset()
-        # stop robot moving
-        elif self.auto_state == AutoState_TwoNote.Idle:
-            self.x_speed = 0.0
-            if self.wiggleTimer.advanceIfElapsed(0.2):
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-                self.auto_state = AutoState_TwoNote.IntakeNoteFromFloor
-        # idle state for 0.2 seconds
-        elif self.auto_state == AutoState_TwoNote.IntakeNoteFromFloor:
-            intake_auto_action(2)
-            self.x_speed = -0.17
-            if self.wiggleTimer.advanceIfElapsed(1.3):
-                self.auto_state = AutoState_TwoNote.IntakeNoteInAir
-                self.wiggleTimer.reset()
-                self.wiggleTimer.start()
-        # intake stops and goes back in
-        elif self.auto_state == AutoState_TwoNote.IntakeNoteInAir:
-            intake_auto_action(3)
-            self.intake_control_auto = IntakeCommands.intake_action
-            if self.wiggleTimer.advanceIfElapsed(0.3):
-                self.auto_state = AutoState_TwoNote.Handoff
-        # intake again to make sure its in
-        elif self.auto_state == AutoState_TwoNote.Handoff:
-            self.x_speed = 0.0
-            kicker_auto_action(2)
-            if self.wiggleTimer.advanceIfElapsed(0.8):
-                self.auto_state = AutoState_TwoNote.KickerIntakeIdle
-        # kicker intake handoff
-        elif self.auto_state == AutoState_TwoNote.KickerIntakeIdle:
-            kicker_auto_action(0)
-            self.double_shot_finished = True
-            self.auto_state = AutoState_TwoNote.ShooterWheelOuttake
-        elif self.auto_state == AutoState_TwoNote.End:
-            # Final state. Just make it explicit.
-            self.x_speed = 0.0
-        else:
-            self.x_speed = 0.0
-            shooter_auto_action(False)
-            intake_auto_action(0)
-
-        # This isn't used yet, but notice that it contains all the values that will be passed to the drive, shooter, and intake
-        return AutonomousControls(
-            x_drive_pct=self.x_speed, y_drive_pct=0, rot_drive_pct=0,
-            distance_to_speaker_m=0,
-            shooter_pivot_command=self.shooter_pivot_auto, shooter_control_command=self.shooter_control_auto,
-            kicker_command=self.shooter_kicker_auto,
-            wrist_command=self.wrist_control_auto,
-            intake_command=self.intake_control_auto)
 
     def autonomousExit(self):
         pass
