@@ -452,6 +452,9 @@ class Myrobot(wpilib.TimedRobot):
             kicker_auto_action(0)
             self.double_shot_finished = True
             self.auto_state = AutoState_TwoNote.ShooterWheelOuttake
+        elif self.auto_state == AutoState_TwoNote.End:
+            # Final state. Just make it explicit.
+            self.x_speed = 0.0
         else:
             self.x_speed = 0.0
             shooter_auto_action(False)
