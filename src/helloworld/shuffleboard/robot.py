@@ -7,6 +7,11 @@ from ntcore._ntcore import Value as ntV
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import meters, degrees
 
+@dataclass(Frozen=True)
+class AutoPlan:
+    TWO_NOTE_CENTER = 0
+    ONE_NOTE_AUTO = 1
+    ORIGINAL_AUTO = 2
 
 class ShuffleTab:
     def __init__(self, tab_name : str):
@@ -72,6 +77,13 @@ class ShuffleTab:
             .withPosition(7, 2)
         )
 
+        self.auto_chooser_widget = SendableChooser()
+        self.auto_chooser_widget.setDefaultOption("2-Note Center", AutoPlan.TWO_NOTE_CENTER)
+        self.auto_chooser_widget.addOption("Single note side", AutoPlan.SINGLE_NOTE_SIDE)
+        self.auto_chooser_widget.addOption("Third", "Third", AutoPlan.OTHER)
+        self.tab.add("Auto Selector", self.auto_chooser_widget).withSize(2, 1).withPosition(1, 2)
+        self.auto_plan = self.auto_chooser_widget.getSelected()
+
     def setBotPosition(self, x : meters, y : meters, angle : degrees):
         ### Convert bot position to use Limelight-style coordinates (0,0 is the center of the field)
         x = x + 8.27
@@ -91,6 +103,14 @@ class ShuffleBoardReadWriteBot(wpilib.TimedRobot):
         # How to write a value to Shuffleboard
         self.shuffle_tab.info_entry.setString("New information")
         self.shuffle_tab.distance_entry.setDouble(5.0)
+
+        self.auto_plan = self.shuffle_tab.auto_chooser_widget.getSelected()
+        if self.auto_plan == AutoPlan.TWO_NOTE_CENTER:
+            print("Two note center")
+        elif self.auto_plan == AutoPlan.SINGLE_NOTE_SIDE:
+            print("Single note side")
+        else:
+            print("Other")
 
     def teleopPeriodic(self):
         # How to read a value from Shuffleboard live
