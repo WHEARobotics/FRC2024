@@ -634,7 +634,7 @@ class Myrobot(wpilib.TimedRobot):
         elif self.rightTrigger:
             self.kicker_action = ShooterKickerCommands.kicker_shot
         elif self.LeftBumper:
-            self.intake_control = IntakeCommands.outtake_shot_action
+            self.intake.intake_move_on_init = True
         elif self.RightBumper:
             self.intake_control = IntakeCommands.intake_action
 

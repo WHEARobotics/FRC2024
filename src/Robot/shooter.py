@@ -305,8 +305,7 @@ class Shooter:
         elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
             self.kicker.set(0.08)
         elif kicker_action == ShooterKickerCommands.kicker_intake_slower:
-            if self.optical_sensor.get():
-                print(self.moved_back)
+            if self.optical_sensor.get() == False:
                 self.kicker.set(-0.1)
             else:
                 self.kicker.set(0.1)
