@@ -171,6 +171,7 @@ class Myrobot(wpilib.TimedRobot):
         self.auto_chooser_widget.setDefaultOption("One-note STARBOARD", AutoPlan.ONE_NOTE_STARBOARD)
         self.auto_chooser_widget.addOption("One-note PORT", AutoPlan.ONE_NOTE_PORT)
         self.auto_chooser_widget.addOption("Two note middle", AutoPlan.TWO_NOTE_CENTER)
+        self.auto_chooser_widget.addOption("One-note", AutoPlan.ONE_NOTE)
         self.shuffle_tab.add("Auto Selector", self.auto_chooser_widget).withSize(2, 1).withPosition(1, 2)
         self.auto_plan = self.auto_chooser_widget.getSelected()
 
@@ -391,10 +392,12 @@ class Myrobot(wpilib.TimedRobot):
             self.autonomous_state_machine_one_note_starboard(intake_auto_action, kicker_auto_action, shooter_auto_action)
         elif self.auto_plan == AutoPlan.ONE_NOTE_PORT:
             self.autonomous_state_machine_one_note_port(intake_auto_action, kicker_auto_action, shooter_auto_action)
+        elif self.auto_plan == AutoPlan.ONE_NOTE:
+            self.autonomous_state_machine_one_note_port(intake_auto_action, kicker_auto_action, shooter_auto_action)
         else:
             raise ValueError("Unknown auto plan")
 
-        self.swerve.drive(self.x_speed, 0, self.rot, True)
+        self.swerve.drive(self.x_speed, self.y_speed, self.rot, True)
         print(f"Autoplan s {self.auto_plan} and Self.rot is {self.rot}")
         self.shooter.periodic(0, self.shooter_pivot_auto, self.shooter_control_auto, self.shooter_kicker_auto)
         self.intake.periodic(self.wrist_control_auto, self.intake_control_auto)
@@ -423,8 +426,8 @@ class Myrobot(wpilib.TimedRobot):
             shooter_auto_action(False)
             intake_auto_action(0)
 
-            self.x_speed = 0.18
-            self.rot = -0.25 if self.auto_plan == AutoPlan.ONE_NOTE_STARBOARD else + 0.25
+            self.x_speed = 0.14
+            self.y_speed = -0.15 if self.auto_plan == AutoPlan.ONE_NOTE_STARBOARD else + 0.15
             if self.wiggleTimer.advanceIfElapsed(1.6):
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
@@ -432,6 +435,7 @@ class Myrobot(wpilib.TimedRobot):
         # state 3 stop kicker and start moving back and intake
         elif self.auto_state == AutoState_OneNote.End:
             self.x_speed = 0.0
+            self.y_speed = 0.0
             self.rot = 0.0
             self.wiggleTimer.reset()
         # stop robot moving
