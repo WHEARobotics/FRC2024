@@ -33,6 +33,7 @@ class FieldPositions:
 
 @dataclass(frozen=True)
 class AutoPlan:
+    ONE_NOTE = 3
     ONE_NOTE_PORT = 2
     ONE_NOTE_STARBOARD = 1
     TWO_NOTE_CENTER = 0
@@ -417,7 +418,10 @@ class Myrobot(wpilib.TimedRobot):
         elif self.auto_state == AutoState_OneNote.KickerShot:
             kicker_auto_action(1)
             if self.wiggleTimer.advanceIfElapsed(0.5):
-                self.auto_state = AutoState_OneNote.RollbackAndPivot
+                if self.auto_plan != AutoPlan.ONE_NOTE:
+                    self.auto_state = AutoState_OneNote.RollbackAndPivot
+                else:
+                    self.auto_state = AutoState_OneNote.End
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
         # state 2 sets the kicker to outtake the note
@@ -428,7 +432,7 @@ class Myrobot(wpilib.TimedRobot):
 
             self.x_speed = 0.14
             self.y_speed = -0.15 if self.auto_plan == AutoPlan.ONE_NOTE_STARBOARD else + 0.15
-            if self.wiggleTimer.advanceIfElapsed(1.6):
+            if self.wiggleTimer.advanceIfElapsed(1.9):
                 self.wiggleTimer.reset()
                 self.wiggleTimer.start()
                 self.auto_state = AutoState_OneNote.End
@@ -438,6 +442,9 @@ class Myrobot(wpilib.TimedRobot):
             self.y_speed = 0.0
             self.rot = 0.0
             self.wiggleTimer.reset()
+            kicker_auto_action(0)
+            shooter_auto_action(False)
+            intake_auto_action(0)
         # stop robot moving
 
     def autonomous_state_machine_one_note_starboard(self, intake_auto_action, kicker_auto_action, shooter_auto_action):

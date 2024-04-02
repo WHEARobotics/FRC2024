@@ -190,7 +190,8 @@ class Shooter:
         self.optical_sensor = wpilib.DigitalInput(0)
 
     
-        self.moved_back = False        
+        self.adjust_state = "Idle"
+        self.kicker_past_action = ShooterKickerCommands.kicker_idle
         
 
 
@@ -273,19 +274,27 @@ class Shooter:
         else:
             self.set_speed = 0.0
         self.shooter_wheel.set(self.set_speed)
+
+        print(self.adjust_state)
         
 
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1
-            print(self.optical_sensor.get())
-            if self.optical_sensor.get() == False and not self.moved_back:
-                self.kicker.set(-0.4)
-            else:
-                self.kicker.set(0.4)
+            if self.kicker_past_action != ShooterKickerCommands.kicker_intake:
+                self.adjust_state = "Handoff"
+            if self.adjust_state == "Handoff": 
+                if self.optical_sensor.get() == False:
+                    self.kicker.set(-0.4)
+                else:
+                    self.adjust_state = "Back"
+                    self.wiggleTimer.reset()
+            elif self.adjust_state == "Back":
+                self.kicker.set(0.1)
                 if self.wiggleTimer.advanceIfElapsed(0.2):
-                    self.kicker.set(0.0)
-                    self.moved_back = True
-        
+                    self.adjust_state = "Idle"
+            else:
+                self.kicker.set(0.0)
+                        
         # the amp scoring
         elif kicker_action == ShooterKickerCommands.kicker_amp_shot: # 2:
             self.kicker.set(0.3)
@@ -296,21 +305,25 @@ class Shooter:
         elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
             self.kicker.set(0.08)
         elif kicker_action == ShooterKickerCommands.kicker_intake_slower:
-            if self.optical_sensor.get() == False and not self.moved_back:
+            if self.optical_sensor.get():
                 print(self.moved_back)
                 self.kicker.set(-0.1)
             else:
                 self.kicker.set(0.1)
                 if self.wiggleTimer.advanceIfElapsed(0.2):
                     self.kicker.set(0.0)
-                    self.moved_back = True
+               
+
         else:
             self.kicker.set(0.0)
-            self.moved_back = False
 
-        # kicker state machine
+        # kicker state 
+            
+        #step 1, store the last kicker action.
         
         wpilib.SmartDashboard.putString('DB/String 6',f"{kicker_action}")
+
+        self.kicker_past_action = kicker_action
 
 
        
