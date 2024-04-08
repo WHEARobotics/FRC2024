@@ -145,9 +145,9 @@ class Myrobot(wpilib.TimedRobot):
         # speed values for the swerve to be changed throughout the different states to drive
         # it would be a good idea to set them in every state and make sure they are 0.0 when we dont want to move
 
-        self.wiggleTimer = wpilib.Timer()
+        self.wiggleTimer = wpilib.Timer() # timer used for many different actions like in autonomous to time something for certain periods of time
 
-        wpilib.CameraServer.launch()
+        wpilib.CameraServer.launch() # launches the camera server to be able to get communications in the smartdashboard from a camera on the robot.
 
         self.shuffle_tab = Shuffleboard.getTab("status")
         self.gyro_widget = self.shuffle_tab.add("gyro", 0).withWidget(BuiltInWidgets.kGyro).withSize(2,2)
@@ -169,8 +169,8 @@ class Myrobot(wpilib.TimedRobot):
         self.optical_sensor_widget = self.shuffle_tab.add("Optical sensor", False).withWidget(BuiltInWidgets.kBooleanBox).withPosition(7,0)
         self.debug_string_widget = self.shuffle_tab.add("Debug", "").withPosition(6 , 6).withSize(7,1)
         self.auto_chooser_widget = SendableChooser()
-        self.auto_chooser_widget.setDefaultOption("One-note STARBOARD", AutoPlan.ONE_NOTE_STARBOARD)
-        self.auto_chooser_widget.addOption("One-note PORT", AutoPlan.ONE_NOTE_PORT)
+        self.auto_chooser_widget.setDefaultOption("One-note Left", AutoPlan.ONE_NOTE_STARBOARD) # TO DO Left is starboard(supposed to be right) and port is right(supposed to be left)
+        self.auto_chooser_widget.addOption("One-note Right", AutoPlan.ONE_NOTE_PORT)# switch all references of starboard in the code to Left and port to Right.
         self.auto_chooser_widget.addOption("Two note middle", AutoPlan.TWO_NOTE_CENTER)
         self.auto_chooser_widget.addOption("One-note", AutoPlan.ONE_NOTE)
         self.shuffle_tab.add("Auto Selector", self.auto_chooser_widget).withSize(2, 1).withPosition(1, 2)
@@ -208,7 +208,7 @@ class Myrobot(wpilib.TimedRobot):
         self.shooter_flywheel_speed = self.shooter.shooter_wheel_encoder.getCountsPerRevolution()
 
         self.wrist_encoder_degrees = self.intake.wrist_encoder.getPosition() * to_degrees
-        self.wrist_limit_switch = self.intake.wrist_limit_switch.get()
+        self.wrist_limit_switch = self.intake.wrist_limit_switch
         self.wrist_desired_pos = self.intake.desired_angle
 
     def outputToSmartDashboard(self) :
@@ -228,6 +228,8 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 5',"Enc Back Right {:4.3f}".format( self.absEnc4))
         wpilib.SmartDashboard.putString('DB/String 4',"Enc Front Left {:4.3f}".format( self.absEnc3))
         wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
+        wpilib.SmartDashboard.putString('DB/String 2',"Lim {:4.3f}".format(self.wrist_limit_switch.get()))
+        print(f"limit switch: {self.wrist_limit_switch.get()}")
 
         wpilib.SmartDashboard.putString('DB/String 7',"Optical sensor {:4.3f}".format(self.shooter.optical_sensor.get()))
 
@@ -409,6 +411,7 @@ class Myrobot(wpilib.TimedRobot):
 
         Face the speaker.
         If the robot is on the RIGHT side of the speaker, it is on the STARBOARD side. Otherwise, it's on the PORT side.
+        then the robot drives back with x an y so it stays on a sideways angle but still drives back relatively straight
         """
         if self.auto_state == AutoState_OneNote.ShooterWheelOuttake:
             shooter_auto_action(1)
@@ -466,6 +469,10 @@ class Myrobot(wpilib.TimedRobot):
         self.autonomous_state_machine_one_note_combined(intake_auto_action, kicker_auto_action, shooter_auto_action, is_starboard=False)
 
     def autonomous_state_machine_two_note_center(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
+        """
+        this autonomous state machine starts by speeding the flywheels, shooting the note, driving back and intaking, then handing off while driving to the original spot, and then
+        scoring the second piece and driving back out and stopping.
+        """
         if self.auto_state == AutoState_TwoNote.ShooterWheelOuttake:
             shooter_auto_action(1)
             if self.wiggleTimer.advanceIfElapsed(0.75):
@@ -515,12 +522,13 @@ class Myrobot(wpilib.TimedRobot):
             intake_auto_action(3)
             self.intake_control_auto = IntakeCommands.intake_action
             if self.wiggleTimer.advanceIfElapsed(0.3):
+                self.wiggleTimer.reset()
                 self.auto_state = AutoState_TwoNote.Handoff
         # intake again to make sure its in
         elif self.auto_state == AutoState_TwoNote.Handoff:
             self.x_speed = 0.0
             kicker_auto_action(2)
-            if self.wiggleTimer.advanceIfElapsed(0.8):
+            if self.wiggleTimer.advanceIfElapsed(0.9):
                 self.auto_state = AutoState_TwoNote.KickerIntakeIdle
         # kicker intake handoff
         elif self.auto_state == AutoState_TwoNote.KickerIntakeIdle:
@@ -530,6 +538,7 @@ class Myrobot(wpilib.TimedRobot):
         elif self.auto_state == AutoState_TwoNote.End:
             # Final state. Just make it explicit.
             self.x_speed = 0.0
+            intake_auto_action(0)
         else:
             self.x_speed = 0.0
             shooter_auto_action(False)
@@ -659,6 +668,7 @@ class Myrobot(wpilib.TimedRobot):
         elif self.leftTrigger:
             self.shooter_pivot_control = self.shooter_pivot_sub
             self.wrist_position = WristAngleCommands.wrist_mid_action
+            self.shooter_control = ShooterControlCommands.shooter_wheel_outtake
         elif self.backButton:
             self.shooter_pivot_control = ShooterPivotCommands.shooter_under_chain_action
 

@@ -105,6 +105,8 @@ class Intake:
     def periodic(self, wrist_pos: WristAngleCommands, intake_control: IntakeCommands):
         wpilib.SmartDashboard.putString("DB/String 1", f'wrist pos {wrist_pos}')
 
+        print(f"wrist limit: {self.wrist_limit_switch.get()}")
+
 
         if self.wrist_limit_switch.get() == True:
             self.wrist_encoder.setPosition(0.0)
@@ -138,7 +140,7 @@ class Intake:
 
 
         if intake_control == IntakeCommands.intake_action:
-            self.set_speed =  -0.4
+            self.set_speed =  -0.6
             self.intake_state = 1
         elif intake_control == IntakeCommands.outtake_action:
             self.set_speed = 0.3
@@ -153,7 +155,7 @@ class Intake:
 
     def DegToTurnCount(self, deg):
         '''Convert intake "wrist" angle in degrees to turns (rotations) of motor shaft.'''
-        return deg * (1.0/360.0) * self.WRIST_GEAR_RATIO
+        return deg * (1.0 / 360.0) * self.WRIST_GEAR_RATIO
 
     def TurnCountToDeg(self, count):
         '''Convert turns (rotations) of motor shaft to angle in degrees of intake "wrist".'''

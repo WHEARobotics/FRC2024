@@ -37,6 +37,12 @@ class ShooterControlCommands:
     shooter_wheel_intake = 2
     shooter_wheel_outtake = 3
 
+@dataclass(frozen=True)
+class OpticalPushbackCommands:
+    HandoffState = 1
+    AdjustState = 2
+    IdleState = 3
+
 
 class Shooter:
     def __init__(self) -> None:
@@ -165,7 +171,7 @@ class Shooter:
 
         self.wiggleTimer = wpilib.Timer()
         self.wiggleTimer.start()
-        time.sleep(1.5)
+        time.sleep(1.1)
         self.corrected_encoder_pos = self.correctedEncoderPosition()
         wpilib.SmartDashboard.putString("DB/String 0", f"init cep {self.corrected_encoder_pos:.3f}")
         self.shooter_pivot_encoder.setPosition(self.corrected_encoder_pos * self.SHOOTER_PIVOT_GEAR_RATIO)
@@ -190,7 +196,7 @@ class Shooter:
         self.optical_sensor = wpilib.DigitalInput(0)
 
     
-        self.adjust_state = "Idle"
+        self.adjust_state = OpticalPushbackCommands.IdleState
         self.kicker_past_action = ShooterKickerCommands.kicker_idle
         
 
@@ -281,17 +287,17 @@ class Shooter:
         # intake with kicker wheels when handoff
         if kicker_action == ShooterKickerCommands.kicker_intake: # 1
             if self.kicker_past_action != ShooterKickerCommands.kicker_intake:
-                self.adjust_state = "Handoff"
-            if self.adjust_state == "Handoff": 
+                self.adjust_state = OpticalPushbackCommands.HandoffState
+            if self.adjust_state == OpticalPushbackCommands.HandoffState:
                 if self.optical_sensor.get() == False:
                     self.kicker.set(-0.4)
                 else:
-                    self.adjust_state = "Back"
+                    self.adjust_state = OpticalPushbackCommands.AdjustState
                     self.wiggleTimer.reset()
-            elif self.adjust_state == "Back":
+            elif self.adjust_state == OpticalPushbackCommands.AdjustState:
                 self.kicker.set(0.1)
-                if self.wiggleTimer.advanceIfElapsed(0.2):
-                    self.adjust_state = "Idle"
+                if self.wiggleTimer.advanceIfElapsed(0.3):
+                    self.adjust_state = OpticalPushbackCommands.IdleState
             else:
                 self.kicker.set(0.0)
                         
@@ -305,12 +311,7 @@ class Shooter:
         elif kicker_action == ShooterKickerCommands.kicker_adjustment: # 4
             self.kicker.set(0.08)
         elif kicker_action == ShooterKickerCommands.kicker_intake_slower:
-            if self.optical_sensor.get() == False:
                 self.kicker.set(-0.1)
-            else:
-                self.kicker.set(0.1)
-                if self.wiggleTimer.advanceIfElapsed(0.2):
-                    self.kicker.set(0.0)
                
 
         else:
