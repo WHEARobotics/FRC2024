@@ -7,9 +7,9 @@ import time # Temporary for diagnostics
 class Vision:
                                                      
     
-    def __init__(self, desired_auto_x, speaker_x) -> None:
-        self.desired_x_for_autonomous_driving = desired_auto_x
-        self.speaker_x = speaker_x
+    def __init__(self) -> None:
+        # self.desired_x_for_autonomous_driving = desired_auto_x
+        # self.speaker_x = speaker_x
 
         self.networktables = ntcore.NetworkTableInstance.getDefault()
         self.limelight_table = self.networktables.getTable("limelight")
@@ -22,6 +22,11 @@ class Vision:
         if botpose is not None: # and len(botpose > 3) and botpose[0] + botpose[1] + int(botpose[2] != 0):  <- the code behind gives an error saying you cannot combine ints and lists
             self.botpose = botpose
         return self.botpose
+    
+    def calculate_desired_x_distance(self, desired_x, bot_x):
+        desired_pos = desired_x - bot_x
+        return desired_pos
+            
 
     def calculate_desired_direction(self, desired_angle, current_angle):
         """
@@ -63,42 +68,42 @@ class Vision:
     
     def get_rotation_autonomous_periodic_for_speaker_shot(self, botpose, current_yaw):
         x = botpose[0]
-        desired_x = self.desired_x_for_autonomous_driving
+        # desired_x = self.desired_x_for_autonomous_driving
         y = botpose[1]
        
 
         speaker_y = 1.44 # 
-        distance_to_wall = (self.speaker_x - x) #Ajd
-        distance_to_speaker_y = (speaker_y - y) #Opp
-        # speaker_distance = self.distance_to_speaker(x, y, speaker_x, speaker_y) #Hy
+        # distance_to_wall = (self.speaker_x - x) #Ajd
+        # distance_to_speaker_y = (speaker_y - y) #Opp
+        # # speaker_distance = self.distance_to_speaker(x, y, speaker_x, speaker_y) #Hy
 
-        desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
+        # desired_bot_angle = self.calculate_desired_angle(distance_to_speaker_y, distance_to_wall)
 
 
-        direction_to_travel = self.calculate_desired_direction(desired_bot_angle, current_yaw)
+        # direction_to_travel = self.calculate_desired_direction(desired_bot_angle, current_yaw)
         # direction_to_travel = self.radians_to_degrees(direction_to_travel_rad)
-        x_distance_to_travel = (desired_x - x)
-        x_kp = 0.007
-        x_max_speed = 0.2
-        x_speed = x_kp * x_distance_to_travel
+        # x_distance_to_travel = (desired_x - x)
+        # x_kp = 0.007
+        # x_max_speed = 0.2
+        # # x_speed = x_kp * x_distance_to_travel
 
-        yaw_kp = 0.007
-        max_rot_value = 0.3
-        rot = yaw_kp * direction_to_travel
+        # yaw_kp = 0.007
+        # max_rot_value = 0.3
+        # rot = yaw_kp * direction_to_travel
         # this acts like the p value in a pid loop for the rotation action
 
-        if x_speed > x_max_speed:
-            x_speed = x_max_speed
-        elif x_speed < -x_max_speed:
-            x_speed = -x_max_speed
+        # if x_speed > x_max_speed:
+        #     x_speed = x_max_speed
+        # elif x_speed < -x_max_speed:
+        #     x_speed = -x_max_speed
 
-        if rot > max_rot_value:
-            rot = max_rot_value
-        elif rot < -max_rot_value: 
-            rot = -max_rot_value
-            # this sets makes sure that the rot value does not pass the maximum we give
+        # if rot > max_rot_value:
+        #     rot = max_rot_value
+        # elif rot < -max_rot_value: 
+        #     rot = -max_rot_value
+        #     # this sets makes sure that the rot value does not pass the maximum we give
 
-        return rot, direction_to_travel
+        # return rot, direction_to_travel
 
     
 

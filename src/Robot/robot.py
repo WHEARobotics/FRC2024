@@ -33,6 +33,7 @@ class FieldPositions:
 
 @dataclass(frozen=True)
 class AutoPlan:
+    TEST = 4
     ONE_NOTE = 3
     ONE_NOTE_PORT = 2
     ONE_NOTE_STARBOARD = 1
@@ -80,6 +81,8 @@ class Myrobot(wpilib.TimedRobot):
         """ Robot initialization. Run once on startup. Do all one-time
         initialization here."""
 
+        self.vision = Vision()
+
         self.swerve = CrescendoSwerveDrivetrain()
         self.intake = Intake()
         self.shooter = Shooter()
@@ -92,6 +95,8 @@ class Myrobot(wpilib.TimedRobot):
 
         self.JOYSTICK_QUICKER_MOVE = 0.5
 
+        self.JOYSTICK_DRIVE_BABY_MODE = 6
+
         self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
 
         #Temporary:
@@ -102,24 +107,24 @@ class Myrobot(wpilib.TimedRobot):
         self.botposeentry.set(ntcore.Value.makeFloatArray([3.0, 5.0, 1.0]))
 
         
-        ally = DriverStation.getAlliance()
-        if ally is not None:
-            if ally == DriverStation.Alliance.kRed:
-                self.speaker_x = FieldPositions.speaker_x_red
-                self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
-                #set x value to the red side x
-                pass
-            elif ally == DriverStation.Alliance.kBlue:
-                self.speaker_x = FieldPositions.speaker_x_blue
-                self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_blue
-                #set the x value to the blue side
-        else:
-            print("No alliance found, defaulting to red")
-            self.speaker_x = FieldPositions.speaker_x_red
-            self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
-        # this checks wether we have set ourselves through the smartdashbard our alliance side and color. for vision we want to check to change
-        # the x value to use the same april tags but use them as if we were on either side of the field.
-        self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
+        # ally = DriverStation.getAlliance()
+        # if ally is not None:
+        #     if ally == DriverStation.Alliance.kRed:
+        #         self.speaker_x = FieldPositions.speaker_x_red
+        #         # self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
+        #         #set x value to the red side x
+        #         pass
+        #     elif ally == DriverStation.Alliance.kBlue:
+        #         self.speaker_x = FieldPositions.speaker_x_blue
+        #         # self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_blue
+        #         #set the x value to the blue side
+        # else:
+        #     print("No alliance found, defaulting to red")
+        #     self.speaker_x = FieldPositions.speaker_x_red
+        #     self.desired_x_for_autonomous_driving = FieldPositions.desired_x_for_autonomous_driving_red
+        # # this checks wether we have set ourselves through the smartdashbard our alliance side and color. for vision we want to check to change
+        # # the x value to use the same april tags but use them as if we were on either side of the field.
+        # self.vision = Vision(self.desired_x_for_autonomous_driving, self.speaker_x)
         # gets the vision class and sets the arguments in init to be used in the file
 
         # Autonomous state machine
@@ -173,6 +178,7 @@ class Myrobot(wpilib.TimedRobot):
         self.auto_chooser_widget.addOption("One-note Right", AutoPlan.ONE_NOTE_PORT)# switch all references of starboard in the code to Left and port to Right.
         self.auto_chooser_widget.addOption("Two note middle", AutoPlan.TWO_NOTE_CENTER)
         self.auto_chooser_widget.addOption("One-note", AutoPlan.ONE_NOTE)
+        self.auto_chooser_widget.addOption("Test", AutoPlan.TEST)
         self.shuffle_tab.add("Auto Selector", self.auto_chooser_widget).withSize(2, 1).withPosition(1, 2)
         self.auto_plan = self.auto_chooser_widget.getSelected()
 
@@ -229,7 +235,7 @@ class Myrobot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putString('DB/String 4',"Enc Front Left {:4.3f}".format( self.absEnc3))
         wpilib.SmartDashboard.putString('DB/String 3',"Enc Front Right {:4.3f}".format( self.absEnc2))
         wpilib.SmartDashboard.putString('DB/String 2',"Lim {:4.3f}".format(self.wrist_limit_switch.get()))
-        print(f"limit switch: {self.wrist_limit_switch.get()}")
+        # print(f"limit switch: {self.wrist_limit_switch.get()}")
 
         wpilib.SmartDashboard.putString('DB/String 7',"Optical sensor {:4.3f}".format(self.shooter.optical_sensor.get()))
 
@@ -310,12 +316,14 @@ class Myrobot(wpilib.TimedRobot):
 
         self.double_shot_finished = False
 
+        self.x_speed = 0
+
     def autonomous_periodic_aiming(self, botpose):
             x = botpose[0]
             y = botpose[1]
             current_yaw = botpose[5]#getting the yaw from the self.botpose table
             desired_yaw = 0 #where we want our yaw to go 
-
+            
             desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
             wpilib.SmartDashboard.putString("DB/String 0", str(x))    
             wpilib.SmartDashboard.putString("DB/String 1", str(y))
@@ -347,7 +355,7 @@ class Myrobot(wpilib.TimedRobot):
         if botpose == None:
             return False
         if len(botpose) < 1:
-            return False
+            return False 
         if botpose[0] == -1:
             return False
         if botpose[0] == 0 and botpose[1] == 0 and botpose[1] == 0:
@@ -356,6 +364,10 @@ class Myrobot(wpilib.TimedRobot):
 
     def autonomousPeriodic(self):
         self.botpose = self.vision.checkBotpose()
+
+        if self.is_botpose_valid(self.botpose):
+            self.bot_x = self.botpose[0]
+            self.y = self.botpose[1]
 
         def intake_auto_action(intake_action):
             if intake_action == 1:
@@ -397,6 +409,8 @@ class Myrobot(wpilib.TimedRobot):
             self.autonomous_state_machine_one_note_port(intake_auto_action, kicker_auto_action, shooter_auto_action)
         elif self.auto_plan == AutoPlan.ONE_NOTE:
             self.autonomous_state_machine_one_note_port(intake_auto_action, kicker_auto_action, shooter_auto_action)
+        elif self.auto_plan == AutoPlan.TEST:
+                self.autonomous_test()
         else:
             raise ValueError("Unknown auto plan")
 
@@ -449,6 +463,99 @@ class Myrobot(wpilib.TimedRobot):
             shooter_auto_action(False)
             intake_auto_action(0)
         # stop robot moving
+
+    def autonomous_test(self):
+
+        desired_x = 7.5
+        if self.is_botpose_valid(self.botpose):
+            self.bot_x = self.botpose[0]
+        robot_x = self.botpose[0]
+        robot_y = self.botpose[1]
+        robot_yaw = self.botpose[5]
+
+        desired_bot_angle = 0
+        desired_x_pos = desired_x - robot_x
+        
+        desired_direction = desired_bot_angle - robot_yaw
+        if desired_direction > 180:
+            desired_direction -= 360
+        if desired_direction < -180:
+            desired_direction += 360
+
+        x_kp = 0.3
+        x_max_speed = 0.5
+        self.x_speed = x_kp * desired_x_pos
+
+        # this acts like the p value in a pid loop for the rotation action
+
+        if self.x_speed > x_max_speed:
+            self.x_speed = x_max_speed
+        elif self.x_speed < -x_max_speed:
+            self.x_speed = -x_max_speed
+        #     # this sets makes sure that the rot value does not pass the maximum we give
+
+        self.x_distance = desired_x_pos
+        
+        if robot_x > -0.1 and robot_x < 0.1:
+            self.x_speed = 0.0
+        elif desired_x_pos > -0.5:
+            self.x_speed = -self.x_speed
+        elif abs(desired_x_pos) < 3:
+            self.x_speed = 0.0
+        else:
+            self.x_speed = self.x_speed + 0.25
+        
+        print(f"speed is{self.x_speed}")
+        print(f"distance is{desired_x_pos}")
+
+
+        desired_y = 1.45
+        desired_y_pos = desired_y - robot_y
+
+        y_kp = 0.3
+        y_max_speed = 0.4
+        self.y_speed = y_kp * desired_y_pos
+
+        # this acts like the p value in a pid loop for the rotation action
+
+        if self.y_speed > y_max_speed:
+            self.y_speed = y_max_speed
+        elif self.y_speed < -y_max_speed:
+            self.y_speed = -y_max_speed
+
+        if robot_y > -0.1 and robot_y < 0.1:
+            self.y_speed = 0.0
+        elif desired_y_pos > -0.5:
+            self.y_speed = -self.y_speed
+        elif abs(desired_y_pos) < 3:
+            self.y_speed = 0.0
+        else:
+            self.y_speed = self.y_speed
+
+        
+        # yaw_kp = 0.7
+        # max_rot_value = 0.3
+        # rot = yaw_kp * desired_direction
+
+        # if rot > max_rot_value:
+        #     rot = max_rot_value
+        # elif rot < -max_rot_value: 
+        #     rot = -max_rot_value
+
+        # if robot_yaw > -0.1 and robot_yaw < 0.1:
+        #     self.rot = 0.0
+        # elif desired_bot_angle > -0.5:
+        #     self.rot = -self.rot
+        # elif abs(desired_bot_angle) < 1:
+        #     self.rot = 0.0
+        # else:
+        #     self.rot = self.rot
+
+        print(self.rot)
+        
+
+
+        self.swerve.drive(self.x_speed, self.y_speed, self.rot, False)
 
     def autonomous_state_machine_one_note_starboard(self, intake_auto_action, kicker_auto_action, shooter_auto_action):
         """
@@ -669,8 +776,7 @@ class Myrobot(wpilib.TimedRobot):
             self.shooter_pivot_control = self.shooter_pivot_sub
             self.wrist_position = WristAngleCommands.wrist_mid_action
             self.shooter_control = ShooterControlCommands.shooter_wheel_outtake
-        elif self.backButton:
-            self.shooter_pivot_control = ShooterPivotCommands.shooter_under_chain_action
+            
 
             
         # wrist positions for intake to move towards the requested location remove magic numbers!
@@ -689,10 +795,10 @@ class Myrobot(wpilib.TimedRobot):
         if self.xbox.getRightBumper() and self.xbox.getLeftBumper():
             self.swerve.gyro.set_yaw(0)
         
-        if self.xbox.getRightTriggerAxis() > 0.5:
-            self.joystick_divider = self.JOYSTICK_QUICKER_MOVE
-        else:
+        if self.xbox.getRightTriggerAxis() > 0.5 and self.xbox.getAButton() and self.xbox.getBButton():
             self.joystick_divider = self.JOYSTICK_DRIVE_SLOWDOWN_FACTOR
+        elif self.xbox.getLeftTriggerAxis() > 0.5 and self.xbox.getAButton() and self.xbox.getXButton():
+            self.joystick_divider = self.JOYSTICK_DRIVE_BABY_MODE
 
         if self.is_botpose_valid(self.botpose):
             x = self.botpose[0]
@@ -706,7 +812,7 @@ class Myrobot(wpilib.TimedRobot):
             speaker_x = 6.5273#the x coordinate of the speaker marked in the field drawings in m.
             speaker_y = 1.98#height of the speaker in meters.
 
-            bot_x = self.botpose[0]#the x coordinate from the botpose table
+            self.bot_x = self.botpose[0]#the x coordinate from the botpose table
             bot_y = self.botpose[1]#the y pos from the botpose table
 
             desired_direction = self.calculate_desired_direction(desired_yaw, current_yaw)
