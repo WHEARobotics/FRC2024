@@ -20,14 +20,14 @@ class CrescendoSwerveDrivetrain:
     # Whether we use degrees or radians for angle is debatable:
     #  - radians is going to be slightly more efficient, to not be converting back and forth.
     #  - degrees is more familiar, and the performance hit may not be that great.
-    MAX_SPEED = 2.0
+    MAX_SPEED = 5.0
     MAX_ANGULAR_SPEED = math.pi # 1/2 rotation per second
 
     # UPDATE NUMBERS
-    BACK_LEFT_OFFSET = 0.709  # Back Left
-    FRONT_RIGHT_OFFSET = 0.205  # Front Right
-    FRONT_LEFT_OFFSET = 0.562 # Front Left
-    BACK_RIGHT_OFFSET = 0.482   # Back Right
+    BACK_LEFT_OFFSET = 0.703  # Back Left
+    FRONT_RIGHT_OFFSET = 0.203  # Front Right 
+    FRONT_LEFT_OFFSET = 0.562 # Front Left 
+    BACK_RIGHT_OFFSET = 0.481   # Back Right
     """
     these are the absolute position offsets that are constants setting an offset to the absolute encoders and changing the position of an angle.
     if we set the position to zero and set the offset 1 time to zero then 180, it would create a 180 degree difference when the wheel is set.

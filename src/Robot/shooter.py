@@ -49,7 +49,7 @@ class Shooter:
         
         SHOOTER_AMP_ANGLE = 135
         SHOOTER_START_ANGLE = 0
-        SHOOTER_FEEDING_ANGLE = -50
+        SHOOTER_FEEDING_ANGLE = -47
         SHOOTER_UNDER_CHAIN_ANGLE = 174
 
         SHOOTER_SUB_ANGLE = -63 #orginally -60
@@ -225,8 +225,6 @@ class Shooter:
                 self.desired_angle = self.shooter_amp
             elif shooter_pivot_pos == ShooterPivotCommands.shooter_pivot_sub_action: # 4
                 self.desired_angle = self.shooter_sub
-            elif shooter_pivot_pos == ShooterPivotCommands.shooter_under_chain_action:
-                self.desired_angle = self.shooter_under_chain
             
 
 
@@ -346,4 +344,4 @@ class Shooter:
             AbsEncValue += 1.0 # we add 1.0 to the encoder value if it returns negative to be able to keep it on the 0-1 range.
         elif AbsEncValue > 0.5:
             AbsEncValue -= 1
-        return AbsEncValue
+        return AbsEncValue 
