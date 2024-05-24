@@ -144,3 +144,9 @@ networktables.json
 # Pytorch weights
 src/machine_learning/data
 /docs/machine-learning/data
+src/helloworld/shuffleboard/.vscode/launch.json
+src/helloworld/shuffleboard/networktables.json.bck
+*.pth
+src/NoteVision/mlruns.db
+*.dat
+*.bck
